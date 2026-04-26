@@ -52,7 +52,9 @@ async def _run_ingestor(ing: Ingestor) -> None:
 app = FastAPI(title="NYC Traffic Cam Monitor", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    # Read-only public dashboard — allow any origin so the Cloudflare Pages
+    # site (and tunnels / preview deploys) can hit the backend directly.
+    allow_origin_regex=r"https?://(localhost(:\d+)?|.*\.pages\.dev|.*\.trycloudflare\.com)",
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

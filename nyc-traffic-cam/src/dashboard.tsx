@@ -7,7 +7,7 @@ import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Tv, X } from 'lucide-react';
 
-import { fetchAlerts, fetchCameras, fetchStats, openAlertSocket } from './api';
+import { apiUrl, fetchAlerts, fetchCameras, fetchStats, openAlertSocket } from './api';
 import type { Alert, Camera, Stats } from './types';
 
 const NYC_VIEW = { longitude: -73.97, latitude: 40.74, zoom: 10.8, pitch: 0, bearing: 0 };
@@ -461,7 +461,7 @@ function AlertRow({ alert: a, onPick }: { alert: Alert; onPick: (a: Alert) => vo
         {a.has_image ? (
           <div className="relative w-[88px] h-[58px] flex-shrink-0 bg-black brackets crt-overlay" style={{ '--bracket': sevRgb } as React.CSSProperties}>
             <img
-              src={`/api/alerts/${a.id}/image.jpg?v=${a.updated_at}`}
+              src={apiUrl(`/api/alerts/${a.id}/image.jpg?v=${a.updated_at}`)}
               alt=""
               loading="lazy"
               className="w-full h-full object-cover"
@@ -584,7 +584,7 @@ function LofiPip({ focus, onClose }: { focus: Alert | null; onClose: () => void 
           <div className="relative crt-overlay">
             <img
               key={`lofi-${focus.camera_id}-${tick}`}
-              src={`/api/cameras/${focus.camera_id}/snapshot.jpg?t=${tick}`}
+              src={apiUrl(`/api/cameras/${focus.camera_id}/snapshot.jpg?t=${tick}`)}
               alt="lofi feed"
               className="w-full bg-black block"
               style={{ minHeight: 280 }}
@@ -702,7 +702,7 @@ function CameraPanel({
           <div className="brackets crt-overlay relative bg-black">
             <img
               key={`live-${camera.id}-${tick}`}
-              src={`/api/cameras/${camera.id}/snapshot.jpg?t=${tick}`}
+              src={apiUrl(`/api/cameras/${camera.id}/snapshot.jpg?t=${tick}`)}
               alt={`live ${camera.id}`}
               className="w-full bg-black block"
               onError={(e) => {
@@ -785,7 +785,7 @@ function AlertModal({ alert, onClose }: { alert: Alert; onClose: () => void }) {
             <div className="text-[9px] uppercase tracking-[0.22em] text-[var(--c-text-dim)] mb-1">FRAME AT TRIGGER</div>
             <div className="brackets crt-overlay bg-black">
               <img
-                src={`/api/alerts/${alert.id}/image.jpg?v=${alert.updated_at}`}
+                src={apiUrl(`/api/alerts/${alert.id}/image.jpg?v=${alert.updated_at}`)}
                 alt={`alert ${alert.id} frame`}
                 className="w-full bg-black block"
               />
@@ -802,7 +802,7 @@ function AlertModal({ alert, onClose }: { alert: Alert; onClose: () => void }) {
           <div className="brackets bg-black">
             <img
               key={`live-${alert.camera_id}-${Math.floor(Date.now() / 5000)}`}
-              src={`/api/cameras/${alert.camera_id}/snapshot.jpg?t=${Math.floor(Date.now() / 5000)}`}
+              src={apiUrl(`/api/cameras/${alert.camera_id}/snapshot.jpg?t=${Math.floor(Date.now() / 5000)}`)}
               alt={`live ${alert.camera_id}`}
               className="w-full bg-black block"
               onError={(e) => {
