@@ -480,3 +480,31 @@ body::after {
   10% { opacity: 1; }
   100% { transform: translate(-110vw, 90vh) rotate(1080deg); opacity: 1; }
 }
+
+/* Quarter rolling across the bottom (right → left) and spinning */
+@keyframes quarter-roll {
+  0% { right: -60px; }
+  40% { right: 50vw; }
+  60% { right: 50vw; }
+  100% { right: calc(100vw + 60px); }
+}
+@keyframes quarter-spin {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(360deg); }
+}
+@keyframes quarter-toast {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-40px); opacity: 0; }
+}
+
+/* Fullscreen TV — fill viewport when in fullscreen */
+.bodega-tv-fullscreen:fullscreen {
+  background: #06080a;
+  display: grid;
+  place-items: center;
+  padding: 4vh 2vw;
+}
+.bodega-tv-fullscreen:fullscreen > div {
+  max-width: 1500px;
+  width: 96vw;
+}

@@ -10,6 +10,7 @@ import { Tv, X } from 'lucide-react';
 import { apiUrl, fetchAlerts, fetchCameras, fetchStats, openAlertSocket } from './api';
 import type { Alert, Camera, Stats } from './types';
 import { BodegaAwning, BodegaTV, CHANNEL_LINEUP, StreetFauna, useClock as useSharedClock, type TVCaption } from './bodega-tv';
+import { QuarterStash, RollingQuarter } from './quarter';
 
 const NYC_VIEW = { longitude: -73.97, latitude: 40.74, zoom: 10.8, pitch: 0, bearing: 0 };
 
@@ -274,6 +275,8 @@ export default function Dashboard() {
       <AlertsRail alerts={alerts} onPick={handleAlertClick} />
 
       <StreetFauna />
+      <QuarterStash />
+      <RollingQuarter />
 
       {lofiMode && (
         <LofiPip

@@ -1,5 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { Lock, X } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Lock, Maximize2, Minimize2, X } from 'lucide-react';
 import { apiUrl } from './api';
 
 export const CHANNEL_LINEUP = [2, 4, 5, 7, 9, 11, 13, 21, 25, 31];
@@ -97,6 +97,8 @@ export function BodegaTV({
   refreshSec?: number;
 }) {
   const [tick, setTick] = useState(0);
+  const [isFs, setIsFs] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
   const clock = useClock();
 
   useEffect(() => {
@@ -104,12 +106,27 @@ export function BodegaTV({
     return () => clearInterval(i);
   }, [refreshSec]);
 
+  useEffect(() => {
+    const onFs = () => setIsFs(document.fullscreenElement === wrapRef.current);
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!wrapRef.current) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else {
+      wrapRef.current.requestFullscreen?.().catch(() => { /* user cancelled or unsupported */ });
+    }
+  };
+
   const hh = String(clock.getHours()).padStart(2, '0');
   const mm = String(clock.getMinutes()).padStart(2, '0');
   const screenMinH = large ? 380 : 260;
 
   return (
-    <div className="select-none w-full">
+    <div ref={wrapRef} className="select-none w-full bodega-tv-fullscreen">
       {/* rabbit-ear antennas — taller on large */}
       <div className="relative h-0">
         <div
@@ -148,6 +165,13 @@ export function BodegaTV({
             <span>RCA · COLOR · TC-21</span>
           </span>
           <span className="hidden md:inline">CH {String(channelNumber).padStart(2, '0')} · {hh}:{mm}</span>
+          <button
+            onClick={toggleFullscreen}
+            className="text-[#f3e9c0]/70 hover:text-white transition-colors"
+            title={isFs ? 'Exit fullscreen (esc)' : 'Fullscreen the TV'}
+          >
+            {isFs ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          </button>
           {onClose && (
             <button onClick={onClose} className="text-[#f3e9c0]/70 hover:text-white transition-colors">
               <X className="w-3.5 h-3.5" />

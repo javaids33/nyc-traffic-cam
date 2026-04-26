@@ -8,6 +8,7 @@ import {
   StreetFauna,
   type TVCaption,
 } from './bodega-tv';
+import { QuarterStash, RollingQuarter } from './quarter';
 
 const ALERT_LABELS_LONG: Record<string, string> = {
   sudden_change: 'SUDDEN CHANGE',
@@ -279,6 +280,8 @@ export default function Lounge() {
           </a>
         }
       />
+      <QuarterStash />
+      <RollingQuarter />
 
       <main className="flex-1 relative flex items-center justify-center px-6 pb-12 overflow-hidden">
         <SkylineBg />

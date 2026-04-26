@@ -1,4 +1,5 @@
 import { BodegaAwning, StreetFauna } from './bodega-tv';
+import { QuarterStash, RollingQuarter } from './quarter';
 
 export default function About() {
   return (
@@ -15,6 +16,8 @@ export default function About() {
           </a>
         }
       />
+      <QuarterStash />
+      <RollingQuarter />
 
       <main className="flex-1 max-w-[760px] mx-auto px-6 py-10 z-10">
         <div className="font-bungee text-[64px] leading-[0.95] uppercase mb-4">
