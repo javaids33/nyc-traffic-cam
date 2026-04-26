@@ -40,24 +40,47 @@ NYC GraphQL API (webcams.nyctmc.org)
 
 You need Python 3.11+ and Node 18+.
 
+**One command:**
+
 ```bash
-# Install Python deps
+./start.sh
+```
+
+`start.sh` creates a Python venv, installs deps if missing, kills anything
+already bound to ports 8000/5173, starts the backend in the background, and
+runs Vite in the foreground. Open `http://localhost:5173/`.
+
+**Manually**, if you prefer two terminals:
+
+```bash
 python3 -m venv .venv
 .venv/bin/pip install -r server/requirements.txt
-
-# Install JS deps
 npm install
 
-# Terminal 1 — backend (FastAPI + ingestor)
+# Terminal 1
 .venv/bin/uvicorn server.main:app --host 127.0.0.1 --port 8000
-
-# Terminal 2 — frontend (Vite dev server, proxies /api and /ws to backend)
+# Terminal 2
 npm run dev
-
-# → open http://localhost:5173/
 ```
 
 State lives in `data/nyc.db` (SQLite WAL). Delete the directory to reset.
+
+## Sharing it with someone
+
+The dashboard is a normal web app served by Vite, so any HTTP tunnel works:
+
+```bash
+# install once
+brew install cloudflared
+
+# from the project directory
+cloudflared tunnel --url http://localhost:5173
+```
+
+Cloudflare prints a `https://<random>.trycloudflare.com` URL. The tunnel
+stays alive until you Ctrl-C `cloudflared`. The dashboard is read-only,
+but the URL is unauthenticated — only share it with people you'd let see
+your laptop's screen.
 
 ## Configuration
 
