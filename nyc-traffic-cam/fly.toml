@@ -1,39 +1,40 @@
-# Fly.io app config for the NYC Traffic Cam Monitor backend.
-# Run `fly launch --copy-config --no-deploy` then `fly deploy` to create the app.
-# A 1GB volume mounted at /data persists SQLite + image cache across deploys.
+# fly.toml app configuration file generated for nyc-cam-monitor on 2026-04-26T05:56:40Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "nyc-cam-monitor"
-primary_region = "ewr"   # Newark — closest to NYC traffic API for low-latency polls
+app = 'nyc-cam-monitor'
+primary_region = 'ewr'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  NYC_POLL_INTERVAL = "15"
-  NYC_HOT_POLL_INTERVAL = "5"
-  NYC_MAX_CONCURRENT = "32"
-  NYC_DB_PATH = "/data/nyc.db"
+  NYC_DB_PATH = '/data/nyc.db'
+  NYC_HOT_POLL_INTERVAL = '5'
+  NYC_MAX_CONCURRENT = '32'
+  NYC_POLL_INTERVAL = '15'
+
+[[mounts]]
+  source = 'nyc_data'
+  destination = '/data'
+  initial_size = '1gb'
 
 [http_service]
   internal_port = 8000
   force_https = true
-  auto_stop_machines = "off"     # ingestor must keep polling
+  auto_stop_machines = 'off'
   auto_start_machines = true
   min_machines_running = 1
-  processes = ["app"]
+  processes = ['app']
 
   [[http_service.checks]]
-    grace_period = "30s"
-    interval = "20s"
-    method = "GET"
-    path = "/api/health"
-    timeout = "5s"
-
-[[mounts]]
-  source = "nyc_data"
-  destination = "/data"
-  initial_size = "1gb"
+    interval = '20s'
+    timeout = '5s'
+    grace_period = '30s'
+    method = 'GET'
+    path = '/api/health'
 
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
+  size = 'shared-cpu-1x'
+  memory = '512mb'
