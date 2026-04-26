@@ -448,19 +448,28 @@ body::after {
   50% { transform: scaleY(0.4); }
 }
 
-/* Awning lightbulb chase */
+/* Awning lightbulb chase — calm, just a soft glow rather than a strobe */
 @keyframes bulb-chase {
-  0%, 100% { opacity: 0.9; }
-  50% { opacity: 0.3; }
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.6; }
 }
 
-/* Marquee letter flicker (one letter occasionally drops out, like a busted tube) */
+/* Marquee letter flicker — much rarer drop-out so it reads as
+   "neon tube blinks once in a while" instead of constantly broken. */
 @keyframes letter-flicker {
-  0%, 92%, 96%, 100% { opacity: 1; text-shadow: 0 0 12px currentColor; }
-  93%, 95% { opacity: 0.18; text-shadow: none; }
-  94% { opacity: 0.5; }
+  0%, 97%, 100% { opacity: 1; text-shadow: 0 0 10px currentColor; }
+  98% { opacity: 0.55; }
 }
-.flicker { animation: letter-flicker 7s ease-in-out infinite; }
+.flicker { animation: letter-flicker 14s ease-in-out infinite; }
+
+/* respect prefers-reduced-motion: kill everything decorative */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001s !important;
+  }
+}
 
 /* Risograph offset (split-channel print look) */
 .riso {

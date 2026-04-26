@@ -91,7 +91,10 @@ export function RollingQuarter() {
   useEffect(() => {
     let stop = false;
     const tick = () => {
-      const wait = 25_000 + Math.random() * 45_000;
+      // Quieter cadence — quarters used to roll every 25-70s which felt
+      // like a screensaver. Now they show up every 90-210s so they read
+      // as a treat, not an interruption.
+      const wait = 90_000 + Math.random() * 120_000;
       setTimeout(() => {
         if (stop) return;
         setGrabbed(false);
@@ -99,8 +102,8 @@ export function RollingQuarter() {
         tick();
       }, wait);
     };
-    // seed an initial spawn quickly so first-time visitors notice
-    setTimeout(() => { if (!stop) { setSeed((s) => s + 1); } }, 6_000);
+    // First spawn ~30s in (long enough to read the page first).
+    setTimeout(() => { if (!stop) { setSeed((s) => s + 1); } }, 30_000);
     tick();
     return () => { stop = true; };
   }, []);

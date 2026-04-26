@@ -10,6 +10,7 @@ import {
 } from './bodega-tv';
 import { QuarterStash, RollingQuarter } from './quarter';
 import { AmbienceWidget } from './ambience';
+import { RadioWidget } from './radio';
 
 const ALERT_LABELS_LONG: Record<string, string> = {
   sudden_change: 'SUDDEN CHANGE',
@@ -271,19 +272,11 @@ export default function Lounge() {
     <div className="h-screen w-screen flex flex-col overflow-hidden text-white" style={{
       background: 'radial-gradient(ellipse at 50% 30%, #1a1530 0%, #0a0a18 55%, #06060c 100%)',
     }}>
-      <BodegaAwning
-        rightSlot={
-          <a
-            href="/dashboard"
-            className="ml-2 px-2 py-0.5 border border-[#FFD600] text-[#FFD600] hover:bg-[#FFD600] hover:text-black transition-colors font-typewriter text-[10px] uppercase tracking-[0.18em]"
-          >
-            Mission Control →
-          </a>
-        }
-      />
+      <BodegaAwning />
       <QuarterStash />
       <RollingQuarter />
       <AmbienceWidget />
+      <RadioWidget />
 
       <main className="flex-1 relative flex items-center justify-center px-2 sm:px-6 pb-12 overflow-hidden">
         <SkylineBg />
@@ -549,12 +542,7 @@ function ChannelGuide({
         )}
         {upcoming.map((a) => (
           <li key={a.id} className="flex items-start gap-2">
-            <span
-              className="font-bungee text-[10px] leading-none px-1 py-0.5 mt-0.5 text-white"
-              style={{ background: '#d11a2a' }}
-            >
-              SEV {a.severity}
-            </span>
+            <span className="text-[#d11a2a] mt-[3px]">●</span>
             <span className="line-clamp-2 uppercase tracking-[0.06em]">
               {a.camera_name ?? a.camera_id}
             </span>

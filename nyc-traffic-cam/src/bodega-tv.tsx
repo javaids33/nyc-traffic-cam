@@ -530,7 +530,7 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
     <div className="relative shrink-0">
       <div className="metrocard-tape h-1.5" />
 
-      {/* light-bulb marquee strip */}
+      {/* light-bulb marquee strip — slow soft pulse, not a strobe */}
       <div className="bg-[#0a0a0a] h-3 flex items-center justify-around overflow-hidden">
         {Array.from({ length: 60 }).map((_, i) => (
           <span
@@ -538,9 +538,9 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
             className="w-1.5 h-1.5 rounded-full bg-[#FFD600]"
             style={{
               boxShadow: '0 0 4px #FFD600, 0 0 9px #FFD60088',
-              animation: `bulb-chase 1.4s ease-in-out infinite`,
-              animationDelay: `${(i % 6) * 0.18}s`,
-              opacity: 0.9,
+              animation: `bulb-chase 4.2s ease-in-out infinite`,
+              animationDelay: `${(i % 8) * 0.55}s`,
+              opacity: 0.85,
             }}
           />
         ))}
@@ -607,27 +607,31 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
 
 /* ────────────────────────────────────────────────── StreetFauna */
 
-export function StreetFauna({ ratMode = false }: { ratMode?: boolean }) {
+export function StreetFauna({ ratMode = false, motion = false }: { ratMode?: boolean; motion?: boolean }) {
+  // Motion is opt-in. Default leaves the static corner cast (cat, hydrant,
+  // lamp, statue) and skips all the constantly-running cabs/rats/pigeons —
+  // the page reads as a quiet diorama rather than a busy screensaver.
+  // Rat mode (Konami cheat) re-enables the moving strip with extras.
+  const showMotion = motion || ratMode;
   return (
     <>
-      {/* moving things — across the bottom strip */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 overflow-hidden h-[140px]">
-        <Rat />
-        {ratMode && <Rat seedOffset={1} />}
-        {ratMode && <Rat seedOffset={2} />}
-        {ratMode && <Rat seedOffset={3} />}
-        <YellowCab />
-        <Pigeon />
-        <SubwayCar />
-        <HotDogCart />
-        <PretzelCart />
-        <NewspaperFlying />
-        <ManholeSteam left="22%" delay="2s" />
-        <ManholeSteam left="71%" delay="11s" />
-      </div>
-      {/* falling pizza — random Easter egg */}
-      <FlyingPizza />
-      {/* fixed corner pieces */}
+      {showMotion && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 overflow-hidden h-[140px]">
+          <Rat />
+          {ratMode && <Rat seedOffset={1} />}
+          {ratMode && <Rat seedOffset={2} />}
+          {ratMode && <Rat seedOffset={3} />}
+          <YellowCab />
+          <Pigeon />
+          <SubwayCar />
+          <HotDogCart />
+          <PretzelCart />
+          <NewspaperFlying />
+          <ManholeSteam left="22%" delay="2s" />
+          <ManholeSteam left="71%" delay="11s" />
+        </div>
+      )}
+      {ratMode && <FlyingPizza />}
       <FireHydrant />
       <SodiumStreetLamp />
       <StatueOfLiberty />
