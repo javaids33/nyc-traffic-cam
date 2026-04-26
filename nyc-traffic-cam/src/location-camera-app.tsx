@@ -1,45 +1,96 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Camera, MapPin, Navigation, AlertCircle, CheckCircle, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  Camera,
+  MapPin,
+  Navigation,
+  AlertCircle,
+  CheckCircle,
+  Wifi,
+  WifiOff,
+  RefreshCw,
+} from 'lucide-react';
+
+// In dev, requests to the NYC TMC API are proxied through Vite to avoid CORS.
+const API_URL = '/nyc-graphql';
+
+const FALLBACK_CAMERAS: NycCamera[] = [
+  { id: '20503e73-1829-4275-a645-5be6a02fd7cd', lat: 40.7589, lng: -73.9851, isOnline: true },
+  { id: 'test-camera-2', lat: 40.7505, lng: -73.9934, isOnline: true },
+];
+
+type NycCamera = {
+  id: string;
+  lat: number;
+  lng: number;
+  isOnline: boolean;
+};
+
+type NearbyCamera = NycCamera & { distance: number };
+
+type UserLocation = {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+  timestamp: Date;
+};
+
+type CapturedImage = {
+  id: number;
+  imageBase64: string;
+  timestamp: string;
+  location: UserLocation | null;
+  distance: string;
+  cameraName: string;
+  cameraId: string;
+};
+
+const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+  const R = 6371e3;
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+};
 
 const LocationCameraApp = () => {
-  const [userLocation, setUserLocation] = useState(null);
-  const [cameras, setCameras] = useState([]);
-  const [selectedCamera, setSelectedCamera] = useState(null);
-  const [threshold, setThreshold] = useState(100); // meters
-  const [isTracking, setIsTracking] = useState(false);
-  const [capturedImages, setCapturedImages] = useState([]);
-  const [lastTrigger, setLastTrigger] = useState(null);
-  const [status, setStatus] = useState('Ready to start tracking');
-  const [watchId, setWatchId] = useState(null);
-  const [permissions, setPermissions] = useState({ location: false });
-  const [loadingCameras, setLoadingCameras] = useState(false);
-  const [nearbyCamera, setNearbyCamera] = useState(null);
-  
-  const API_URL = 'https://webcams.nyctmc.org/cameras/graphql';
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [cameras, setCameras] = useState<NycCamera[]>([]);
+  const [threshold, setThreshold] = useState<number>(100);
+  const [isTracking, setIsTracking] = useState<boolean>(false);
+  const [capturedImages, setCapturedImages] = useState<CapturedImage[]>([]);
+  const [status, setStatus] = useState<string>('Ready to start tracking');
+  const [permissions, setPermissions] = useState<{ location: boolean }>({ location: false });
+  const [loadingCameras, setLoadingCameras] = useState<boolean>(false);
+  const [nearbyCamera, setNearbyCamera] = useState<NearbyCamera | null>(null);
 
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Earth's radius in meters
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δφ = (lat2-lat1) * Math.PI/180;
-    const Δλ = (lon2-lon1) * Math.PI/180;
+  // Refs avoid stale-closure bugs inside the geolocation watch callback.
+  const camerasRef = useRef<NycCamera[]>([]);
+  const thresholdRef = useRef<number>(threshold);
+  const lastTriggerRef = useRef<number | null>(null);
+  const watchIdRef = useRef<number | null>(null);
 
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  useEffect(() => {
+    camerasRef.current = cameras;
+  }, [cameras]);
 
-    return R * c; // Distance in meters
-  };
+  useEffect(() => {
+    thresholdRef.current = threshold;
+  }, [threshold]);
 
   const fetchCameras = async () => {
     setLoadingCameras(true);
+    setStatus('Loading NYC traffic cameras...');
     try {
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: `
             query {
@@ -50,141 +101,157 @@ const LocationCameraApp = () => {
                 isOnline
               }
             }
-          `
-        })
+          `,
+        }),
       });
-      
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
+
+      if (data.errors) {
+        throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
+      }
+
       if (data.data && data.data.cameras) {
-        const onlineCameras = data.data.cameras.filter(cam => cam.isOnline);
+        const onlineCameras: NycCamera[] = data.data.cameras.filter(
+          (cam: NycCamera) => cam.isOnline && cam.lat && cam.lng,
+        );
         setCameras(onlineCameras);
         setStatus(`Loaded ${onlineCameras.length} online cameras`);
+      } else {
+        throw new Error('Invalid response format');
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error fetching cameras:', error);
-      setStatus('Failed to load cameras');
+      setStatus(`Failed to load cameras: ${message}. Using fallback cameras.`);
+      setCameras(FALLBACK_CAMERAS);
     }
     setLoadingCameras(false);
   };
 
-  const fetchCameraImage = async (cameraId, cameraName) => {
+  const fetchCameraImage = async (
+    cameraId: string,
+    cameraName: string,
+    nearest: NearbyCamera,
+    locationAtTrigger: UserLocation,
+  ) => {
     try {
       setStatus('Capturing image from traffic camera...');
-      
+
       const response = await fetch(API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: `
             query($cameraId: UUID!) {
               camera(cameraId: $cameraId) {
                 name
               }
-              watermark(cameraId: $cameraId) {
-                imageBase64
-                position
-              }
+              cameraImage(cameraId: $cameraId)
             }
           `,
-          variables: { cameraId }
-        })
+          variables: { cameraId },
+        }),
       });
-      
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
-      
-      if (data.data && data.data.watermark && data.data.watermark.imageBase64) {
-        const timestamp = new Date().toISOString();
-        const distance = userLocation ? calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          nearbyCamera.lat,
-          nearbyCamera.lng
-        ).toFixed(1) : 'Unknown';
-        
-        const newImage = {
+
+      if (data.errors) {
+        console.error('GraphQL errors:', data.errors);
+        setStatus('Camera image capture failed');
+        return;
+      }
+
+      if (data.data && data.data.cameraImage) {
+        const distance = calculateDistance(
+          locationAtTrigger.latitude,
+          locationAtTrigger.longitude,
+          nearest.lat,
+          nearest.lng,
+        ).toFixed(1);
+
+        const newImage: CapturedImage = {
           id: Date.now(),
-          imageBase64: data.data.watermark.imageBase64,
-          timestamp,
-          location: userLocation,
+          imageBase64: data.data.cameraImage,
+          timestamp: new Date().toISOString(),
+          location: locationAtTrigger,
           distance,
-          cameraName: data.data.camera.name || cameraName,
-          cameraId
+          cameraName: data.data.camera?.name || cameraName,
+          cameraId,
         };
-        
-        setCapturedImages(prev => [newImage, ...prev.slice(0, 4)]); // Keep last 5 images
+
+        setCapturedImages((prev) => [newImage, ...prev.slice(0, 4)]);
         setStatus(`Image captured from ${newImage.cameraName}! Distance: ${distance}m`);
-        
+
         setTimeout(() => {
           setStatus('Image sent to user successfully!');
           setTimeout(() => setStatus('Tracking location...'), 2000);
         }, 1000);
-        
-        return newImage;
       } else {
-        setStatus('Failed to capture image from camera');
+        setStatus('No image data received from camera');
       }
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error fetching camera image:', error);
-      setStatus('Error capturing camera image');
+      setStatus(`Error capturing camera image: ${message}`);
     }
   };
 
-  const findNearestCamera = (location) => {
-    if (!cameras.length) return null;
-    
-    let nearest = null;
+  const findNearestCamera = (location: UserLocation): NearbyCamera | null => {
+    const list = camerasRef.current;
+    if (!list.length) return null;
+
+    let nearest: NearbyCamera | null = null;
     let minDistance = Infinity;
-    
-    cameras.forEach(camera => {
-      const distance = calculateDistance(
-        location.latitude,
-        location.longitude,
-        camera.lat,
-        camera.lng
-      );
-      
+
+    list.forEach((camera) => {
+      const distance = calculateDistance(location.latitude, location.longitude, camera.lat, camera.lng);
       if (distance < minDistance) {
         minDistance = distance;
         nearest = { ...camera, distance };
       }
     });
-    
+
     return nearest;
   };
 
-  const handleLocationUpdate = (position) => {
-    const newLocation = {
+  const handleLocationUpdate = (position: GeolocationPosition) => {
+    const newLocation: UserLocation = {
       latitude: position.coords.latitude,
       longitude: position.coords.longitude,
       accuracy: position.coords.accuracy,
-      timestamp: new Date(position.timestamp)
+      timestamp: new Date(position.timestamp),
     };
-    
+
     setUserLocation(newLocation);
-    
+
     const nearest = findNearestCamera(newLocation);
     setNearbyCamera(nearest);
-    
+
     if (nearest) {
-      const distance = nearest.distance;
-      
       const now = Date.now();
-      const timeSinceLastTrigger = lastTrigger ? now - lastTrigger : Infinity;
-      
-      if (distance <= threshold && timeSinceLastTrigger > 30000) { // 30 second cooldown
-        setLastTrigger(now);
-        fetchCameraImage(nearest.id, `Camera ${nearest.id.substring(0, 8)}...`);
+      const timeSinceLastTrigger = lastTriggerRef.current ? now - lastTriggerRef.current : Infinity;
+
+      if (nearest.distance <= thresholdRef.current && timeSinceLastTrigger > 30000) {
+        lastTriggerRef.current = now;
+        fetchCameraImage(nearest.id, `Camera ${nearest.id.substring(0, 8)}...`, nearest, newLocation);
       }
-      
-      setStatus(`Tracking... Nearest camera: ${distance.toFixed(1)}m away`);
+
+      setStatus(`Tracking... Nearest camera: ${nearest.distance.toFixed(1)}m away`);
     } else {
       setStatus('Tracking... No cameras nearby');
     }
   };
 
-  const startTracking = async () => {
+  const startTracking = () => {
     if (!navigator.geolocation) {
       setStatus('Geolocation not supported');
       return;
@@ -202,26 +269,22 @@ const LocationCameraApp = () => {
           console.error('Location error:', error);
           setStatus(`Location error: ${error.message}`);
         },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 5000
-        }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 },
       );
-      
-      setWatchId(id);
+
+      watchIdRef.current = id;
       setIsTracking(true);
-      setPermissions(prev => ({ ...prev, location: true }));
+      setPermissions((prev) => ({ ...prev, location: true }));
       setStatus('Starting location tracking...');
-    } catch (error) {
+    } catch {
       setStatus('Location access denied');
     }
   };
 
   const stopTracking = () => {
-    if (watchId) {
-      navigator.geolocation.clearWatch(watchId);
-      setWatchId(null);
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
     }
     setIsTracking(false);
     setNearbyCamera(null);
@@ -230,10 +293,9 @@ const LocationCameraApp = () => {
 
   useEffect(() => {
     fetchCameras();
-    
     return () => {
-      if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
       }
     };
   }, []);
@@ -264,7 +326,9 @@ const LocationCameraApp = () => {
             </div>
           )}
         </div>
-        <p className="text-sm mt-2 text-gray-300">{status}</p>
+        <p className="text-sm mt-2 text-gray-300" data-testid="status">
+          {status}
+        </p>
       </div>
 
       <div className="p-4 border-b border-gray-800">
@@ -282,27 +346,34 @@ const LocationCameraApp = () => {
             Refresh
           </button>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="bg-gray-800 p-3 rounded-lg text-center">
-            <div className="text-2xl font-bold text-green-400">{cameras.length}</div>
+            <div className="text-2xl font-bold text-green-400" data-testid="camera-count">
+              {cameras.length}
+            </div>
             <div className="text-xs text-gray-400">Online Cameras</div>
           </div>
           <div className="bg-gray-800 p-3 rounded-lg text-center">
-            <div className="text-2xl font-bold text-blue-400">{capturedImages.length}</div>
+            <div className="text-2xl font-bold text-blue-400" data-testid="image-count">
+              {capturedImages.length}
+            </div>
             <div className="text-xs text-gray-400">Images Captured</div>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Trigger Distance (meters)</label>
+          <label className="block text-sm text-gray-400 mb-1" htmlFor="threshold-input">
+            Trigger Distance (meters)
+          </label>
           <input
+            id="threshold-input"
             type="number"
             value={threshold}
             onChange={(e) => setThreshold(parseInt(e.target.value) || 100)}
             className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm"
-            min="50"
-            max="1000"
+            min={50}
+            max={1000}
           />
         </div>
       </div>
@@ -368,19 +439,17 @@ const LocationCameraApp = () => {
           <div className="space-y-3">
             {capturedImages.map((image) => (
               <div key={image.id} className="bg-gray-800 rounded-lg overflow-hidden">
-                <img 
-                  src={image.imageBase64} 
+                <img
+                  src={image.imageBase64}
                   alt={`Traffic camera ${image.cameraName}`}
                   className="w-full h-48 object-contain bg-black"
                 />
                 <div className="p-3">
-                  <div className="text-sm font-medium text-white mb-1">
-                    {image.cameraName}
-                  </div>
+                  <div className="text-sm font-medium text-white mb-1">{image.cameraName}</div>
                   <div className="text-xs text-gray-400 space-y-1">
-                    <p>📅 {new Date(image.timestamp).toLocaleString()}</p>
-                    <p>📍 Distance: {image.distance}m</p>
-                    <p>🆔 {image.cameraId.substring(0, 13)}...</p>
+                    <p>{new Date(image.timestamp).toLocaleString()}</p>
+                    <p>Distance: {image.distance}m</p>
+                    <p>{image.cameraId.substring(0, 13)}...</p>
                   </div>
                 </div>
               </div>
@@ -392,14 +461,26 @@ const LocationCameraApp = () => {
       <div className="p-4 border-t border-gray-800 text-xs">
         <div className="flex items-center justify-between mb-1">
           <span>Location Permission:</span>
-          <span className={`flex items-center gap-1 ${permissions.location ? 'text-green-400' : 'text-gray-400'}`}>
-            {permissions.location ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          <span
+            className={`flex items-center gap-1 ${
+              permissions.location ? 'text-green-400' : 'text-gray-400'
+            }`}
+          >
+            {permissions.location ? (
+              <CheckCircle className="w-4 h-4" />
+            ) : (
+              <AlertCircle className="w-4 h-4" />
+            )}
             {permissions.location ? 'Granted' : 'Pending'}
           </span>
         </div>
         <div className="flex items-center justify-between">
           <span>NYC API Status:</span>
-          <span className={`flex items-center gap-1 ${cameras.length > 0 ? 'text-green-400' : 'text-gray-400'}`}>
+          <span
+            className={`flex items-center gap-1 ${
+              cameras.length > 0 ? 'text-green-400' : 'text-gray-400'
+            }`}
+          >
             {cameras.length > 0 ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
             {cameras.length > 0 ? 'Connected' : 'Disconnected'}
           </span>
