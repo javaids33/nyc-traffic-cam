@@ -289,28 +289,38 @@ export default function Lounge() {
         <SkylineBg />
         <CornerBrasstack />
 
-        <div className="w-full max-w-[860px] relative z-10">
-          <BodegaTV
-            cameraId={focus?.cameraId ?? null}
-            caption={focus?.caption ?? null}
+        <div className="w-full max-w-[1400px] relative z-10 grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_260px] xl:grid-cols-[300px_minmax(0,1fr)_300px] items-start">
+          <ChannelGuide
+            alerts={alerts}
+            currentCameraId={focus?.cameraId ?? null}
             channelNumber={CHANNEL_LINEUP[channelIdx]}
-            flashKey={flashKey}
-            staticOn={staticOn}
-            locked={locked}
-            large
-            onScreenClick={() => setLocked((l) => !l)}
           />
 
-          <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[10px] sm:text-[11px] uppercase tracking-[0.22em] font-typewriter text-[#FFD600]/85 px-1">
-            <span>
-              {locked
-                ? '★ LOCKED — TAP SCREEN TO RESUME ★'
-                : 'AUTO-SURFING · 18s DWELL · TAP TO HOLD'}
-            </span>
-            <span className="text-white/45">
-              tuning {alerts.filter((a) => !a.resolved_at && a.severity >= 5).length} live · {cameras.length} cams
-            </span>
+          <div className="min-w-0">
+            <BodegaTV
+              cameraId={focus?.cameraId ?? null}
+              caption={focus?.caption ?? null}
+              channelNumber={CHANNEL_LINEUP[channelIdx]}
+              flashKey={flashKey}
+              staticOn={staticOn}
+              locked={locked}
+              large
+              onScreenClick={() => setLocked((l) => !l)}
+            />
+
+            <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[10px] sm:text-[11px] uppercase tracking-[0.22em] font-typewriter text-[#FFD600]/85 px-1">
+              <span>
+                {locked
+                  ? '★ LOCKED — TAP SCREEN TO RESUME ★'
+                  : 'AUTO-SURFING · 18s DWELL · TAP TO HOLD'}
+              </span>
+              <span className="text-white/45">
+                tuning {alerts.filter((a) => !a.resolved_at && a.severity >= 5).length} live · {cameras.length} cams
+              </span>
+            </div>
           </div>
+
+          <CityServicesRail alerts={alerts} cameras={cameras} />
         </div>
       </main>
 
@@ -486,6 +496,175 @@ function FooterMatchbook() {
 }
 
 /* ────────────────────────── extras ────────────────────────── */
+
+/* Left rail: a printed-paper "TONIGHT'S LINEUP" strip — newsstand insert vibe.
+   Lists what's currently on, what's coming up, and the active alert count. */
+function ChannelGuide({
+  alerts,
+  currentCameraId,
+  channelNumber,
+}: {
+  alerts: Alert[];
+  currentCameraId: string | null;
+  channelNumber: number;
+}) {
+  const upcoming = alerts
+    .filter((a) => !a.resolved_at && a.severity >= 5 && a.camera_id !== currentCameraId)
+    .slice(0, 6);
+  const stamp = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return (
+    <aside
+      className="hidden lg:block self-stretch text-[#1a1410] font-typewriter relative"
+      style={{
+        background: 'repeating-linear-gradient(180deg, #f3e9c0 0px, #f3e9c0 22px, #ecdfa9 22px, #ecdfa9 23px)',
+        boxShadow: '4px 6px 0 rgba(0,0,0,0.55), inset 0 0 0 1px rgba(0,0,0,0.18)',
+        borderLeft: '6px solid #d11a2a',
+        padding: '14px 16px 18px',
+        transform: 'rotate(-0.5deg)',
+      }}
+    >
+      <div className="flex items-baseline justify-between mb-3 border-b-2 border-black/35 pb-2">
+        <div>
+          <div className="font-bungee text-[18px] leading-none uppercase tracking-[0.04em]">TV Guide</div>
+          <div className="text-[9px] uppercase tracking-[0.3em] mt-1 text-[#1a1410]/65">{stamp} · 25¢</div>
+        </div>
+        <div className="text-right">
+          <div className="font-tabloid text-[13px] leading-none uppercase">Vol. 26</div>
+          <div className="text-[8px] uppercase tracking-[0.3em] text-[#1a1410]/55">No. 117</div>
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <div className="text-[9px] uppercase tracking-[0.3em] text-[#d11a2a]">★ NOW PLAYING</div>
+        <div className="font-bungee text-[14px] leading-tight uppercase">
+          CH {String(channelNumber).padStart(2, '0')}
+        </div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-[#1a1410]/75">live traffic surf</div>
+      </div>
+
+      <div className="text-[9px] uppercase tracking-[0.3em] text-[#1a1410]/65 mb-1.5">★ Up Next</div>
+      <ul className="text-[11px] leading-snug space-y-1.5">
+        {upcoming.length === 0 && (
+          <li className="text-[#1a1410]/55 italic">— quiet streets · b-roll only —</li>
+        )}
+        {upcoming.map((a) => (
+          <li key={a.id} className="flex items-start gap-2">
+            <span
+              className="font-bungee text-[10px] leading-none px-1 py-0.5 mt-0.5 text-white"
+              style={{ background: '#d11a2a' }}
+            >
+              SEV {a.severity}
+            </span>
+            <span className="line-clamp-2 uppercase tracking-[0.06em]">
+              {a.camera_name ?? a.camera_id}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-4 pt-3 border-t border-dashed border-black/30 text-[10px] uppercase tracking-[0.18em] text-[#1a1410]/65">
+        <a href="/about" className="hover:text-[#d11a2a]">how this works →</a>
+      </div>
+    </aside>
+  );
+}
+
+/* Right rail: NYC city services snapshot — subway bullets, weather, dollar
+   slice index, and a fake (but plausible) lottery number block. */
+function CityServicesRail({ alerts, cameras }: { alerts: Alert[]; cameras: Camera[] }) {
+  const active = alerts.filter((a) => !a.resolved_at);
+  const sevHigh = active.filter((a) => a.severity >= 7).length;
+  const polled = cameras.length;
+  // Pick a stable (per-day) faux Pick-3 / Pick-4 set so the page feels alive
+  // but doesn't change on every rerender.
+  const day = Math.floor(Date.now() / 86_400_000);
+  const pick3 = String(((day * 137) % 1000)).padStart(3, '0');
+  const pick4 = String(((day * 911) % 10_000)).padStart(4, '0');
+  const win4 = String(((day * 401) % 10_000)).padStart(4, '0');
+  return (
+    <aside className="hidden lg:flex flex-col gap-3 self-stretch text-white">
+      {/* MTA service status */}
+      <div className="bg-[#003B70] border-2 border-[#FFD600] px-3 py-3" style={{ boxShadow: '4px 4px 0 rgba(0,0,0,0.6)' }}>
+        <div className="flex items-baseline justify-between mb-2">
+          <div className="font-bungee text-[14px] uppercase tracking-[0.04em] text-[#FFD600]">MTA Service</div>
+          <div className="text-[8px] uppercase tracking-[0.3em] text-white/70">good service</div>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { l: '1', c: '#EE352E' }, { l: '2', c: '#EE352E' }, { l: '3', c: '#EE352E' },
+            { l: '4', c: '#00933C' }, { l: '5', c: '#00933C' }, { l: '6', c: '#00933C' },
+            { l: '7', c: '#B933AD' }, { l: 'A', c: '#0039A6' }, { l: 'C', c: '#0039A6' },
+            { l: 'E', c: '#0039A6' }, { l: 'B', c: '#FF6319', col: '#000' }, { l: 'D', c: '#FF6319', col: '#000' },
+            { l: 'F', c: '#FF6319', col: '#000' }, { l: 'M', c: '#FF6319', col: '#000' },
+            { l: 'G', c: '#6CBE45' }, { l: 'L', c: '#A7A9AC', col: '#000' }, { l: 'N', c: '#FCCC0A', col: '#000' },
+            { l: 'Q', c: '#FCCC0A', col: '#000' }, { l: 'R', c: '#FCCC0A', col: '#000' }, { l: 'W', c: '#FCCC0A', col: '#000' },
+            { l: 'J', c: '#996633' }, { l: 'Z', c: '#996633' },
+          ].map((s, i) => (
+            <span
+              key={i}
+              className="subway-bullet text-[11px]"
+              style={{ background: s.c, color: s.col ?? '#fff' }}
+            >
+              {s.l}
+            </span>
+          ))}
+        </div>
+        <div className="mt-2 text-[9px] uppercase tracking-[0.22em] text-white/65">
+          last sweep · service indicator stylized · not a real-time feed
+        </div>
+      </div>
+
+      {/* Lottery / city stats — newspaper-back-page energy */}
+      <div className="bg-[#0b0b14] border border-[#FFD600] px-3 py-3" style={{ boxShadow: '4px 4px 0 #d11a2a' }}>
+        <div className="flex items-baseline justify-between border-b border-[#FFD600]/30 pb-1.5 mb-2">
+          <span className="font-bungee text-[13px] uppercase tracking-[0.04em] text-[#FFD600]">NY Lotto</span>
+          <span className="text-[8px] uppercase tracking-[0.3em] text-white/55">midday draw</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <NumberBox label="NUMBERS" digits={pick3} />
+          <NumberBox label="WIN 4" digits={pick4} />
+          <NumberBox label="TAKE 5" digits={win4} />
+        </div>
+        <div className="mt-2 text-[9px] uppercase tracking-[0.22em] text-white/55">
+          for entertainment · pull a quarter, play arcade
+        </div>
+      </div>
+
+      {/* "Vital signs" stats panel */}
+      <div className="bg-black/55 border border-[#FFD600]/40 px-3 py-3 backdrop-blur-sm">
+        <div className="font-bungee text-[13px] uppercase tracking-[0.04em] text-[#FFD600] mb-2">
+          City Vitals
+        </div>
+        <ul className="text-[11px] font-typewriter uppercase tracking-[0.14em] text-white/85 space-y-1">
+          <li className="flex justify-between"><span className="text-white/55">cameras online</span><span className="tabular text-[#FFD600]">{polled}</span></li>
+          <li className="flex justify-between"><span className="text-white/55">live alerts</span><span className="tabular text-[#ff5582]">{active.length}</span></li>
+          <li className="flex justify-between"><span className="text-white/55">heavy (sev≥7)</span><span className="tabular text-[#ff5582]">{sevHigh}</span></li>
+          <li className="flex justify-between"><span className="text-white/55">$ slice index</span><span className="tabular text-[#FFD600]">$1.50</span></li>
+          <li className="flex justify-between"><span className="text-white/55">subway swipe</span><span className="tabular text-[#FFD600]">$2.90</span></li>
+        </ul>
+      </div>
+    </aside>
+  );
+}
+
+function NumberBox({ label, digits }: { label: string; digits: string }) {
+  return (
+    <div className="text-center">
+      <div className="text-[8px] uppercase tracking-[0.22em] text-white/55 mb-1">{label}</div>
+      <div className="flex justify-center gap-0.5">
+        {digits.split('').map((d, i) => (
+          <span
+            key={i}
+            className="font-crt text-[18px] leading-none px-1.5 py-1 bg-black border border-[#FFD600]/40 text-[#FFD600] tabular"
+            style={{ textShadow: '0 0 6px #FFD600cc' }}
+          >
+            {d}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function TimesSquareTicker({ alerts }: { alerts: Alert[] }) {
   const items = alerts

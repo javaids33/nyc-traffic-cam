@@ -161,21 +161,40 @@ export function BodegaTV({
         )}
       </div>
 
-      {/* wood cabinet */}
+      {/* wood cabinet — fat back CRT vibe */}
       <div
-        className="wood-grain px-4 pt-3 pb-4 rounded-md relative"
-        style={{ borderTopLeftRadius: 18, borderTopRightRadius: 18 }}
+        className="wood-grain relative"
+        style={{
+          borderTopLeftRadius: 22,
+          borderTopRightRadius: 22,
+          padding: large ? '20px 18px 24px' : '14px 12px 18px',
+          boxShadow:
+            '0 30px 0 -14px rgba(0,0,0,0.85), 0 18px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,228,160,0.08), inset 0 -22px 36px rgba(0,0,0,0.55)',
+        }}
       >
-        {/* nameplate */}
-        <div className="flex items-center justify-between mb-2 text-[10px] tracking-[0.3em] uppercase font-typewriter text-[#f3e9c0]/80">
+        {/* top vents + nameplate row */}
+        <div className="flex items-center justify-between mb-2 text-[10px] tracking-[0.3em] uppercase font-typewriter text-[#f3e9c0]/85">
           <span className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-[#ff5026] rec-dot rounded-full" />
-            <span>RCA · COLOR · TC-21</span>
+            <span className="w-2 h-2 bg-[#ff5026] rec-dot rounded-full" style={{ boxShadow: '0 0 6px #ff5026' }} />
+            <span className="font-bungee tracking-[0.08em] text-[12px] text-[#f3e9c0]">RCA</span>
+            <span className="text-[#f3e9c0]/60">· SOLID-STATE COLOR · TC-21 ·</span>
           </span>
-          <span className="hidden md:inline">CH {String(channelNumber).padStart(2, '0')} · {hh}:{mm}</span>
+          <span className="hidden md:flex items-center gap-1 flex-1 justify-center mx-4">
+            {Array.from({ length: 22 }).map((_, i) => (
+              <span
+                key={i}
+                className="h-[3px] flex-1 max-w-[10px]"
+                style={{
+                  background: 'linear-gradient(90deg, rgba(0,0,0,0.85), rgba(60,40,20,0.4))',
+                  boxShadow: 'inset 0 1px 0 rgba(255,210,120,0.08)',
+                }}
+              />
+            ))}
+          </span>
+          <span className="hidden md:inline tabular text-[#f3e9c0]/55">CH {String(channelNumber).padStart(2, '0')} · {hh}:{mm}</span>
           <button
             onClick={toggleFullscreen}
-            className="text-[#f3e9c0]/70 hover:text-white transition-colors"
+            className="ml-2 text-[#f3e9c0]/70 hover:text-white transition-colors"
             title={isFs ? 'Exit fullscreen (esc)' : 'Fullscreen the TV'}
           >
             {isFs ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
@@ -187,14 +206,19 @@ export function BodegaTV({
           )}
         </div>
 
+        {/* fat cabinet row: speaker grille | screen | knob stack */}
+        <div className="flex items-stretch gap-2 sm:gap-3">
+          {/* left speaker grille — only on large variant */}
+          {large && <SpeakerGrille />}
+
         {/* screen bezel */}
         <div
-          className="relative bg-black overflow-hidden cursor-pointer"
+          className="relative bg-black overflow-hidden cursor-pointer flex-1"
           style={{
-            border: large ? '8px solid #1a1410' : '6px solid #1a1410',
-            borderRadius: '22px / 14px',
+            border: large ? '14px solid #0e0a07' : '8px solid #1a1410',
+            borderRadius: '28px / 18px',
             boxShadow:
-              'inset 0 0 50px rgba(0,0,0,0.95), 0 0 0 2px rgba(255,255,255,0.06), 0 0 60px rgba(255,150,40,0.06)',
+              'inset 0 0 60px rgba(0,0,0,0.95), 0 0 0 3px rgba(255,255,255,0.08), 0 0 70px rgba(255,150,40,0.08), inset 0 0 0 1px rgba(0,0,0,0.6)',
           }}
           onClick={onScreenClick}
         >
@@ -205,20 +229,12 @@ export function BodegaTV({
           >
             {cameraId && caption ? (
               <>
-                <img
-                  key={`tv-${cameraId}-${tick}`}
-                  src={
-                    liveSource === 'nyctmc'
-                      ? NYCTMC_IMG(cameraId, tick)
-                      : apiUrl(`/api/cameras/${cameraId}/snapshot.jpg?t=${tick}`)
-                  }
+                <SmoothCamFrame
+                  cameraId={cameraId}
+                  tick={tick}
+                  liveSource={liveSource}
                   alt={caption.title}
-                  className="w-full bg-black block"
-                  style={{ minHeight: screenMinH, objectFit: 'cover' }}
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.opacity = '0.2';
-                  }}
+                  minHeight={screenMinH}
                 />
                 <span className="vhs-band" />
                 <CornerGuides large={large} />
@@ -275,29 +291,212 @@ export function BodegaTV({
           {staticOn && <div className="crt-static absolute inset-0 pointer-events-none opacity-75" />}
         </div>
 
-        {/* knob row */}
-        <div className="flex items-center justify-between mt-3 px-1">
-          <div className="flex items-center gap-3">
-            <KnobChannel value={channelNumber} />
-            <div className="text-[9px] uppercase tracking-[0.3em] text-[#f3e9c0]/70 font-typewriter">CHANNEL</div>
-          </div>
-          <div className="text-[9px] tracking-[0.3em] uppercase font-typewriter text-[#f3e9c0]/55 hidden md:block">
-            BODEGA · CAFÉ · LOTTO · ATM
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex gap-[2px]">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <span
-                  key={i}
-                  className="w-1 h-3 bg-[#ff5026]"
-                  style={{ opacity: i < 3 ? 0.95 : 0.25, boxShadow: i < 3 ? '0 0 4px #ff5026' : 'none' }}
-                />
-              ))}
+          {/* right knob stack — large variant only */}
+          {large && (
+            <div className="flex flex-col items-center justify-between gap-2 py-1 pr-1 w-[64px] sm:w-[80px] shrink-0">
+              <KnobDial label="CHAN" value={String(channelNumber).padStart(2, '0')} digit />
+              <KnobDial label="VOL" value="●●●○○" />
+              <KnobDial label="TINT" small />
+              <KnobDial label="V·HOLD" small />
+              <button
+                title="POWER"
+                aria-label="power"
+                className="mt-auto rounded-full bg-[#0a0805] border-2 border-[#3b2a14] w-7 h-7 grid place-items-center"
+                style={{ boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.7), 0 1px 0 rgba(255,210,140,0.06)' }}
+              >
+                <span className="block w-2.5 h-2.5 rounded-full" style={{ background: '#ff5026', boxShadow: '0 0 6px #ff5026' }} />
+              </button>
             </div>
-            <div className="text-[9px] uppercase tracking-[0.3em] text-[#f3e9c0]/70 font-typewriter">VOL</div>
+          )}
+        </div>
+
+        {/* bottom control rail — chunky CRT button strip */}
+        <div className="mt-3 flex items-center gap-2 sm:gap-3">
+          <span className="hidden md:inline text-[9px] tracking-[0.3em] uppercase font-typewriter text-[#f3e9c0]/55">
+            ★ TC-21 · TRINITRON STYLE COLOR ·
+          </span>
+          <div className="flex-1 flex items-center justify-end gap-1 sm:gap-1.5">
+            {['POWER', 'TV/VID', 'CH▲', 'CH▼', 'VOL▲', 'VOL▼', 'MENU'].map((b) => (
+              <span
+                key={b}
+                className="text-[8px] sm:text-[9px] tracking-[0.18em] font-typewriter uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 text-[#f3e9c0]/85"
+                style={{
+                  background: 'linear-gradient(180deg, #2a1c10 0%, #150d07 100%)',
+                  border: '1px solid #4a361e',
+                  borderTopColor: '#5d4624',
+                  borderBottomColor: '#0a0703',
+                  boxShadow: 'inset 0 1px 0 rgba(255,210,140,0.12), 0 1px 0 rgba(0,0,0,0.7)',
+                }}
+              >
+                {b}
+              </span>
+            ))}
           </div>
         </div>
       </div>
+
+      {/* base / pedestal — sells the "fat back" depth */}
+      <div
+        className="mx-auto h-2"
+        style={{
+          width: '88%',
+          background: 'linear-gradient(180deg, #1a120a 0%, #050302 100%)',
+          borderBottomLeftRadius: 6,
+          borderBottomRightRadius: 6,
+          boxShadow: '0 14px 24px rgba(0,0,0,0.7)',
+        }}
+      />
+    </div>
+  );
+}
+
+/* perforated speaker grille — flanks the screen on the wide cabinet */
+function SpeakerGrille() {
+  return (
+    <div
+      className="hidden sm:block w-[44px] md:w-[64px] shrink-0 self-stretch relative rounded-[14px]"
+      style={{
+        background:
+          'radial-gradient(circle at 50% 30%, #2a1d10 0%, #14100a 60%, #050302 100%)',
+        border: '1px solid #0c0703',
+        boxShadow: 'inset 0 1px 0 rgba(255,210,140,0.08), inset 0 -2px 4px rgba(0,0,0,0.85)',
+        backgroundImage:
+          'radial-gradient(circle, rgba(0,0,0,0.85) 1.4px, transparent 1.6px)',
+        backgroundSize: '8px 8px',
+        backgroundPosition: '4px 4px',
+      }}
+      aria-hidden
+    />
+  );
+}
+
+/* one of the right-side knob dials. Uses a faux-3D radial gradient. */
+function KnobDial({
+  label,
+  value,
+  digit,
+  small,
+}: {
+  label: string;
+  value?: string;
+  digit?: boolean;
+  small?: boolean;
+}) {
+  const sz = small ? 30 : 44;
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <div
+        style={{
+          width: sz,
+          height: sz,
+          borderRadius: '50%',
+          background:
+            'radial-gradient(circle at 30% 28%, #efe2bd 0%, #b89968 22%, #5b401d 60%, #2a1c0a 100%)',
+          boxShadow:
+            'inset 0 -3px 6px rgba(0,0,0,0.7), inset 0 2px 3px rgba(255,235,180,0.45), 0 1px 0 rgba(0,0,0,0.6)',
+          position: 'relative',
+        }}
+      >
+        {digit && value ? (
+          <span
+            className="absolute inset-0 grid place-items-center font-crt text-[14px] text-[#FFD600]"
+            style={{ textShadow: '0 0 6px #FFD600cc' }}
+          >
+            {value}
+          </span>
+        ) : (
+          <span
+            className="absolute"
+            style={{
+              top: 3,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 2,
+              height: small ? 8 : 12,
+              background: '#0a0703',
+              borderRadius: 1,
+            }}
+          />
+        )}
+      </div>
+      <span className="text-[8px] tracking-[0.18em] uppercase font-typewriter text-[#f3e9c0]/70">
+        {label}
+      </span>
+      {!digit && value && (
+        <span className="text-[8px] tabular text-[#ff8a3a]/85" style={{ letterSpacing: 1 }}>{value}</span>
+      )}
+    </div>
+  );
+}
+
+/* Double-buffered cam frame: never collapses between ticks.
+   Two stacked <img>s, swap once the next finishes loading; on camera
+   change we hard-reset the front layer so we never show the previous
+   camera's last frame stretched into a new aspect ratio. */
+function SmoothCamFrame({
+  cameraId,
+  tick,
+  liveSource,
+  alt,
+  minHeight,
+}: {
+  cameraId: string;
+  tick: number;
+  liveSource: 'nyctmc' | 'backend';
+  alt: string;
+  minHeight: number;
+}) {
+  const buildSrc = (t: number) =>
+    liveSource === 'nyctmc'
+      ? NYCTMC_IMG(cameraId, t)
+      : apiUrl(`/api/cameras/${cameraId}/snapshot.jpg?t=${t}`);
+
+  const [front, setFront] = useState<string>(() => buildSrc(tick));
+  const [back, setBack] = useState<string | null>(null);
+
+  // On camera change: blow away both buffers and start fresh.
+  useEffect(() => {
+    setFront(buildSrc(tick));
+    setBack(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cameraId]);
+
+  // On tick change: stage the new frame in the back buffer; promote it
+  // to front only when it has decoded.
+  useEffect(() => {
+    const next = buildSrc(tick);
+    if (next === front) return;
+    setBack(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tick, cameraId]);
+
+  return (
+    <div
+      className="relative w-full bg-black overflow-hidden"
+      style={{ minHeight, aspectRatio: '16 / 9' }}
+    >
+      <img
+        src={front}
+        alt={alt}
+        referrerPolicy="no-referrer"
+        decoding="async"
+        className="absolute inset-0 w-full h-full object-cover block"
+      />
+      {back && (
+        <img
+          src={back}
+          alt=""
+          aria-hidden
+          referrerPolicy="no-referrer"
+          decoding="async"
+          className="absolute inset-0 w-full h-full object-cover block opacity-0"
+          onLoad={() => {
+            setFront(back);
+            setBack(null);
+          }}
+          onError={() => setBack(null)}
+        />
+      )}
     </div>
   );
 }
