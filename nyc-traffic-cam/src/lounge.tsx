@@ -40,6 +40,12 @@ export default function Lounge() {
   const [flashKey, setFlashKey] = useState(0);
   const [staticOn, setStaticOn] = useState(false);
   const [locked, setLocked] = useState(false);
+  const [ratMode, setRatMode] = useState(false);
+  const [showHotkeys, setShowHotkeys] = useState(false);
+  const [intro, setIntro] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !sessionStorage.getItem('nyc-cam-seen');
+  });
 
   // initial fetch
   useEffect(() => {
@@ -192,6 +198,73 @@ export default function Lounge() {
     return () => clearTimeout(t);
   }, [locked]);
 
+  // MetroCard intro: dismiss after 1.6s and remember in sessionStorage
+  useEffect(() => {
+    if (!intro) return;
+    const t = setTimeout(() => {
+      setIntro(false);
+      try { sessionStorage.setItem('nyc-cam-seen', '1'); } catch { /* noop */ }
+    }, 1600);
+    return () => clearTimeout(t);
+  }, [intro]);
+
+  // Keyboard hotkeys: 1-9 channel jump, L lock, ? hotkeys panel, ESC close
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
+      if (e.key >= '1' && e.key <= '9') {
+        // Pick the Nth active worthwhile alert (or fall back to surfNext)
+        const worthwhile = alertsRef.current.filter(
+          (a) => !a.resolved_at && a.severity >= 5 && a.kind !== 'static_feed' && a.kind !== 'camera_offline',
+        );
+        const i = parseInt(e.key, 10) - 1;
+        if (worthwhile[i]) {
+          flipTo({
+            cameraId: worthwhile[i].camera_id,
+            caption: {
+              title: worthwhile[i].camera_name ?? worthwhile[i].camera_id,
+              subtitle: worthwhile[i].message,
+              meta: `${ALERT_LABELS_LONG[worthwhile[i].kind] ?? worthwhile[i].kind} · SEV ${worthwhile[i].severity} · ${rough_borough(worthwhile[i].lat, worthwhile[i].lng)}`,
+              coords: { lat: worthwhile[i].lat, lng: worthwhile[i].lng },
+              occurrences: worthwhile[i].occurrence_count,
+            },
+          });
+        } else {
+          surfNext();
+        }
+      } else if (e.key === 'l' || e.key === 'L') {
+        setLocked((v) => !v);
+      } else if (e.key === '?') {
+        setShowHotkeys((v) => !v);
+      } else if (e.key === 'Escape') {
+        setShowHotkeys(false);
+        setLocked(false);
+      } else if (e.key === ' ') {
+        surfNext();
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [flipTo, surfNext]);
+
+  // Konami code → RAT MODE
+  useEffect(() => {
+    const code = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+    let buf: string[] = [];
+    const onKey = (e: KeyboardEvent) => {
+      buf.push(e.key.toLowerCase());
+      if (buf.length > code.length) buf.shift();
+      const ok = buf.length === code.length && buf.every((k, i) => k === code[i].toLowerCase());
+      if (ok) {
+        setRatMode((v) => !v);
+        buf = [];
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden text-white" style={{
       background: 'radial-gradient(ellipse at 50% 30%, #1a1530 0%, #0a0a18 55%, #06060c 100%)',
@@ -236,9 +309,20 @@ export default function Lounge() {
         </div>
       </main>
 
+      <TimesSquareTicker alerts={alerts} />
       <FooterMatchbook />
 
-      <StreetFauna />
+      <StreetFauna ratMode={ratMode} />
+
+      {ratMode && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-[#FFD600] text-black px-3 py-1 font-bungee text-[12px] uppercase tracking-[0.2em]" style={{ boxShadow: '3px 3px 0 #d11a2a' }}>
+          ↑↑↓↓←→←→BA · RAT MODE — TYPE AGAIN TO STOP
+        </div>
+      )}
+
+      {showHotkeys && <HotkeysPanel onClose={() => setShowHotkeys(false)} />}
+
+      {intro && <MetroCardIntro />}
     </div>
   );
 }
@@ -356,16 +440,129 @@ function CornerBrasstack() {
   );
 }
 
+const NYC_FOOD = [
+  'pork roll · egg · cheese',
+  'chopped cheese on a roll',
+  'bacon egg & cheese',
+  'a slice, dollar regular',
+  'halal cart over rice',
+  'dirty water dog',
+  'salt bagel + scallion schmear',
+  'pizza rat special',
+  'arnold palmer',
+  'egg cream, no chocolate',
+  'plantains, two ways',
+  'bodega coffee, light + sweet',
+];
+
 function FooterMatchbook() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setIdx((x) => (x + 1) % NYC_FOOD.length), 6000);
+    return () => clearInterval(i);
+  }, []);
   return (
     <div className="shrink-0 border-t border-white/10 bg-black/60 backdrop-blur-sm px-4 py-1.5 flex items-center gap-3 text-[9px] uppercase tracking-[0.22em] font-typewriter text-white/55 z-30">
       <span>★</span>
       <span>Public-domain footage, NYC DOT</span>
       <span className="text-white/25">·</span>
       <span>954 cams, perpetual broadcast</span>
-      <span className="text-white/25">·</span>
-      <span className="hidden md:inline">A love letter — not affiliated</span>
-      <span className="ml-auto hidden md:inline text-[#FFD600]/80">click any pin on /dashboard to dial in</span>
+      <span className="text-white/25 hidden md:inline">·</span>
+      <span className="hidden md:inline text-[#FFD600]/80">today’s special: <span className="text-white/85">{NYC_FOOD[idx]}</span></span>
+      <span className="ml-auto flex items-center gap-3">
+        <a href="/game" className="hover:text-[#FFD600] transition-colors">Jimmy's Arcade ★</a>
+        <span className="text-white/25">·</span>
+        <a href="/about" className="hover:text-[#FFD600] transition-colors">about ?</a>
+        <span className="text-white/25">·</span>
+        <a href="/dashboard" className="text-[#FFD600]/80 hover:text-[#FFD600] transition-colors">/dashboard →</a>
+      </span>
+    </div>
+  );
+}
+
+/* ────────────────────────── extras ────────────────────────── */
+
+function TimesSquareTicker({ alerts }: { alerts: Alert[] }) {
+  const items = alerts
+    .filter((a) => !a.resolved_at && a.severity >= 5)
+    .slice(0, 18)
+    .map((a) => `★ SEV ${a.severity} · ${a.camera_name ?? a.camera_id}`);
+  const filler = items.length === 0
+    ? ['★ STANDBY · CITY IS QUIET · GOOD VIBES', '★ TUNE IN · 954 CAMS · FREE FOREVER', '★ DOLLAR SLICE INDEX: STABLE']
+    : items;
+  // Duplicate to make the loop seamless
+  const track = [...filler, ...filler];
+  return (
+    <div className="shrink-0 ticker-led border-y border-[#FFD600]/35 overflow-hidden">
+      <div className="ticker-track py-1 text-[#ff8a3a] font-crt text-[18px] tracking-[0.05em] uppercase">
+        {track.map((line, i) => (
+          <span key={i} className="px-3" style={{ textShadow: '0 0 6px #ff8a3a, 0 0 14px #ff8a3a55' }}>
+            {line}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HotkeysPanel({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="bg-[#0b0b14] border border-[#FFD600] p-6 max-w-[420px] w-[90vw]" onClick={(e) => e.stopPropagation()}>
+        <div className="font-bungee text-[#FFD600] text-2xl uppercase tracking-[0.06em] mb-3">Channel Guide</div>
+        <ul className="space-y-2 text-sm font-typewriter uppercase tracking-[0.16em] text-white/85">
+          <li><kbd className="text-[#FFD600]">1–9</kbd> · jump to active alert N</li>
+          <li><kbd className="text-[#FFD600]">space</kbd> · surf to next channel</li>
+          <li><kbd className="text-[#FFD600]">L</kbd> · lock current channel</li>
+          <li><kbd className="text-[#FFD600]">click TV</kbd> · same as L</li>
+          <li><kbd className="text-[#FFD600]">esc</kbd> · close / unlock</li>
+          <li><kbd className="text-[#FFD600]">?</kbd> · this menu</li>
+          <li className="pt-2 text-white/45">try ↑↑↓↓←→←→BA</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function MetroCardIntro() {
+  return (
+    <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden bg-black/70 backdrop-blur-sm grid place-items-center">
+      <div
+        className="metrocard"
+        style={{
+          width: 360,
+          height: 220,
+          background: '#FFD600',
+          color: '#003B70',
+          padding: 18,
+          fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
+          animation: 'metrocard-swipe 1.5s cubic-bezier(.4,.0,.2,1) forwards',
+        }}
+      >
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>★ MetroCard</div>
+        <div style={{ fontSize: 28, fontWeight: 900, marginTop: 12, lineHeight: 1.05 }}>
+          NYC TRAFFIC<br/>CAM CO.
+        </div>
+        <div style={{ fontSize: 11, marginTop: 12, fontWeight: 600 }}>
+          GOOD FOR ONE FARE · UNLIMITED RIDES THROUGH THE CITY'S TRAFFIC FEEDS
+        </div>
+        <div style={{ fontSize: 11, marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
+          <span>EXP — NEVER</span>
+          <span style={{ fontFamily: 'IBM Plex Mono, monospace' }}>0000 0000 0954 LIVE</span>
+        </div>
+      </div>
+      <style>{`
+        @keyframes metrocard-swipe {
+          0% { transform: translateX(140vw) rotate(2deg) skewX(-4deg); }
+          55% { transform: translateX(0) rotate(0deg) skewX(0); }
+          85% { transform: translateX(0) rotate(0deg) skewX(0); opacity: 1; }
+          100% { transform: translateX(-150vw) rotate(-3deg) skewX(4deg); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }

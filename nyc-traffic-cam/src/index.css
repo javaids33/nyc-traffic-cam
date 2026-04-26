@@ -473,3 +473,10 @@ body::after {
 .tilt-l { transform: rotate(-1.4deg); }
 .tilt-r { transform: rotate(1.1deg); }
 .tilt-xl { transform: rotate(-2.2deg); }
+
+/* Pizza tumble — diagonal fall + spin */
+@keyframes pizza-tumble {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate(-110vw, 90vh) rotate(1080deg); opacity: 1; }
+}
