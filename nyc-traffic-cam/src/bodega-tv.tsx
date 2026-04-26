@@ -278,13 +278,21 @@ export function BodegaTV({
           >
             {cameraId && caption ? (
               <>
-                <SmoothCamFrame
-                  cameraId={cameraId}
-                  tick={tick}
-                  liveSource={liveSource}
-                  alt={caption.title}
-                  minHeight={screenMinH}
-                />
+                {(() => {
+                  const hour = nycHourNow();
+                  const deadHours = hour >= 2 && hour < 5;
+                  return deadHours ? (
+                    <DeadHoursCard large={large} />
+                  ) : (
+                    <SmoothCamFrame
+                      cameraId={cameraId}
+                      tick={tick}
+                      liveSource={liveSource}
+                      alt={caption.title}
+                      minHeight={screenMinH}
+                    />
+                  );
+                })()}
                 <span className="vhs-band" />
                 <CornerGuides large={large} />
 
@@ -393,6 +401,73 @@ export function BodegaTV({
           boxShadow: '0 14px 24px rgba(0,0,0,0.7)',
         }}
       />
+    </div>
+  );
+}
+
+/* NYC local hour, used by the dead-hours card and by reactive fauna.
+   Rough check (Math.abs offset minus -240 → ~America/New_York, ignoring DST
+   nuance — close enough for "is it the middle of the night"). */
+function useNycHour() {
+  const [h, setH] = useState(() => nycHourNow());
+  useEffect(() => {
+    const i = setInterval(() => setH(nycHourNow()), 60_000);
+    return () => clearInterval(i);
+  }, []);
+  return h;
+}
+function nycHourNow(): number {
+  // Use Intl to get NYC hour reliably regardless of viewer locale.
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    hour12: false,
+  });
+  return parseInt(fmt.format(new Date()), 10) || 0;
+}
+
+/* Dead-hours late-night idle screen — runs 2am-5am NYC. The actual
+   cameras are mostly empty intersections at that hour, so we lean
+   into it: a stylized "WE'LL BE RIGHT BACK" cable-access card. */
+export function DeadHoursCard({ large }: { large?: boolean }) {
+  const minH = large ? 380 : 260;
+  const [t, setT] = useState(() => new Date());
+  useEffect(() => {
+    const i = setInterval(() => setT(new Date()), 1000);
+    return () => clearInterval(i);
+  }, []);
+  const stamp = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(t);
+  return (
+    <div
+      className="relative w-full overflow-hidden grid place-items-center text-center"
+      style={{
+        minHeight: minH,
+        aspectRatio: '16 / 9',
+        background: 'repeating-linear-gradient(0deg, #0a0a18 0px, #0a0a18 2px, #060611 2px, #060611 4px)',
+      }}
+    >
+      <div className="px-6">
+        <div className="font-bungee text-[#FFD600] tracking-[0.04em] uppercase" style={{ fontSize: large ? 44 : 30, lineHeight: 1, textShadow: '3px 3px 0 #d11a2a, 0 0 18px #FFD60055' }}>
+          We&apos;ll Be Right Back
+        </div>
+        <div className="mt-3 font-typewriter text-[11px] uppercase tracking-[0.32em] text-white/65">
+          ★ NYC dead-hours · {stamp} et ★
+        </div>
+        <div className="mt-2 font-typewriter text-[10px] uppercase tracking-[0.22em] text-white/35 max-w-[460px] mx-auto">
+          streets are empty · only cabs and ghosts · we&apos;ll resume regular programming around 5 a.m.
+        </div>
+        <div className="mt-4 flex justify-center gap-2 text-[#FFD600]/85">
+          {['◉', '◉', '◉', '◉'].map((d, i) => (
+            <span key={i} className="text-[18px]" style={{ animation: `dead-hours-blink 2.4s ${i * 0.4}s ease-in-out infinite` }}>{d}</span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -1192,22 +1267,47 @@ function StatueOfLiberty() {
 }
 
 function BodegaCat() {
-  // Sleeping cat curled in the bottom-left
+  // Reactive: night cat sleeps with Zs · daytime cat sits up alert ·
+  // around feeding time (8am, 6pm) the cat is gone (out for tuna).
+  const hour = useNycHour();
+  const sleeping = hour >= 22 || hour < 7;
+  const feeding  = hour === 8 || hour === 18;
+
+  if (feeding) {
+    return (
+      <div className="pointer-events-none fixed left-12 bottom-2 z-10 hidden md:block font-typewriter text-[9px] uppercase tracking-[0.18em] text-white/40" aria-hidden>
+        ⌒ cat is gone — feeding time ⌒
+      </div>
+    );
+  }
+
   return (
     <div className="pointer-events-none fixed left-12 bottom-2 z-10 hidden md:block" aria-hidden>
       <svg viewBox="0 0 80 40" width="64" height="32">
-        {/* shadow */}
         <ellipse cx="40" cy="38" rx="34" ry="2" fill="rgba(0,0,0,0.4)" />
-        {/* curled body */}
-        <ellipse cx="40" cy="26" rx="32" ry="12" fill="#3a2818" />
-        {/* head tucked in */}
-        <ellipse cx="62" cy="22" rx="9" ry="8" fill="#3a2818" />
-        <path d="M 56 16 L 58 12 L 60 16 M 65 14 L 67 11 L 69 16" stroke="#3a2818" strokeWidth="1.5" fill="#3a2818" />
-        {/* tail wrapped */}
-        <path d="M 14 28 Q 4 22, 12 14 Q 18 10, 24 14" stroke="#3a2818" strokeWidth="6" fill="none" strokeLinecap="round" />
-        {/* "Z" sleeping */}
-        <text x="50" y="6" fontSize="10" fontFamily="Bungee, Impact, sans-serif" fill="#999" opacity="0.6">z</text>
-        <text x="58" y="2" fontSize="6" fontFamily="Bungee, Impact, sans-serif" fill="#999" opacity="0.4">z</text>
+        {sleeping ? (
+          <>
+            {/* curled body */}
+            <ellipse cx="40" cy="26" rx="32" ry="12" fill="#3a2818" />
+            <ellipse cx="62" cy="22" rx="9" ry="8" fill="#3a2818" />
+            <path d="M 56 16 L 58 12 L 60 16 M 65 14 L 67 11 L 69 16" stroke="#3a2818" strokeWidth="1.5" fill="#3a2818" />
+            <path d="M 14 28 Q 4 22, 12 14 Q 18 10, 24 14" stroke="#3a2818" strokeWidth="6" fill="none" strokeLinecap="round" />
+            <text x="50" y="6" fontSize="10" fontFamily="Bungee, Impact, sans-serif" fill="#999" opacity="0.6">z</text>
+            <text x="58" y="2" fontSize="6" fontFamily="Bungee, Impact, sans-serif" fill="#999" opacity="0.4">z</text>
+          </>
+        ) : (
+          <>
+            {/* sitting up — alert daytime pose */}
+            <ellipse cx="44" cy="32" rx="14" ry="6" fill="#3a2818" />
+            <rect x="36" y="18" width="16" height="14" rx="3" fill="#3a2818" />
+            <circle cx="44" cy="14" r="7" fill="#3a2818" />
+            <path d="M 38 9 L 40 4 L 42 10 M 46 10 L 48 4 L 50 9" stroke="#3a2818" strokeWidth="1.6" fill="#3a2818" />
+            <circle cx="42" cy="13" r="0.9" fill="#fff" />
+            <circle cx="46" cy="13" r="0.9" fill="#fff" />
+            {/* tail flicked */}
+            <path d="M 56 30 Q 66 22, 60 14" stroke="#3a2818" strokeWidth="5" fill="none" strokeLinecap="round" />
+          </>
+        )}
       </svg>
     </div>
   );

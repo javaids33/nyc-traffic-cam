@@ -462,6 +462,12 @@ body::after {
 }
 .flicker { animation: letter-flicker 14s ease-in-out infinite; }
 
+/* Dead-hours blink dots (2-5am idle screen) */
+@keyframes dead-hours-blink {
+  0%, 60%, 100% { opacity: 0.85; }
+  30%           { opacity: 0.2; }
+}
+
 /* Chyron marquee — only fires when title would clip */
 @keyframes chyron-scroll {
   0%   { transform: translateX(0); }

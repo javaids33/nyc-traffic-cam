@@ -10,6 +10,7 @@ import {
 } from './bodega-tv';
 import { QuarterStash, RollingQuarter } from './quarter';
 import { AudioPanel } from './audio-panel';
+import { recordAlert, recordTune, loreLine } from './cam-lore';
 
 const ALERT_LABELS_LONG: Record<string, string> = {
   sudden_change: 'SUDDEN CHANGE',
@@ -24,7 +25,18 @@ const SURF_INTERVAL_MS = 18_000;     // ~18s dwell — long enough to vibe
 const STATIC_FLIP_MS = 380;
 const RESUME_AFTER_LOCK_MS = 90_000; // unlock auto-resumes 90s after locking, in case you forget
 
-function rough_borough(lat: number, lng: number): string {
+type Borough = 'ALL' | 'MANHATTAN' | 'BRONX' | 'BROOKLYN' | 'QUEENS' | 'STATEN ISLAND';
+
+const BOROUGH_TABS: { id: Borough; label: string; short: string }[] = [
+  { id: 'ALL',           label: 'ALL FIVE',  short: 'ALL' },
+  { id: 'MANHATTAN',     label: 'MANHATTAN', short: 'MAN' },
+  { id: 'BRONX',         label: 'BRONX',     short: 'BX' },
+  { id: 'BROOKLYN',      label: 'BROOKLYN',  short: 'BK' },
+  { id: 'QUEENS',        label: 'QUEENS',    short: 'QNS' },
+  { id: 'STATEN ISLAND', label: 'STATEN IS', short: 'SI' },
+];
+
+function rough_borough(lat: number, lng: number): Borough {
   // Loose bounding boxes — Easter-egg accuracy, not survey-grade.
   if (lat > 40.78 && lng > -73.94) return 'BRONX';
   if (lng < -74.05) return 'STATEN ISLAND';
@@ -44,6 +56,9 @@ export default function Lounge() {
   const [locked, setLocked] = useState(false);
   const [ratMode, setRatMode] = useState(false);
   const [showHotkeys, setShowHotkeys] = useState(false);
+  const [borough, setBorough] = useState<Borough>('ALL');
+  const boroughRef = useRef<Borough>('ALL');
+  useEffect(() => { boroughRef.current = borough; }, [borough]);
   const [intro, setIntro] = useState(() => {
     if (typeof window === 'undefined') return false;
     return !sessionStorage.getItem('nyc-cam-seen');
@@ -66,6 +81,9 @@ export default function Lounge() {
   // live alert stream
   useEffect(() => {
     const close = openAlertSocket((evt) => {
+      if (evt.type === 'alert_opened') {
+        recordAlert(evt.camera_id);
+      }
       if (evt.type === 'alert_opened' || evt.type === 'alert_updated') {
         setAlerts((prev) => {
           const idx = prev.findIndex((a) => a.id === evt.id);
@@ -117,6 +135,18 @@ export default function Lounge() {
   useEffect(() => { alertsRef.current = alerts; }, [alerts]);
 
   const flipTo = useCallback((next: Channel) => {
+    recordTune(next.cameraId);
+    // Decorate caption with lore line if we have one for this cam.
+    const lore = loreLine(next.cameraId);
+    if (lore) {
+      next = {
+        ...next,
+        caption: {
+          ...next.caption,
+          meta: next.caption.meta ? `${next.caption.meta} · ${lore}` : lore,
+        },
+      };
+    }
     setStaticOn(true);
     setFocus(next);
     setChannelIdx((i) => (i + 1) % CHANNEL_LINEUP.length);
@@ -129,13 +159,15 @@ export default function Lounge() {
     const cur = focusRef.current;
     const allAlerts = alertsRef.current;
     const allCams = camerasRef.current;
+    const b = boroughRef.current;
 
     const worthwhile = allAlerts.filter(
       (a) =>
         !a.resolved_at &&
         a.severity >= 5 &&
         a.kind !== 'static_feed' &&
-        a.kind !== 'camera_offline',
+        a.kind !== 'camera_offline' &&
+        (b === 'ALL' || rough_borough(a.lat, a.lng) === b),
     );
 
     let next: Channel | null = null;
@@ -164,8 +196,10 @@ export default function Lounge() {
         },
       };
     } else if (allCams.length) {
-      const others = allCams.filter((c) => c.id !== cur?.cameraId && c.last_polled_at);
-      const pool = others.length ? others : allCams;
+      const inBorough = b === 'ALL' ? allCams : allCams.filter((c) => rough_borough(c.lat, c.lng) === b);
+      const baseline = inBorough.length ? inBorough : allCams;
+      const others = baseline.filter((c) => c.id !== cur?.cameraId && c.last_polled_at);
+      const pool = others.length ? others : baseline;
       const c = pool[Math.floor(Math.random() * pool.length)];
       next = {
         cameraId: c.id,
@@ -276,7 +310,7 @@ export default function Lounge() {
       <RollingQuarter />
       <AudioPanel />
 
-      <main className="flex-1 relative flex items-center justify-center px-2 sm:px-6 pb-12 overflow-hidden">
+      <main className="flex-1 relative flex items-start justify-center px-2 sm:px-6 pt-3 pb-6 overflow-y-auto">
         <SkylineBg />
         <CornerBrasstack />
 
@@ -301,6 +335,34 @@ export default function Lounge() {
           />
 
           <div className="min-w-0">
+            {/* borough filter — local TV station chooser */}
+            <div className="mb-2 flex flex-wrap items-center gap-1 px-1 font-typewriter text-[10px] uppercase tracking-[0.18em]">
+              <span className="text-white/45 mr-1 hidden sm:inline">tune by borough:</span>
+              {BOROUGH_TABS.map((b) => {
+                const active = borough === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => {
+                      setBorough(b.id);
+                      // Force a fresh pick that respects the new filter — don't wait
+                      // for the 18s tick.
+                      setLocked(false);
+                      setTimeout(() => surfNext(), 0);
+                    }}
+                    className={`px-2 py-0.5 border transition-colors ${
+                      active
+                        ? 'bg-[#FFD600] text-black border-[#FFD600]'
+                        : 'border-white/20 text-white/65 hover:border-[#FFD600] hover:text-[#FFD600]'
+                    }`}
+                    title={b.label}
+                  >
+                    <span className="sm:hidden">{b.short}</span>
+                    <span className="hidden sm:inline">{b.label}</span>
+                  </button>
+                );
+              })}
+            </div>
             <BodegaTV
               cameraId={focus?.cameraId ?? null}
               caption={focus?.caption ?? null}
@@ -600,6 +662,173 @@ function ChannelGuide({
 
 /* Right rail: NYC city services snapshot — subway bullets, weather, dollar
    slice index, and a fake (but plausible) lottery number block. */
+/* The current local NYC hour + weekday, refreshed every minute. */
+function useNycMoment() {
+  const get = () => {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      hour: 'numeric',
+      hour12: false,
+      weekday: 'short',
+    }).formatToParts(new Date());
+    const hour = parseInt(fmt.find((p) => p.type === 'hour')?.value ?? '0', 10) || 0;
+    const weekday = fmt.find((p) => p.type === 'weekday')?.value ?? 'Mon';
+    return { hour, weekday };
+  };
+  const [m, setM] = useState(get);
+  useEffect(() => {
+    const i = setInterval(() => setM(get()), 60_000);
+    return () => clearInterval(i);
+  }, []);
+  return m;
+}
+
+/* "What's good right now" — copy keyed by local NYC hour and weekday.
+   Hard-coded windows; no API. The point is the voice. */
+function rightNowCopy(hour: number, weekday: string): { headline: string; sub: string; vibe: string } {
+  const weekend = weekday === 'Sat' || weekday === 'Sun';
+  if (hour >= 2 && hour < 5)   return { headline: 'Dead Hours', sub: '3 a.m. is for cabs and ghosts.',                         vibe: 'BQE wide open · no honking · go home' };
+  if (hour >= 5 && hour < 7)   return { headline: 'First Light', sub: 'Bagel guys are firing up the boilers.',                  vibe: 'wholesale flowers · garbage trucks · the city stretches' };
+  if (hour >= 7 && hour < 9)   return { headline: 'Morning Rush', sub: 'Schools dump out, BQE plugs up.',                       vibe: 'expect delays · 4/5/6 packed · don\'t be the guy holding the door' };
+  if (hour >= 9 && hour < 12)  return { headline: 'Coffee Hours', sub: weekend ? 'Brunch line at the diner already deep.' : 'The city has logged in.', vibe: 'cabs angry · contractors double-parked · runners on the bridge' };
+  if (hour >= 12 && hour < 14) return { headline: 'Lunch Rush', sub: 'Halal carts deep, slice line out the door.',              vibe: 'midtown deadlocked · cyclists weaving · don\'t call it lunch break' };
+  if (hour >= 14 && hour < 16) return { headline: 'School\'s Out', sub: 'Kids back on the trains, block parties starting.',      vibe: 'avoid the L · ice cream truck on every corner' };
+  if (hour >= 16 && hour < 19) return { headline: 'Evening Rush', sub: 'BQE solid, FDR a parking lot.',                          vibe: 'expect delays · don\'t take the GW · take the bridge instead' };
+  if (hour >= 19 && hour < 22) return { headline: weekend ? 'Friday Energy' : 'Dinner Hours', sub: weekend ? 'L train chaos starts now.' : 'Bodegas firing up the chopped cheese.', vibe: 'cabs full · subway tolerable · LES picking up' };
+  if (hour >= 22 || hour < 2)  return { headline: 'Late Hours', sub: 'Dollar slice index: holding firm.',                       vibe: 'last call coming · 4 train running local · take a yellow not an uber' };
+  return { headline: 'Right Now', sub: 'NYC is up to something.', vibe: 'tune in' };
+}
+
+function RightNowCard() {
+  const { hour, weekday } = useNycMoment();
+  const c = rightNowCopy(hour, weekday);
+  return (
+    <div
+      className="bg-[#FFD600] text-black px-3 py-3"
+      style={{ boxShadow: '4px 4px 0 rgba(0,0,0,0.7)' }}
+    >
+      <div className="flex items-baseline justify-between border-b-2 border-black/30 pb-1.5 mb-2">
+        <span className="font-bungee text-[13px] uppercase tracking-[0.04em]">★ Right Now</span>
+        <span className="text-[8px] uppercase tracking-[0.3em] text-black/55 tabular">
+          {weekday} · {String(hour).padStart(2, '0')}:00 et
+        </span>
+      </div>
+      <div className="font-tabloid text-[18px] leading-tight uppercase">{c.headline}</div>
+      <div className="text-[11px] mt-1 text-black/85">{c.sub}</div>
+      <div className="mt-2 pt-1 border-t border-black/25 text-[10px] uppercase tracking-[0.16em] text-black/70">
+        {c.vibe}
+      </div>
+    </div>
+  );
+}
+
+/* Live MTA route status from subwaynow.app — public CORS-friendly
+   feed sourced from MTA GTFS-RT. Refreshes every 90s. */
+type MtaRoute = { id: string; status: string; color: string; text_color?: string };
+function useMtaRoutes() {
+  const [routes, setRoutes] = useState<MtaRoute[]>([]);
+  const [error, setError] = useState(false);
+  useEffect(() => {
+    let stop = false;
+    const load = async () => {
+      try {
+        const r = await fetch('https://api.subwaynow.app/routes');
+        if (!r.ok) throw new Error('mta http ' + r.status);
+        const j = await r.json();
+        if (stop) return;
+        const out: MtaRoute[] = [];
+        for (const route of Object.values<Record<string, unknown>>(j.routes ?? {})) {
+          out.push({
+            id: String(route.id ?? ''),
+            status: String(route.status ?? 'Good Service'),
+            color: String(route.color ?? '#666'),
+            text_color: typeof route.text_color === 'string' ? route.text_color : undefined,
+          });
+        }
+        setRoutes(out);
+        setError(false);
+      } catch {
+        if (!stop) setError(true);
+      }
+    };
+    load();
+    const i = setInterval(load, 90_000);
+    return () => { stop = true; clearInterval(i); };
+  }, []);
+  return { routes, error };
+}
+
+function MtaServicePanel() {
+  const { routes, error } = useMtaRoutes();
+  const trouble = routes.filter(
+    (r) => r.status && r.status.toLowerCase() !== 'good service',
+  );
+  const summary = error
+    ? 'mta feed unreachable'
+    : routes.length === 0
+      ? 'loading…'
+      : trouble.length === 0
+        ? 'good service all lines'
+        : `${trouble.length} line${trouble.length === 1 ? '' : 's'} disrupted`;
+  return (
+    <div className="bg-[#003B70] border-2 border-[#FFD600] px-3 py-3" style={{ boxShadow: '4px 4px 0 rgba(0,0,0,0.6)' }}>
+      <div className="flex items-baseline justify-between mb-2">
+        <div className="font-bungee text-[14px] uppercase tracking-[0.04em] text-[#FFD600]">MTA Service</div>
+        <div className={`text-[8px] uppercase tracking-[0.3em] ${error || trouble.length ? 'text-[#ff5582]' : 'text-white/70'}`}>{summary}</div>
+      </div>
+
+      {/* All bullets — colored normally, dimmed if in good service when delays exist
+          so the eye lands on the troubled lines. */}
+      <div className="flex flex-wrap gap-1.5">
+        {routes.length === 0 && (
+          <div className="text-[9px] uppercase tracking-[0.22em] text-white/55">…</div>
+        )}
+        {routes.map((r) => {
+          const ok = r.status.toLowerCase() === 'good service';
+          return (
+            <span
+              key={r.id}
+              className="subway-bullet text-[11px]"
+              style={{
+                background: r.color,
+                color: r.text_color || '#fff',
+                opacity: trouble.length ? (ok ? 0.35 : 1) : 1,
+              }}
+              title={`${r.id}: ${r.status}`}
+            >
+              {r.id}
+            </span>
+          );
+        })}
+      </div>
+
+      {/* Trouble list — short status lines for the affected routes */}
+      {trouble.length > 0 && (
+        <ul className="mt-3 space-y-1 text-[10px] uppercase tracking-[0.12em] font-typewriter">
+          {trouble.slice(0, 6).map((r) => (
+            <li key={r.id} className="flex items-baseline gap-2">
+              <span
+                className="subway-bullet text-[10px] shrink-0"
+                style={{ background: r.color, color: r.text_color || '#fff' }}
+              >
+                {r.id}
+              </span>
+              <span className="text-white/85 line-clamp-2">{r.status.toLowerCase()}</span>
+            </li>
+          ))}
+          {trouble.length > 6 && (
+            <li className="text-[9px] tracking-[0.2em] text-white/45">+ {trouble.length - 6} more</li>
+          )}
+        </ul>
+      )}
+
+      <div className="mt-2 text-[8px] uppercase tracking-[0.22em] text-white/45">
+        feed: subwaynow.app · refreshed 90s
+      </div>
+    </div>
+  );
+}
+
 function CityServicesRail({ alerts, cameras }: { alerts: Alert[]; cameras: Camera[] }) {
   const active = alerts.filter((a) => !a.resolved_at);
   const sevHigh = active.filter((a) => a.severity >= 7).length;
@@ -612,36 +841,9 @@ function CityServicesRail({ alerts, cameras }: { alerts: Alert[]; cameras: Camer
   const win4 = String(((day * 401) % 10_000)).padStart(4, '0');
   return (
     <aside className="hidden lg:flex flex-col gap-3 self-stretch text-white">
-      {/* MTA service status */}
-      <div className="bg-[#003B70] border-2 border-[#FFD600] px-3 py-3" style={{ boxShadow: '4px 4px 0 rgba(0,0,0,0.6)' }}>
-        <div className="flex items-baseline justify-between mb-2">
-          <div className="font-bungee text-[14px] uppercase tracking-[0.04em] text-[#FFD600]">MTA Service</div>
-          <div className="text-[8px] uppercase tracking-[0.3em] text-white/70">good service</div>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {[
-            { l: '1', c: '#EE352E' }, { l: '2', c: '#EE352E' }, { l: '3', c: '#EE352E' },
-            { l: '4', c: '#00933C' }, { l: '5', c: '#00933C' }, { l: '6', c: '#00933C' },
-            { l: '7', c: '#B933AD' }, { l: 'A', c: '#0039A6' }, { l: 'C', c: '#0039A6' },
-            { l: 'E', c: '#0039A6' }, { l: 'B', c: '#FF6319', col: '#000' }, { l: 'D', c: '#FF6319', col: '#000' },
-            { l: 'F', c: '#FF6319', col: '#000' }, { l: 'M', c: '#FF6319', col: '#000' },
-            { l: 'G', c: '#6CBE45' }, { l: 'L', c: '#A7A9AC', col: '#000' }, { l: 'N', c: '#FCCC0A', col: '#000' },
-            { l: 'Q', c: '#FCCC0A', col: '#000' }, { l: 'R', c: '#FCCC0A', col: '#000' }, { l: 'W', c: '#FCCC0A', col: '#000' },
-            { l: 'J', c: '#996633' }, { l: 'Z', c: '#996633' },
-          ].map((s, i) => (
-            <span
-              key={i}
-              className="subway-bullet text-[11px]"
-              style={{ background: s.c, color: s.col ?? '#fff' }}
-            >
-              {s.l}
-            </span>
-          ))}
-        </div>
-        <div className="mt-2 text-[9px] uppercase tracking-[0.22em] text-white/65">
-          last sweep · service indicator stylized · not a real-time feed
-        </div>
-      </div>
+      <RightNowCard />
+
+      <MtaServicePanel />
 
       {/* Lottery / city stats — newspaper-back-page energy */}
       <div className="bg-[#0b0b14] border border-[#FFD600] px-3 py-3" style={{ boxShadow: '4px 4px 0 #d11a2a' }}>
@@ -695,14 +897,63 @@ function NumberBox({ label, digits }: { label: string; digits: string }) {
   );
 }
 
+/* NYC 311 Open Data — recent service requests (noise complaints,
+   pothole reports, water main, etc.) for the bottom ticker. The
+   endpoint is CORS-* and responds with raw JSON, no auth. */
+type T311 = { created_date: string; complaint_type: string; descriptor?: string; incident_address?: string; borough?: string };
+function use311() {
+  const [items, setItems] = useState<T311[]>([]);
+  useEffect(() => {
+    let stop = false;
+    const load = async () => {
+      try {
+        const url =
+          'https://data.cityofnewyork.us/resource/erm2-nwe9.json' +
+          '?$select=created_date,complaint_type,descriptor,incident_address,borough' +
+          '&$order=created_date DESC&$limit=20';
+        const r = await fetch(url);
+        if (!r.ok) return;
+        const j = (await r.json()) as T311[];
+        if (!stop) setItems(j);
+      } catch { /* swallow — ticker has fallback */ }
+    };
+    load();
+    const i = setInterval(load, 5 * 60_000);
+    return () => { stop = true; clearInterval(i); };
+  }, []);
+  return items;
+}
+
+function fmt311Age(ts: string): string {
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return '';
+  const min = Math.max(0, Math.floor((Date.now() - d.getTime()) / 60_000));
+  if (min < 60) return `${min} min ago`;
+  if (min < 24 * 60) return `${Math.floor(min / 60)}h ago`;
+  return `${Math.floor(min / (24 * 60))}d ago`;
+}
+
 function TimesSquareTicker({ alerts }: { alerts: Alert[] }) {
-  const items = alerts
+  const requests311 = use311();
+  const camLines = alerts
     .filter((a) => !a.resolved_at && a.severity >= 5)
-    .slice(0, 18)
-    .map((a) => `★ SEV ${a.severity} · ${a.camera_name ?? a.camera_id}`);
-  const filler = items.length === 0
+    .slice(0, 8)
+    .map((a) => `★ CAM SEV ${a.severity} · ${a.camera_name ?? a.camera_id}`);
+  const lines311 = requests311.slice(0, 8).map((c) => {
+    const where = [c.incident_address, c.borough].filter(Boolean).join(' · ').toUpperCase();
+    const what = (c.descriptor || c.complaint_type).toUpperCase();
+    return `◉ 311 · ${what} · ${where || 'NYC'} · ${fmt311Age(c.created_date)}`;
+  });
+  // Interleave so the two streams alternate.
+  const interleaved: string[] = [];
+  const max = Math.max(camLines.length, lines311.length);
+  for (let i = 0; i < max; i++) {
+    if (camLines[i]) interleaved.push(camLines[i]);
+    if (lines311[i]) interleaved.push(lines311[i]);
+  }
+  const filler = interleaved.length === 0
     ? ['★ STANDBY · CITY IS QUIET · GOOD VIBES', '★ TUNE IN · 954 CAMS · FREE FOREVER', '★ DOLLAR SLICE INDEX: STABLE']
-    : items;
+    : interleaved;
   // Duplicate to make the loop seamless
   const track = [...filler, ...filler];
   return (
