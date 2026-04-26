@@ -312,13 +312,32 @@ export default function Lounge() {
               onScreenClick={() => setLocked((l) => !l)}
             />
 
-            <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[10px] sm:text-[11px] uppercase tracking-[0.22em] font-typewriter text-[#FFD600]/85 px-1">
-              <span>
-                {locked
-                  ? '★ LOCKED — TAP SCREEN TO RESUME ★'
-                  : 'AUTO-SURFING · 18s DWELL · TAP TO HOLD'}
+            <div className="mt-3 flex flex-wrap items-center gap-2 px-1">
+              <button
+                type="button"
+                onClick={() => surfNext()}
+                title="Next channel (space)"
+                className="px-3 py-1.5 border border-[#FFD600] text-[#FFD600] hover:bg-[#FFD600] hover:text-black transition-colors font-typewriter text-[10px] sm:text-[11px] uppercase tracking-[0.22em]"
+                style={{ boxShadow: '2px 2px 0 #d11a2a' }}
+              >
+                CH ▶ NEXT
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocked((l) => !l)}
+                title="Lock / unlock the channel"
+                className={`px-3 py-1.5 border transition-colors font-typewriter text-[10px] sm:text-[11px] uppercase tracking-[0.22em] ${
+                  locked
+                    ? 'bg-[#FFD600] text-black border-[#FFD600]'
+                    : 'border-white/30 text-white/75 hover:border-[#FFD600] hover:text-[#FFD600]'
+                }`}
+              >
+                {locked ? '🔒 LOCKED' : 'HOLD CHANNEL'}
+              </button>
+              <span className="hidden sm:inline text-[10px] tracking-[0.22em] uppercase font-typewriter text-[#FFD600]/65 ml-1">
+                {locked ? '— tap screen or HOLD again to resume —' : 'auto-surfs every 18s'}
               </span>
-              <span className="text-white/45">
+              <span className="ml-auto text-[10px] tracking-[0.22em] uppercase font-typewriter text-white/45">
                 tuning {alerts.filter((a) => !a.resolved_at && a.severity >= 5).length} live · {cameras.length} cams
               </span>
             </div>
