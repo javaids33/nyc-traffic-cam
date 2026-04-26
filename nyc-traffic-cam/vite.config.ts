@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
+    // Permit Cloudflare quick-tunnel hosts so the dashboard can be shared.
+    allowedHosts: ['.trycloudflare.com', '.ngrok-free.app', 'localhost'],
     proxy: {
       // FastAPI dashboard backend
       '/api': {
