@@ -462,6 +462,12 @@ body::after {
 }
 .flicker { animation: letter-flicker 14s ease-in-out infinite; }
 
+/* Chyron marquee — only fires when title would clip */
+@keyframes chyron-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* respect prefers-reduced-motion: kill everything decorative */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

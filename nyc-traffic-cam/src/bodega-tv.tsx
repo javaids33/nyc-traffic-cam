@@ -32,14 +32,34 @@ const WEATHER_ICON: Record<number, string> = {
   85: '🌨', 86: '🌨',
   95: '⛈', 96: '⛈', 99: '⛈',
 };
+/* NYC banter — short captions instead of clinical descriptions. */
 const WEATHER_COND: Record<number, string> = {
-  0: 'Clear', 1: 'Mostly Clear', 2: 'Partly Cloudy', 3: 'Overcast',
-  45: 'Fog', 48: 'Fog',
-  51: 'Drizzle', 53: 'Drizzle', 55: 'Drizzle',
-  61: 'Rain', 63: 'Rain', 65: 'Heavy Rain',
-  71: 'Snow', 73: 'Snow', 75: 'Snow',
-  80: 'Showers', 81: 'Showers', 82: 'Heavy Showers',
-  95: 'Thunder', 96: 'Thunder + Hail', 99: 'Thunder + Hail',
+  0:  'is what it is',
+  1:  'mostly clear',
+  2:  'half and half',
+  3:  'gray sky kinda day',
+  45: 'fog · go slow',
+  48: 'fog · go slow',
+  51: 'spitting',
+  53: 'spitting',
+  55: 'spitting · grab a hood',
+  61: 'rain · cabs are full',
+  63: 'rain · cabs are full',
+  65: 'pouring · stay in',
+  66: 'wintry mix · careful',
+  67: 'wintry mix · careful',
+  71: 'snow · subway weather',
+  73: 'snow · subway weather',
+  75: 'whiteout · stay in',
+  77: 'snow grains',
+  80: 'on/off showers',
+  81: 'on/off showers',
+  82: 'pouring',
+  85: 'snow showers',
+  86: 'snow showers',
+  95: 'thunder · take the stairs',
+  96: 'thunder + hail',
+  99: 'thunder + hail',
 };
 function useNycWeather() {
   const [w, setW] = useState<{ temp: string; cond: string; icon: string } | null>(null);
@@ -113,6 +133,35 @@ export function BodegaTV({
     const i = setInterval(() => setTick(Date.now()), refreshSec * 1000);
     return () => clearInterval(i);
   }, [refreshSec]);
+
+  // Channel-flip "click-thunk": tiny synthesized mechanical click each
+  // time the parent bumps flashKey. Lazy AudioContext so we never grab
+  // audio before a user gesture (avoids autoplay warnings).
+  const clickCtxRef = useRef<AudioContext | null>(null);
+  const firstFlashRef = useRef(true);
+  useEffect(() => {
+    if (firstFlashRef.current) { firstFlashRef.current = false; return; }
+    try {
+      if (!clickCtxRef.current) {
+        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        clickCtxRef.current = new Ctx();
+      }
+      const ctx = clickCtxRef.current;
+      if (!ctx || ctx.state === 'suspended') return;
+      const t = ctx.currentTime;
+      // square knob-thunk
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'square';
+      o.frequency.setValueAtTime(180, t);
+      o.frequency.exponentialRampToValueAtTime(60, t + 0.05);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.18, t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+      o.connect(g).connect(ctx.destination);
+      o.start(t); o.stop(t + 0.1);
+    } catch { /* noop */ }
+  }, [flashKey]);
 
   useEffect(() => {
     const onFs = () => setIsFs(document.fullscreenElement === wrapRef.current);
@@ -248,9 +297,8 @@ export function BodegaTV({
                       <div className="text-[10px] tracking-[0.28em] uppercase font-typewriter text-[#FFD600]">
                         — NOW PLAYING — CHANNEL {channelNumber}
                       </div>
-                      <div className={`font-tabloid leading-tight uppercase truncate mt-0.5 ${large ? 'text-[28px]' : 'text-[22px]'}`}>
-                        {caption.title}
-                      </div>
+                      <ChyronTitle title={caption.title} large={large} />
+
                       {caption.subtitle && (
                         <div className="text-[11px] text-white/85 mt-0.5 line-clamp-1">{caption.subtitle}</div>
                       )}
@@ -310,26 +358,25 @@ export function BodegaTV({
           )}
         </div>
 
-        {/* bottom control rail — chunky CRT button strip */}
+        {/* bottom rail — left: model badge.  Right: a single decorative
+            row of indicator LEDs.  We dropped the fake button strip
+            entirely; if a control isn't wired up, it shouldn't claim
+            to be one. */}
         <div className="mt-3 flex items-center gap-2 sm:gap-3">
-          <span className="hidden md:inline text-[9px] tracking-[0.3em] uppercase font-typewriter text-[#f3e9c0]/55">
-            ★ TC-21 · TRINITRON STYLE COLOR ·
+          <span className="text-[9px] tracking-[0.3em] uppercase font-typewriter text-[#f3e9c0]/55">
+            ★ TC-21 · TRINITRON STYLE COLOR
           </span>
-          <div className="flex-1 flex items-center justify-end gap-1 sm:gap-1.5">
-            {['POWER', 'TV/VID', 'CH▲', 'CH▼', 'VOL▲', 'VOL▼', 'MENU'].map((b) => (
+          <div className="flex-1 flex items-center justify-end gap-2">
+            <span className="text-[8px] tracking-[0.22em] uppercase font-typewriter text-[#f3e9c0]/45">SIGNAL</span>
+            {[0, 1, 2, 3, 4].map((i) => (
               <span
-                key={b}
-                className="text-[8px] sm:text-[9px] tracking-[0.18em] font-typewriter uppercase px-1.5 sm:px-2 py-0.5 sm:py-1 text-[#f3e9c0]/85"
+                key={i}
+                className="w-1.5 h-3"
                 style={{
-                  background: 'linear-gradient(180deg, #2a1c10 0%, #150d07 100%)',
-                  border: '1px solid #4a361e',
-                  borderTopColor: '#5d4624',
-                  borderBottomColor: '#0a0703',
-                  boxShadow: 'inset 0 1px 0 rgba(255,210,140,0.12), 0 1px 0 rgba(0,0,0,0.7)',
+                  background: i < 4 ? '#7be57b' : '#3a3a3a',
+                  boxShadow: i < 4 ? '0 0 4px #7be57b' : 'none',
                 }}
-              >
-                {b}
-              </span>
+              />
             ))}
           </div>
         </div>
@@ -346,6 +393,42 @@ export function BodegaTV({
           boxShadow: '0 14px 24px rgba(0,0,0,0.7)',
         }}
       />
+    </div>
+  );
+}
+
+/* Chyron title that scrolls when the camera name overflows the box —
+   so "CROSS ISLAND PKWY @ THROGS NECK BR ENTRANCE" reads end-to-end
+   instead of being chopped at "THROGSNE...". Short titles render
+   normally; long ones use a slow marquee. */
+function ChyronTitle({ title, large }: { title: string; large?: boolean }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const innerRef = useRef<HTMLSpanElement | null>(null);
+  const [overflow, setOverflow] = useState(false);
+  useEffect(() => {
+    const measure = () => {
+      const c = ref.current, s = innerRef.current;
+      if (!c || !s) return;
+      setOverflow(s.scrollWidth > c.clientWidth + 4);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (ref.current) ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, [title]);
+  return (
+    <div
+      ref={ref}
+      className={`font-tabloid leading-tight uppercase mt-0.5 overflow-hidden ${large ? 'text-[28px]' : 'text-[22px]'}`}
+    >
+      {overflow ? (
+        <div className="inline-block whitespace-nowrap" style={{ animation: 'chyron-scroll 18s linear infinite' }}>
+          <span ref={innerRef} className="pr-12">{title}</span>
+          <span aria-hidden className="pr-12">{title}</span>
+        </div>
+      ) : (
+        <span ref={innerRef} className="block whitespace-nowrap">{title}</span>
+      )}
     </div>
   );
 }

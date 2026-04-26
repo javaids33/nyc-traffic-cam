@@ -226,6 +226,15 @@ export default function Dashboard() {
       />
 
       <div className="flex-1 relative">
+        {!stats && cameras.length === 0 && (
+          <div className="absolute inset-0 z-20 grid place-items-center pointer-events-none">
+            <div className="bg-[var(--c-surface)] border border-[var(--c-border-strong)] px-5 py-4 text-center font-typewriter text-[11px] uppercase tracking-[0.2em] text-[var(--c-text-mid)]" style={{ boxShadow: '4px 4px 0 #d11a2a' }}>
+              <div className="display text-[18px] text-[#FFD600] mb-1">— STANDBY —</div>
+              <div className="mb-1">connecting to ingestor</div>
+              <div className="text-[var(--c-text-dim)] normal-case lowercase">if this stays up, the backend isn't reachable from the browser. start it with `python -m uvicorn server.main:app --port 8000`.</div>
+            </div>
+          </div>
+        )}
         <MapLibre
           ref={mapRef}
           initialViewState={NYC_VIEW}

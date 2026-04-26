@@ -9,8 +9,7 @@ import {
   type TVCaption,
 } from './bodega-tv';
 import { QuarterStash, RollingQuarter } from './quarter';
-import { AmbienceWidget } from './ambience';
-import { RadioWidget } from './radio';
+import { AudioPanel } from './audio-panel';
 
 const ALERT_LABELS_LONG: Record<string, string> = {
   sudden_change: 'SUDDEN CHANGE',
@@ -275,8 +274,7 @@ export default function Lounge() {
       <BodegaAwning />
       <QuarterStash />
       <RollingQuarter />
-      <AmbienceWidget />
-      <RadioWidget />
+      <AudioPanel />
 
       <main className="flex-1 relative flex items-center justify-center px-2 sm:px-6 pb-12 overflow-hidden">
         <SkylineBg />
@@ -287,6 +285,19 @@ export default function Lounge() {
             alerts={alerts}
             currentCameraId={focus?.cameraId ?? null}
             channelNumber={CHANNEL_LINEUP[channelIdx]}
+            onTune={(a) => {
+              flipTo({
+                cameraId: a.camera_id,
+                caption: {
+                  title: a.camera_name ?? a.camera_id,
+                  subtitle: a.message,
+                  meta: `${ALERT_LABELS_LONG[a.kind] ?? a.kind} · SEV ${a.severity}`,
+                  coords: { lat: a.lat, lng: a.lng },
+                  occurrences: a.occurrence_count,
+                },
+              });
+              setLocked(true);
+            }}
           />
 
           <div className="min-w-0">
@@ -448,19 +459,22 @@ function CornerBrasstack() {
   );
 }
 
+/* The bodega has opinions. */
 const NYC_FOOD = [
-  'pork roll · egg · cheese',
-  'chopped cheese on a roll',
-  'bacon egg & cheese',
-  'a slice, dollar regular',
-  'halal cart over rice',
-  'dirty water dog',
-  'salt bagel + scallion schmear',
-  'pizza rat special',
-  'arnold palmer',
-  'egg cream, no chocolate',
-  'plantains, two ways',
-  'bodega coffee, light + sweet',
+  'pork roll · egg · cheese · salt pepper ketchup',
+  'chopped cheese · no ketchup · don’t even ask',
+  'bacon egg & cheese on a roll · 4.50 fight me',
+  'a slice, dollar regular, fold it like a man',
+  'halal cart over rice · white sauce · extra hot',
+  'dirty water dog · mustard · sauerkraut',
+  'salt bagel + scallion schmear · everything is a lie',
+  'pizza rat special · don’t look down',
+  'arnold palmer · half & half · easy ice',
+  'egg cream · no chocolate · u-bet only',
+  'plantains, two ways · maduros & tostones',
+  'bodega coffee · light & sweet · already poured',
+  'sandwich is six bucks now and that’s the news',
+  'cash only after midnight, atm’s in the back, broken',
 ];
 
 function FooterMatchbook() {
@@ -496,10 +510,12 @@ function ChannelGuide({
   alerts,
   currentCameraId,
   channelNumber,
+  onTune,
 }: {
   alerts: Alert[];
   currentCameraId: string | null;
   channelNumber: number;
+  onTune?: (a: Alert) => void;
 }) {
   const upcoming = alerts
     .filter((a) => !a.resolved_at && a.severity >= 5 && a.camera_id !== currentCameraId)
@@ -535,17 +551,23 @@ function ChannelGuide({
         <div className="text-[10px] uppercase tracking-[0.18em] text-[#1a1410]/75">live traffic surf</div>
       </div>
 
-      <div className="text-[9px] uppercase tracking-[0.3em] text-[#1a1410]/65 mb-1.5">★ Up Next</div>
-      <ul className="text-[11px] leading-snug space-y-1.5">
+      <div className="text-[9px] uppercase tracking-[0.3em] text-[#1a1410]/65 mb-1.5">★ Up Next · click to tune</div>
+      <ul className="text-[11px] leading-snug space-y-0.5">
         {upcoming.length === 0 && (
           <li className="text-[#1a1410]/55 italic">— quiet streets · b-roll only —</li>
         )}
         {upcoming.map((a) => (
-          <li key={a.id} className="flex items-start gap-2">
-            <span className="text-[#d11a2a] mt-[3px]">●</span>
-            <span className="line-clamp-2 uppercase tracking-[0.06em]">
-              {a.camera_name ?? a.camera_id}
-            </span>
+          <li key={a.id}>
+            <button
+              type="button"
+              onClick={() => onTune?.(a)}
+              className="w-full text-left flex items-start gap-2 py-1 px-1 -mx-1 hover:bg-[#d11a2a] hover:text-white transition-colors group cursor-pointer"
+            >
+              <span className="text-[#d11a2a] mt-[3px] group-hover:text-white">●</span>
+              <span className="line-clamp-2 uppercase tracking-[0.06em]">
+                {a.camera_name ?? a.camera_id}
+              </span>
+            </button>
           </li>
         ))}
       </ul>

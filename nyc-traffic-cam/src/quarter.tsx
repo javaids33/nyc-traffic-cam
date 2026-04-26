@@ -9,9 +9,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
    ========================================================*/
 
 const STORE_KEY = 'nyc-quarters';
+const SEEDED_KEY = 'nyc-quarters-seeded';
 
 function readStash(): number {
   if (typeof window === 'undefined') return 0;
+  // First-time visitors get one free quarter so the arcade isn't a dead
+  // end. If they spend it the counter goes to zero and they have to
+  // hunt the rolling quarter like everyone else.
+  if (!localStorage.getItem(SEEDED_KEY)) {
+    localStorage.setItem(SEEDED_KEY, '1');
+    if (!localStorage.getItem(STORE_KEY)) {
+      localStorage.setItem(STORE_KEY, '1');
+      return 1;
+    }
+  }
   return parseInt(localStorage.getItem(STORE_KEY) || '0', 10) || 0;
 }
 
@@ -47,18 +58,43 @@ export function useQuarters() {
 }
 
 export function QuarterIcon({ size = 22 }: { size?: number }) {
+  // Reads unambiguously as a coin: 25¢ inside a milled silver disc with
+  // a beveled rim. No faces, no embossed eagle that could read as a head.
+  const id = `qg-${size}`;
   return (
     <svg viewBox="0 0 40 40" width={size} height={size} aria-hidden>
       <defs>
-        <radialGradient id="qg" cx="40%" cy="40%" r="65%">
-          <stop offset="0%" stopColor="#f1f1f1" />
-          <stop offset="60%" stopColor="#bcbcbc" />
-          <stop offset="100%" stopColor="#7a7a7a" />
+        <radialGradient id={id} cx="35%" cy="32%" r="70%">
+          <stop offset="0%"   stopColor="#fbfbfa" />
+          <stop offset="50%"  stopColor="#cfcfcc" />
+          <stop offset="85%"  stopColor="#8a8a86" />
+          <stop offset="100%" stopColor="#5a5a55" />
         </radialGradient>
       </defs>
-      <circle cx="20" cy="20" r="18" fill="url(#qg)" stroke="#555" strokeWidth="1.4" />
-      <circle cx="20" cy="20" r="14" fill="none" stroke="#999" strokeWidth="0.8" strokeDasharray="1.2 1" />
-      <text x="20" y="24" textAnchor="middle" fontSize="11" fill="#1a1a1a" fontWeight="900" fontFamily="Bungee, Impact, sans-serif">25¢</text>
+      {/* outer milled rim */}
+      <circle cx="20" cy="20" r="18.5" fill={`url(#${id})`} stroke="#3d3d3a" strokeWidth="1" />
+      {/* engraved inner ring */}
+      <circle cx="20" cy="20" r="14.5" fill="none" stroke="#5b5b57" strokeWidth="0.7" />
+      {/* milled-edge tick marks */}
+      {Array.from({ length: 32 }).map((_, i) => {
+        const a = (i / 32) * Math.PI * 2;
+        const x1 = 20 + Math.cos(a) * 17;
+        const y1 = 20 + Math.sin(a) * 17;
+        const x2 = 20 + Math.cos(a) * 18.5;
+        const y2 = 20 + Math.sin(a) * 18.5;
+        return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#3d3d3a" strokeWidth="0.6" />;
+      })}
+      {/* the value */}
+      <text
+        x="20"
+        y="24.5"
+        textAnchor="middle"
+        fontSize="13"
+        fontWeight="900"
+        fontFamily="Bungee, Impact, sans-serif"
+        fill="#1a1a18"
+        letterSpacing="-0.5"
+      >25¢</text>
     </svg>
   );
 }
