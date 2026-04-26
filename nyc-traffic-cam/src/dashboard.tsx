@@ -9,6 +9,7 @@ import { Tv, X } from 'lucide-react';
 
 import { apiUrl, fetchAlerts, fetchCameras, fetchStats, openAlertSocket } from './api';
 import type { Alert, Camera, Stats } from './types';
+import { BodegaAwning, BodegaTV, CHANNEL_LINEUP, StreetFauna, useClock as useSharedClock, type TVCaption } from './bodega-tv';
 
 const NYC_VIEW = { longitude: -73.97, latitude: 40.74, zoom: 10.8, pitch: 0, bearing: 0 };
 
@@ -53,14 +54,7 @@ const ALERT_LABELS_LONG: Record<string, string> = {
   high_activity: 'HIGH ACTIVITY',
 };
 
-function useClock() {
-  const [t, setT] = useState(new Date());
-  useEffect(() => {
-    const i = setInterval(() => setT(new Date()), 1000);
-    return () => clearInterval(i);
-  }, []);
-  return t;
-}
+const useClock = useSharedClock;
 
 export default function Dashboard() {
   const [cameras, setCameras] = useState<Camera[]>([]);
@@ -213,6 +207,7 @@ export default function Dashboard() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-ink-950 text-[var(--c-text)] overflow-hidden font-mono">
+      <BodegaAwning />
       <Header
         clock={clock}
         cameras={cameras}
@@ -278,7 +273,16 @@ export default function Dashboard() {
 
       <AlertsRail alerts={alerts} onPick={handleAlertClick} />
 
-      {lofiMode && <LofiPip focus={lofiFocus} onClose={() => { setLofiMode(false); setLofiFocus(null); }} />}
+      <StreetFauna />
+
+      {lofiMode && (
+        <LofiPip
+          focus={lofiFocus}
+          alerts={alerts}
+          onClose={() => { setLofiMode(false); setLofiFocus(null); }}
+          onCycleTo={(a) => { setLofiFocus(a); flyTo(a.lng, a.lat, 16); }}
+        />
+      )}
 
       {selectedCamera && (
         <CameraPanel
@@ -341,9 +345,16 @@ function Header({
           <span className="display text-[26px] leading-none text-[var(--c-text)]">
             {hh}<span className="text-[var(--c-text-dim)]">:</span>{mm}<span className="text-[var(--c-text-dim)]">:</span>{ss}
           </span>
+          <a
+            href="/"
+            className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border text-[11px] uppercase tracking-[0.14em] border-[var(--c-border-strong)] text-[var(--c-text-mid)] hover:text-[#FFD600] hover:border-[#FFD600] transition-colors font-typewriter"
+            title="Back to the lounge / channel surf"
+          >
+            ← LOUNGE
+          </a>
           <button
             onClick={toggleLofi}
-            className={`group ml-2 inline-flex items-center gap-1.5 px-2.5 py-1 border text-[11px] uppercase tracking-[0.14em] transition-all ${
+            className={`group inline-flex items-center gap-1.5 px-2.5 py-1 border text-[11px] uppercase tracking-[0.14em] transition-all ${
               lofiMode
                 ? 'border-[var(--c-hi)] text-[var(--c-hi)] shadow-glow-hi bg-[rgba(233,31,255,0.08)]'
                 : 'border-[var(--c-border-strong)] text-[var(--c-text-mid)] hover:text-[var(--c-text)] hover:border-[var(--c-text-mid)]'
@@ -528,116 +539,68 @@ function Legend() {
   );
 }
 
-/* ────────────────────────────────────────────────────────── lofi PIP */
+/* ────────────────────────────────────────────────────────── lofi PIP — wraps shared BodegaTV */
 
-function LofiPip({ focus, onClose }: { focus: Alert | null; onClose: () => void }) {
-  const [tick, setTick] = useState(0);
+function LofiPip({
+  focus,
+  alerts,
+  onClose,
+  onCycleTo,
+}: {
+  focus: Alert | null;
+  alerts: Alert[];
+  onClose: () => void;
+  onCycleTo: (a: Alert) => void;
+}) {
   const [flashKey, setFlashKey] = useState(0);
-  const clock = useClock();
+  const [staticOn, setStaticOn] = useState(false);
+  const [channelIdx, setChannelIdx] = useState(0);
 
+  // Trigger channel flip (static + index bump) whenever focus.id changes.
   useEffect(() => {
-    if (focus) setFlashKey((k) => k + 1);
+    if (!focus) return;
+    setFlashKey((k) => k + 1);
+    setChannelIdx((i) => (i + 1) % CHANNEL_LINEUP.length);
+    setStaticOn(true);
+    const t = setTimeout(() => setStaticOn(false), 380);
+    return () => clearTimeout(t);
   }, [focus?.id]);
 
+  // Auto-surf through active alerts every 12s while the dashboard pip is open.
+  const focusIdRef = useRef<number | null>(focus?.id ?? null);
+  useEffect(() => { focusIdRef.current = focus?.id ?? null; }, [focus?.id]);
   useEffect(() => {
-    const i = setInterval(() => setTick((t) => t + 1), 3000);
+    const i = setInterval(() => {
+      const candidates = alerts.filter((a) => !a.resolved_at);
+      if (candidates.length < 2) return;
+      const idx = candidates.findIndex((a) => a.id === focusIdRef.current);
+      const next = candidates[(idx + 1) % candidates.length];
+      if (next && next.id !== focusIdRef.current) onCycleTo(next);
+    }, 12000);
     return () => clearInterval(i);
-  }, []);
+  }, [alerts, onCycleTo]);
 
-  const hh = String(clock.getUTCHours()).padStart(2, '0');
-  const mm = String(clock.getUTCMinutes()).padStart(2, '0');
-  const ss = String(clock.getUTCSeconds()).padStart(2, '0');
+  const caption: TVCaption | null = focus
+    ? {
+        title: focus.camera_name ?? focus.camera_id,
+        subtitle: focus.message,
+        meta: `${ALERT_LABELS_LONG[focus.kind] ?? focus.kind} · SEV ${focus.severity} · ${fmtAge(focus.created_at)} ago`,
+        coords: { lat: focus.lat, lng: focus.lng },
+        occurrences: focus.occurrence_count,
+      }
+    : null;
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[680px] z-40 pointer-events-none">
-      <div
-        key={flashKey}
-        className="bg-black border border-[var(--c-hi)]/70 shadow-glow-hi pointer-events-auto"
-        style={{ animation: 'channel-flip 0.5s ease-out' }}
-      >
-        {/* top bar: REC + station + alert badge */}
-        <div className="flex items-center gap-3 px-3 py-1.5 bg-[var(--c-surface-2)] border-b border-[var(--c-hi)]/40 text-[10px] uppercase tracking-[0.16em]">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-[var(--c-crit)] rec-dot" />
-            <span className="text-[var(--c-crit)] font-semibold">REC</span>
-          </span>
-          <span className="text-[var(--c-text-mid)]">STATION NYC-01</span>
-          <span className="text-[var(--c-text-dim)]">/</span>
-          <span className="text-[var(--c-hi)]">LO-FI LIVE</span>
-          {focus && (
-            <>
-              <span className="text-[var(--c-text-dim)]">/</span>
-              <span className="text-[var(--c-text)]">
-                {ALERT_LABELS_LONG[focus.kind] ?? focus.kind} · SEV {focus.severity}
-              </span>
-            </>
-          )}
-          <span className="ml-auto tabular text-[var(--c-text-mid)]">
-            {hh}:{mm}:{ss} UTC
-          </span>
-          <button onClick={onClose} className="ml-2 hover:text-[var(--c-crit)] transition-colors">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {focus ? (
-          <div className="relative crt-overlay">
-            <img
-              key={`lofi-${focus.camera_id}-${tick}`}
-              src={apiUrl(`/api/cameras/${focus.camera_id}/snapshot.jpg?t=${tick}`)}
-              alt="lofi feed"
-              className="w-full bg-black block"
-              style={{ minHeight: 280 }}
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.opacity = '0.2';
-              }}
-            />
-            {/* corner crosshair guides */}
-            <CornerGuides />
-            {/* bottom information panel */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/85 to-transparent p-3 text-white">
-              <div className="flex items-end gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="text-[9px] uppercase tracking-[0.22em] text-[var(--c-hi)]">NOW WATCHING</div>
-                  <div className="display text-[24px] leading-tight uppercase mt-0.5 truncate">
-                    {focus.camera_name ?? focus.camera_id}
-                  </div>
-                  <div className="text-[10px] text-gray-300 mt-1 line-clamp-2 max-w-[480px]">{focus.message}</div>
-                </div>
-                <div className="text-right text-[9px] tabular text-gray-400 uppercase tracking-wider leading-relaxed shrink-0">
-                  <div><span className="text-[var(--c-text-dim)]">CAM</span> {focus.camera_id.slice(0, 8)}</div>
-                  <div><span className="text-[var(--c-text-dim)]">LAT</span> {focus.lat.toFixed(4)}</div>
-                  <div><span className="text-[var(--c-text-dim)]">LNG</span> {focus.lng.toFixed(4)}</div>
-                  <div><span className="text-[var(--c-text-dim)]">×</span> {focus.occurrence_count} · {fmtAge(focus.created_at)} ago</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="p-12 text-center text-[var(--c-hi)]/80 text-[12px] uppercase tracking-[0.22em]">
-            Standby · awaiting next alert
-          </div>
-        )}
-      </div>
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[700px] z-40">
+      <BodegaTV
+        cameraId={focus?.camera_id ?? null}
+        caption={caption}
+        channelNumber={CHANNEL_LINEUP[channelIdx]}
+        flashKey={flashKey}
+        staticOn={staticOn}
+        onClose={onClose}
+      />
     </div>
-  );
-}
-
-function CornerGuides() {
-  return (
-    <>
-      {/* top-left */}
-      <span className="absolute top-2 left-2 w-4 h-4 border-t border-l border-[var(--c-hi)]" />
-      {/* top-right */}
-      <span className="absolute top-2 right-2 w-4 h-4 border-t border-r border-[var(--c-hi)]" />
-      {/* bottom-left */}
-      <span className="absolute bottom-2 left-2 w-4 h-4 border-b border-l border-[var(--c-hi)]" />
-      {/* bottom-right */}
-      <span className="absolute bottom-2 right-2 w-4 h-4 border-b border-r border-[var(--c-hi)]" />
-      {/* center crosshair */}
-      <span className="absolute top-1/2 left-1/2 w-px h-3 -translate-x-1/2 -translate-y-1/2 bg-[var(--c-hi)]/60" />
-      <span className="absolute top-1/2 left-1/2 w-3 h-px -translate-x-1/2 -translate-y-1/2 bg-[var(--c-hi)]/60" />
-    </>
   );
 }
 

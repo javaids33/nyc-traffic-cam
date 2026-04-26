@@ -164,3 +164,312 @@ body::after {
   0% { background-position-y: 0; }
   100% { background-position-y: 12px; }
 }
+
+/* ──────────── NYC bodega-CRT layer ──────────── */
+
+/* Wood-grain bodega TV cabinet — repeating layered linear gradients */
+.wood-grain {
+  background-color: #5a3818;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.18) 0,
+      rgba(0, 0, 0, 0.18) 1px,
+      transparent 1px,
+      transparent 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 200, 130, 0.06) 0,
+      rgba(255, 200, 130, 0.06) 6px,
+      transparent 6px,
+      transparent 13px
+    ),
+    linear-gradient(180deg, #6b4222 0%, #4a2c14 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 200, 130, 0.18),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+    0 18px 50px rgba(0, 0, 0, 0.7);
+}
+
+/* CRT static — animated SVG noise overlay used between channel flips */
+.crt-static {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.7 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: static-shift 0.07s steps(3) infinite;
+}
+@keyframes static-shift {
+  0% { background-position: 0 0; }
+  33% { background-position: -50px 30px; }
+  66% { background-position: 30px -40px; }
+  100% { background-position: -20px 20px; }
+}
+
+/* VHS tracking — a faint rolling band that drifts down occasionally */
+@keyframes vhs-tracking {
+  0% { top: -20%; opacity: 0; }
+  10% { opacity: 0.55; }
+  90% { opacity: 0.45; }
+  100% { top: 110%; opacity: 0; }
+}
+.vhs-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  animation: vhs-tracking 6s ease-in 3s infinite;
+}
+
+/* Channel flip — quick collapse-and-snap (1980s TV channel change) */
+@keyframes tv-channel-flip {
+  0% { transform: scaleY(1); filter: brightness(1) saturate(1); }
+  20% { transform: scaleY(0.02); filter: brightness(2.4) saturate(0); }
+  35% { transform: scaleY(0.02); filter: brightness(0.5); }
+  60% { transform: scaleY(1.04); filter: brightness(1.6) saturate(1.2); }
+  100% { transform: scaleY(1); filter: brightness(1) saturate(1); }
+}
+
+/* Bodega awning scallop edge — drawn with conic gradient on a thin strip */
+.awning-scallop {
+  background:
+    radial-gradient(circle at 8px 0, transparent 7px, var(--c-bodega-green, #1B5E20) 7.5px) repeat-x;
+  background-size: 16px 12px;
+  background-position-y: 0;
+}
+
+/* Rabbit-ear antennas */
+.antenna {
+  position: absolute;
+  bottom: 100%;
+  width: 2px;
+  height: 60px;
+  background: linear-gradient(180deg, #c0c0c0, #6a6a6a);
+  transform-origin: bottom center;
+  box-shadow: -2px 0 0 -1px #4a4a4a;
+}
+.antenna::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: #c0c0c0;
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+/* Channel digit — that glowing red 7-segment look */
+.channel-digit {
+  font-family: 'VT323', monospace;
+  color: #ff5026;
+  text-shadow:
+    0 0 6px rgba(255, 80, 38, 0.9),
+    0 0 14px rgba(255, 80, 38, 0.6);
+  background: #1a0606;
+  padding: 2px 8px;
+  border: 1px solid #3a1a1a;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+/* Street rat — runs across bottom of viewport */
+@keyframes rat-run {
+  0% { transform: translateX(-80px) scaleX(1); }
+  48% { transform: translateX(50vw) scaleX(1) translateY(-2px); }
+  52% { transform: translateX(50vw) scaleX(1) translateY(0); }
+  100% { transform: translateX(calc(100vw + 80px)) scaleX(1); }
+}
+@keyframes rat-tail {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(8deg); }
+}
+
+/* Yellow cab — drives across less frequently, smoother */
+@keyframes cab-drive {
+  0% { transform: translateX(calc(100vw + 200px)); }
+  100% { transform: translateX(-200px); }
+}
+
+/* Manhole steam — wisps drifting up at random points */
+@keyframes steam-drift {
+  0% { transform: translateY(0) scale(0.8); opacity: 0; }
+  20% { opacity: 0.5; }
+  100% { transform: translateY(-120px) scale(1.6); opacity: 0; }
+}
+
+/* Tabloid headline shimmer */
+@keyframes ny-tape {
+  0% { background-position: 0 0; }
+  100% { background-position: 80px 0; }
+}
+.metrocard-tape {
+  background: repeating-linear-gradient(
+    -55deg,
+    #FFD600 0,
+    #FFD600 14px,
+    #1a1a1a 14px,
+    #1a1a1a 18px
+  );
+  animation: ny-tape 4s linear infinite;
+}
+
+/* ──────────── MAXIMALIST NYC LAYER — neon, halftone, sirens, ticker ──────────── */
+
+/* Neon "ON AIR" sign — the classic flickering buzz */
+@keyframes neon-buzz {
+  0%, 100% { opacity: 1; text-shadow:
+    0 0 4px currentColor,
+    0 0 12px currentColor,
+    0 0 24px currentColor,
+    0 0 44px currentColor; }
+  6% { opacity: 0.3; text-shadow: none; }
+  8% { opacity: 1; }
+  44% { opacity: 0.7; }
+  46% { opacity: 1; }
+}
+.neon {
+  color: #ff5582;
+  filter: drop-shadow(0 0 2px #ff5582) drop-shadow(0 0 8px #ff558266);
+  animation: neon-buzz 4.5s ease-in-out infinite;
+}
+.neon-cyan { color: #5ff0ff; filter: drop-shadow(0 0 3px #5ff0ff) drop-shadow(0 0 8px #5ff0ff66); }
+.neon-amber { color: #ffb142; filter: drop-shadow(0 0 3px #ffb142) drop-shadow(0 0 8px #ffb14266); }
+
+/* Halftone newspaper texture overlay — used on tabloid alert thumbs */
+.halftone {
+  background-image: radial-gradient(circle, rgba(0,0,0,0.55) 0.6px, transparent 0.7px);
+  background-size: 3px 3px;
+  mix-blend-mode: multiply;
+}
+.halftone-overlay {
+  position: relative;
+}
+.halftone-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.35) 0.7px, transparent 0.8px);
+  background-size: 3px 3px;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+}
+
+/* Police siren — full-edge red/blue alternating strobe (rare, only sev≥7) */
+@keyframes siren-strobe {
+  0%, 100% { box-shadow:
+    inset 0 0 80px 20px rgba(255, 30, 60, 0),
+    0 0 0 0 rgba(255, 30, 60, 0); }
+  25% { box-shadow:
+    inset 0 0 90px 25px rgba(255, 30, 60, 0.55),
+    0 0 0 6px rgba(255, 30, 60, 0.3); }
+  50% { box-shadow:
+    inset 0 0 80px 20px rgba(0, 80, 255, 0),
+    0 0 0 0 rgba(0, 80, 255, 0); }
+  75% { box-shadow:
+    inset 0 0 90px 25px rgba(0, 80, 255, 0.55),
+    0 0 0 6px rgba(0, 80, 255, 0.3); }
+}
+.siren {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  animation: siren-strobe 0.65s linear infinite;
+}
+
+/* Times Square LED ticker tape */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: inline-flex;
+  gap: 3rem;
+  white-space: nowrap;
+  animation: ticker-scroll 60s linear infinite;
+  will-change: transform;
+}
+.ticker-led {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,0.6) 0.6px, transparent 0.8px) 0 0 / 3px 3px,
+    linear-gradient(180deg, #1a0606, #0a0303);
+}
+
+/* Tabloid stamp — the kind that gets slapped on a NY Post photo: "EXCLUSIVE" angled */
+.stamp-banner {
+  font-family: 'Bungee', Impact, sans-serif;
+  background: #d11a2a;
+  color: #fff;
+  padding: 2px 8px;
+  letter-spacing: 0.05em;
+  display: inline-block;
+  transform: skewX(-8deg);
+  box-shadow: 2px 2px 0 #1a1a1a;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+}
+
+/* Subway-line bullet (colored circle with letter) */
+.subway-bullet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  color: #fff;
+  line-height: 1;
+}
+
+/* "Live now" pulsing red light */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+.live-light {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #ff2d3d;
+  box-shadow: 0 0 6px #ff2d3d, 0 0 18px #ff2d3d99;
+  animation: live-pulse 1s ease-in-out infinite;
+}
+
+/* Pigeon flap wings */
+@keyframes pigeon-fly {
+  0% { transform: translate(-100px, 0); }
+  100% { transform: translate(calc(100vw + 100px), -120px); }
+}
+@keyframes wing-flap {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.4); }
+}
+
+/* Awning lightbulb chase */
+@keyframes bulb-chase {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.3; }
+}
+
+/* Marquee letter flicker (one letter occasionally drops out, like a busted tube) */
+@keyframes letter-flicker {
+  0%, 92%, 96%, 100% { opacity: 1; text-shadow: 0 0 12px currentColor; }
+  93%, 95% { opacity: 0.18; text-shadow: none; }
+  94% { opacity: 0.5; }
+}
+.flicker { animation: letter-flicker 7s ease-in-out infinite; }
+
+/* Risograph offset (split-channel print look) */
+.riso {
+  text-shadow:
+    -1px 0 0 #ff2d3d,
+    1px 0 0 #00b4d8;
+}
+
+/* Tabloid card rotation — used on alert items */
+.tilt-l { transform: rotate(-1.4deg); }
+.tilt-r { transform: rotate(1.1deg); }
+.tilt-xl { transform: rotate(-2.2deg); }

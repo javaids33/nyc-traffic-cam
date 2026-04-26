@@ -6,6 +6,14 @@ export default {
       fontFamily: {
         display: ['"Big Shoulders Display"', 'system-ui', 'sans-serif'],
         mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        tabloid: ['Anton', 'Impact', 'sans-serif'],
+        typewriter: ['"Special Elite"', 'Courier', 'monospace'],
+        crt: ['VT323', '"IBM Plex Mono"', 'monospace'],
+        bungee: ['Bungee', 'Impact', 'sans-serif'],
+        bungeeShade: ['"Bungee Shade"', 'Impact', 'sans-serif'],
+        marker: ['"Permanent Marker"', 'sans-serif'],
+        graffiti: ['Knewave', 'Impact', 'sans-serif'],
+        slab: ['"Rubik Mono One"', 'Impact', 'sans-serif'],
       },
       colors: {
         ink: {
@@ -25,6 +33,14 @@ export default {
         alarm: '#FF8A1F',
         crit: '#FF3A6C',
         hi: '#E91FFF',
+        // NYC palette
+        bodega: '#1B5E20',       // deli awning green
+        bodegaDk: '#0F3812',
+        metrocard: '#FFD600',    // MetroCard / taxi yellow
+        ny1: '#003B70',          // broadcast news blue
+        tabloid: '#D11A2A',      // NY Post / Daily News red
+        wood: '#8b5a2b',         // TV cabinet
+        woodDk: '#5a3818',
       },
       boxShadow: {
         'glow-signal': '0 0 18px rgba(181, 245, 0, 0.45)',
