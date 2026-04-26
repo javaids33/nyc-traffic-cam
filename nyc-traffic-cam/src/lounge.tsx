@@ -9,6 +9,7 @@ import {
   type TVCaption,
 } from './bodega-tv';
 import { QuarterStash, RollingQuarter } from './quarter';
+import { AmbienceWidget } from './ambience';
 
 const ALERT_LABELS_LONG: Record<string, string> = {
   sudden_change: 'SUDDEN CHANGE',
@@ -282,8 +283,9 @@ export default function Lounge() {
       />
       <QuarterStash />
       <RollingQuarter />
+      <AmbienceWidget />
 
-      <main className="flex-1 relative flex items-center justify-center px-6 pb-12 overflow-hidden">
+      <main className="flex-1 relative flex items-center justify-center px-2 sm:px-6 pb-12 overflow-hidden">
         <SkylineBg />
         <CornerBrasstack />
 
@@ -299,14 +301,14 @@ export default function Lounge() {
             onScreenClick={() => setLocked((l) => !l)}
           />
 
-          <div className="mt-3 flex items-center justify-between text-[11px] uppercase tracking-[0.22em] font-typewriter text-[#FFD600]/85 px-1">
+          <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[10px] sm:text-[11px] uppercase tracking-[0.22em] font-typewriter text-[#FFD600]/85 px-1">
             <span>
               {locked
                 ? '★ LOCKED — TAP SCREEN TO RESUME ★'
-                : 'AUTO-SURFING · 18s DWELL · TAP SCREEN TO HOLD'}
+                : 'AUTO-SURFING · 18s DWELL · TAP TO HOLD'}
             </span>
-            <span className="hidden md:inline text-white/45">
-              tuning {alerts.filter((a) => !a.resolved_at && a.severity >= 5).length} live · {cameras.length} cams citywide
+            <span className="text-white/45">
+              tuning {alerts.filter((a) => !a.resolved_at && a.severity >= 5).length} live · {cameras.length} cams
             </span>
           </div>
         </div>

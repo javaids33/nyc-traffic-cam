@@ -374,14 +374,14 @@ function Header({
       </div>
 
       {/* row 2 — broadcast lower-third stats strip */}
-      <div className="grid grid-cols-12 gap-px bg-[var(--c-border)] border-t border-[var(--c-border)]">
-        <Metric label="POLLS" value={(stats?.metrics.polls_total ?? 0).toLocaleString()} className="col-span-2" />
-        <Metric label="FAIL" value={stats?.metrics.polls_failed ?? 0} tone={stats?.metrics.polls_failed ? 'crit' : 'mid'} className="col-span-1" />
-        <Metric label="OPENED" value={stats?.metrics.alerts_opened ?? 0} className="col-span-1" />
-        <Metric label="RESOLVED" value={stats?.metrics.alerts_resolved ?? 0} tone="signal" className="col-span-1" />
-        <Metric label="ACTIVE" value={activeAlertCount} tone={activeAlertCount ? 'crit' : 'signal'} accent={activeAlertCount > 0} className="col-span-2" />
-        <Metric label="CHANNELS" value={`${polled}/${total}`} className="col-span-3" />
-        <Metric label="Δ TICK" value={`${fmtAge(stats?.metrics.last_tick_at)} ago`} className="col-span-2" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 gap-px bg-[var(--c-border)] border-t border-[var(--c-border)] overflow-x-auto">
+        <Metric label="POLLS" value={(stats?.metrics.polls_total ?? 0).toLocaleString()} className="lg:col-span-2" />
+        <Metric label="FAIL" value={stats?.metrics.polls_failed ?? 0} tone={stats?.metrics.polls_failed ? 'crit' : 'mid'} className="lg:col-span-1" />
+        <Metric label="OPENED" value={stats?.metrics.alerts_opened ?? 0} className="lg:col-span-1" />
+        <Metric label="RESOLVED" value={stats?.metrics.alerts_resolved ?? 0} tone="signal" className="lg:col-span-1" />
+        <Metric label="ACTIVE" value={activeAlertCount} tone={activeAlertCount ? 'crit' : 'signal'} accent={activeAlertCount > 0} className="lg:col-span-2" />
+        <Metric label="CHANNELS" value={`${polled}/${total}`} className="lg:col-span-3" />
+        <Metric label="Δ TICK" value={`${fmtAge(stats?.metrics.last_tick_at)} ago`} className="lg:col-span-2" />
       </div>
     </header>
   );
@@ -424,8 +424,18 @@ function Metric({
 
 function AlertsRail({ alerts, onPick }: { alerts: Alert[]; onPick: (a: Alert) => void }) {
   const active = alerts.filter((a) => !a.resolved_at);
+  const [open, setOpen] = useState(false);
   return (
-    <aside className="absolute right-0 top-[88px] bottom-0 w-[380px] bg-[var(--c-surface)]/95 backdrop-blur border-l border-[var(--c-border-strong)] flex flex-col">
+    <>
+      {/* mobile floating toggle */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="md:hidden fixed bottom-4 right-3 z-40 bg-[var(--c-surface)] border border-[var(--c-border-strong)] px-3 py-2 text-[10px] uppercase tracking-[0.2em] font-typewriter text-[#FFD600]"
+        style={{ boxShadow: '3px 3px 0 #d11a2a' }}
+      >
+        {open ? '▼ HIDE' : `▲ ${active.length} ALERTS`}
+      </button>
+    <aside className={`fixed md:absolute right-0 top-auto md:top-[88px] bottom-0 w-full md:w-[380px] h-[55vh] md:h-auto bg-[var(--c-surface)]/95 backdrop-blur border-l border-[var(--c-border-strong)] flex flex-col z-30 transition-transform ${open ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
       <div className="px-3 py-2 border-b border-[var(--c-border)] flex items-baseline justify-between">
         <div className="flex items-baseline gap-2">
           <span className="text-[9px] uppercase tracking-[0.18em] text-[var(--c-text-dim)]">FEED</span>
@@ -455,6 +465,7 @@ function AlertsRail({ alerts, onPick }: { alerts: Alert[]; onPick: (a: Alert) =>
         </ul>
       </div>
     </aside>
+    </>
   );
 }
 

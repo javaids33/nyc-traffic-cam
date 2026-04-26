@@ -335,10 +335,10 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
       </div>
 
       <div
-        className="bg-[#1B5E20] text-white px-4 pt-1 pb-2 flex items-center gap-4 border-b-2 border-[#FFD600] relative"
+        className="bg-[#1B5E20] text-white px-3 sm:px-4 pt-1 pb-2 flex items-center gap-2 sm:gap-4 border-b-2 border-[#FFD600] relative flex-wrap"
         style={{ boxShadow: '0 4px 0 #0F3812, inset 0 -1px 0 rgba(0,0,0,0.4)' }}
       >
-        <a href="/" className="font-bungee uppercase tracking-[0.06em] text-[22px] leading-none whitespace-nowrap hover:text-[#FFD600] transition-colors">
+        <a href="/" className="font-bungee uppercase tracking-[0.06em] text-[16px] sm:text-[22px] leading-none whitespace-nowrap hover:text-[#FFD600] transition-colors">
           NYC <span className="text-[#FFD600] flicker">★</span> TRAFFIC <span className="text-[#FFD600]">CAM</span>{' '}
           <span className="text-white riso">CO.</span>
         </a>
@@ -347,7 +347,6 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
           <span>EST.</span><span>2026</span>
         </span>
 
-        {/* OPEN 24/7 pulsing neon */}
         <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 border border-[#ff5582] text-[#ff5582] font-bungee text-[10px] uppercase tracking-[0.18em] neon">
           OPEN · 24 / 7
         </span>
@@ -356,8 +355,7 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
           · cold beer · lotto · pork roll · chopped cheese · live cams ·
         </span>
 
-        <span className="ml-auto flex items-center gap-3">
-          {/* live weather */}
+        <span className="ml-auto flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
           {weather && (
             <a
               href="/about"
@@ -369,11 +367,13 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
               <span className="hidden lg:inline text-white/55">{weather.cond}</span>
             </a>
           )}
-          <span className="subway-bullet" style={{ background: '#EE352E' }}>1</span>
-          <span className="subway-bullet" style={{ background: '#00933C' }}>4</span>
-          <span className="subway-bullet" style={{ background: '#0039A6' }}>A</span>
-          <span className="subway-bullet" style={{ background: '#A7A9AC', color: '#000' }}>L</span>
-          <span className="font-typewriter text-[10px] tracking-[0.2em] uppercase text-[#FFD600] pl-2">
+          <span className="hidden sm:flex items-center gap-1.5">
+            <span className="subway-bullet" style={{ background: '#EE352E' }}>1</span>
+            <span className="subway-bullet" style={{ background: '#00933C' }}>4</span>
+            <span className="subway-bullet" style={{ background: '#0039A6' }}>A</span>
+            <span className="subway-bullet" style={{ background: '#A7A9AC', color: '#000' }}>L</span>
+          </span>
+          <span className="hidden sm:inline font-typewriter text-[10px] tracking-[0.2em] uppercase text-[#FFD600] pl-2">
             NYC · {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
           </span>
           {rightSlot}
