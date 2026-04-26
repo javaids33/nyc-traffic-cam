@@ -73,6 +73,12 @@ function useNycWeather() {
    The reusable wood-cabinet CRT. Display-only — the parent decides
    what camera to show, when to flip channels, and any lock state. */
 
+/* The TV pulls frames straight from the public NYC TMC image endpoint when
+   `liveSource="nyctmc"`. Each tick uses Date.now() as the cache-buster, which
+   matches the upstream cadence (~1-2s). */
+const NYCTMC_IMG = (id: string, t: number) =>
+  `https://webcams.nyctmc.org/api/cameras/${id}/image?t=${t}`;
+
 export function BodegaTV({
   cameraId,
   caption,
@@ -83,7 +89,8 @@ export function BodegaTV({
   locked = false,
   onScreenClick,
   onClose,
-  refreshSec = 3,
+  refreshSec = 1.5,
+  liveSource = 'nyctmc',
 }: {
   cameraId: string | null;
   caption: TVCaption | null;
@@ -95,14 +102,15 @@ export function BodegaTV({
   onScreenClick?: () => void;
   onClose?: () => void;
   refreshSec?: number;
+  liveSource?: 'nyctmc' | 'backend';
 }) {
-  const [tick, setTick] = useState(0);
+  const [tick, setTick] = useState(() => Date.now());
   const [isFs, setIsFs] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const clock = useClock();
 
   useEffect(() => {
-    const i = setInterval(() => setTick((t) => t + 1), refreshSec * 1000);
+    const i = setInterval(() => setTick(Date.now()), refreshSec * 1000);
     return () => clearInterval(i);
   }, [refreshSec]);
 
@@ -199,10 +207,15 @@ export function BodegaTV({
               <>
                 <img
                   key={`tv-${cameraId}-${tick}`}
-                  src={apiUrl(`/api/cameras/${cameraId}/snapshot.jpg?t=${tick}`)}
+                  src={
+                    liveSource === 'nyctmc'
+                      ? NYCTMC_IMG(cameraId, tick)
+                      : apiUrl(`/api/cameras/${cameraId}/snapshot.jpg?t=${tick}`)
+                  }
                   alt={caption.title}
                   className="w-full bg-black block"
                   style={{ minHeight: screenMinH, objectFit: 'cover' }}
+                  referrerPolicy="no-referrer"
                   onError={(e) => {
                     (e.currentTarget as HTMLImageElement).style.opacity = '0.2';
                   }}

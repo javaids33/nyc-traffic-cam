@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Map as MapLibre, NavigationControl } from 'react-map-gl/maplibre';
-import { DeckGL } from '@deck.gl/react';
-import { FlyToInterpolator } from '@deck.gl/core';
+import { Map as MapLibre, NavigationControl, useControl, type MapRef } from 'react-map-gl/maplibre';
 import { ScatterplotLayer } from '@deck.gl/layers';
 import { HeatmapLayer } from '@deck.gl/aggregation-layers';
+import { MapboxOverlay, type MapboxOverlayProps } from '@deck.gl/mapbox';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Tv, X } from 'lucide-react';
 
 import { apiUrl, fetchAlerts, fetchCameras, fetchStats, openAlertSocket } from './api';
 import type { Alert, Camera, Stats } from './types';
-import { BodegaAwning, BodegaTV, CHANNEL_LINEUP, StreetFauna, useClock as useSharedClock, type TVCaption } from './bodega-tv';
-import { QuarterStash, RollingQuarter } from './quarter';
+import { BodegaAwning, BodegaTV, CHANNEL_LINEUP, useClock as useSharedClock, type TVCaption } from './bodega-tv';
+import { QuarterIcon, useQuarters, RollingQuarter } from './quarter';
+
+function DeckOverlay(props: MapboxOverlayProps) {
+  const overlay = useControl(() => new MapboxOverlay(props));
+  overlay.setProps(props);
+  return null;
+}
 
 const NYC_VIEW = { longitude: -73.97, latitude: 40.74, zoom: 10.8, pitch: 0, bearing: 0 };
 
@@ -69,24 +74,12 @@ export default function Dashboard() {
   useEffect(() => {
     lofiModeRef.current = lofiMode;
   }, [lofiMode]);
-  const viewRef = useRef(NYC_VIEW);
-  const [viewState, setViewState] = useState<typeof NYC_VIEW & {
-    transitionDuration?: number;
-    transitionInterpolator?: FlyToInterpolator;
-  }>(NYC_VIEW);
+  const mapRef = useRef<MapRef | null>(null);
 
   const flyTo = useCallback((lng: number, lat: number, zoom = 15.5) => {
-    const next = {
-      longitude: lng,
-      latitude: lat,
-      zoom,
-      pitch: 35,
-      bearing: 0,
-      transitionDuration: 2200,
-      transitionInterpolator: new FlyToInterpolator({ speed: 1.5, curve: 1.4 }),
-    };
-    viewRef.current = { longitude: lng, latitude: lat, zoom, pitch: 35, bearing: 0 };
-    setViewState(next);
+    const m = mapRef.current?.getMap();
+    if (!m) return;
+    m.flyTo({ center: [lng, lat], zoom, pitch: 35, bearing: 0, duration: 2200, essential: true });
   }, []);
 
   useEffect(() => {
@@ -233,49 +226,44 @@ export default function Dashboard() {
       />
 
       <div className="flex-1 relative">
-        <DeckGL
-          viewState={viewState}
-          controller
-          layers={[heatLayer, camerasLayer]}
-          onViewStateChange={(p) => {
-            viewRef.current = p.viewState as typeof NYC_VIEW;
-            setViewState(p.viewState as typeof NYC_VIEW);
-          }}
-          getTooltip={({ object }) => {
-            if (!object) return null;
-            const cam = object as Camera;
-            return {
-              text:
-                `${cam.name ?? cam.id}\n` +
-                `SEV ${cam.active_severity ?? '—'}  Δ ${cam.last_diff?.toFixed(2) ?? '—'}\n` +
-                `LAST POLL ${fmtAge(cam.last_polled_at)} ago`,
-              style: {
-                background: '#0B0F14',
-                color: '#E5EBF0',
-                fontFamily: '"IBM Plex Mono", monospace',
-                fontSize: '11px',
-                padding: '6px 8px',
-                border: '1px solid rgba(255,255,255,0.16)',
-                borderRadius: '0',
-              },
-            };
-          }}
+        <MapLibre
+          ref={mapRef}
+          initialViewState={NYC_VIEW}
+          mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+          attributionControl={false}
+          style={{ position: 'absolute', inset: 0 }}
         >
-          <MapLibre
-            mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-            attributionControl={false}
-          >
-            <NavigationControl position="bottom-right" />
-          </MapLibre>
-        </DeckGL>
+          <DeckOverlay
+            interleaved
+            layers={[heatLayer, camerasLayer]}
+            getTooltip={({ object }) => {
+              if (!object) return null;
+              const cam = object as Camera;
+              return {
+                text:
+                  `${cam.name ?? cam.id}\n` +
+                  `SEV ${cam.active_severity ?? '—'}  Δ ${cam.last_diff?.toFixed(2) ?? '—'}\n` +
+                  `LAST POLL ${fmtAge(cam.last_polled_at)} ago`,
+                style: {
+                  background: '#0B0F14',
+                  color: '#E5EBF0',
+                  fontFamily: '"IBM Plex Mono", monospace',
+                  fontSize: '11px',
+                  padding: '6px 8px',
+                  border: '1px solid rgba(255,255,255,0.16)',
+                  borderRadius: '0',
+                },
+              };
+            }}
+          />
+          <NavigationControl position="bottom-right" />
+        </MapLibre>
 
         <Legend />
+
+        <AlertsRail alerts={alerts} onPick={handleAlertClick} />
       </div>
 
-      <AlertsRail alerts={alerts} onPick={handleAlertClick} />
-
-      <StreetFauna />
-      <QuarterStash />
       <RollingQuarter />
 
       {lofiMode && (
@@ -328,6 +316,7 @@ function Header({
   const ss = String(clock.getUTCSeconds()).padStart(2, '0');
   const polled = stats?.cameras_polled ?? 0;
   const total = stats?.cameras_online ?? cameras.length;
+  const { count: quarters } = useQuarters();
 
   return (
     <header className="border-b border-[var(--c-border-strong)] bg-[var(--c-surface)]/95 backdrop-blur">
@@ -347,6 +336,13 @@ function Header({
           <span className="uppercase tracking-widest">UTC</span>
           <span className="display text-[26px] leading-none text-[var(--c-text)]">
             {hh}<span className="text-[var(--c-text-dim)]">:</span>{mm}<span className="text-[var(--c-text-dim)]">:</span>{ss}
+          </span>
+          <span
+            className="hidden sm:inline-flex items-center gap-1 text-[10px] tabular text-[var(--c-text-mid)] uppercase tracking-[0.18em]"
+            title={`Quarters: ${quarters}`}
+          >
+            <QuarterIcon size={14} />
+            <span className="text-[#FFD600]">×{quarters}</span>
           </span>
           <a
             href="/"
@@ -435,7 +431,7 @@ function AlertsRail({ alerts, onPick }: { alerts: Alert[]; onPick: (a: Alert) =>
       >
         {open ? '▼ HIDE' : `▲ ${active.length} ALERTS`}
       </button>
-    <aside className={`fixed md:absolute right-0 top-auto md:top-[88px] bottom-0 w-full md:w-[380px] h-[55vh] md:h-auto bg-[var(--c-surface)]/95 backdrop-blur border-l border-[var(--c-border-strong)] flex flex-col z-30 transition-transform ${open ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
+    <aside className={`fixed md:absolute right-0 top-auto md:top-0 bottom-0 w-full md:w-[380px] h-[55vh] md:h-auto bg-[var(--c-surface)]/95 backdrop-blur border-l border-[var(--c-border-strong)] flex flex-col z-30 transition-transform ${open ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
       <div className="px-3 py-2 border-b border-[var(--c-border)] flex items-baseline justify-between">
         <div className="flex items-baseline gap-2">
           <span className="text-[9px] uppercase tracking-[0.18em] text-[var(--c-text-dim)]">FEED</span>
