@@ -63,12 +63,25 @@ One-time data jobs (run from repo root):
 .venv/bin/python -m server.sync_cameras                 # refresh src/cameras.json from NYCTMC GraphQL
 .venv/bin/python -m server.check_cameras --concurrency 24
                                                         # probe every cam, write data/cam_health.json + src/cam-health.json
+.venv/bin/python -m server.poi_classify_local --limit 5 --dry-run
+                                                        # smoke test: prints labels for 5 cams to stdout, NO file writes
 .venv/bin/python -m server.poi_classify_local --resume  # classify cams via LOCAL Ollama vision model
                                                         # → writes src/cam-pois.json (lights up /poi page)
                                                         # default model: llama3.2-vision (needs Ollama ≥ 0.5.13)
                                                         # fallback: --model llava:7b on older Ollama
 .venv/bin/python -m server.poi_classify --resume        # same job, but cloud Anthropic API (needs ANTHROPIC_API_KEY)
 ```
+
+Both classifiers share a single source of truth at `server/poi_taxonomy.py`
+which defines the prompt, the controlled vocabulary, and the parser. The
+on-disk schema (`data/cam_pois.json`, `src/cam-pois.json`) is a strict
+superset of the legacy `{poi, category, description, confidence}` shape —
+the existing /poi page keeps working. New structured fields per cam:
+`image_usable`, `scene` (highway/bridge/tunnel/intersection/boulevard/
+residential/skyline/other), `skyline_visible`, `sun_glare`, `lens_obstruction`,
+`time_of_day`, `weather`, `congestion`, `crowd_or_event`, `event_description`,
+`landmark_name`, `confidence`. Use `--dry-run` to spot-check labels before
+running an overnight sweep.
 
 Local POI classification — preferred over the cloud path. Requires Ollama
 running locally with a vision model pulled (`ollama pull llama3.2-vision`

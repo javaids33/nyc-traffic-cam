@@ -16,8 +16,8 @@ Quickstart:
     # OR lightweight:
     ollama pull llava:7b               # ~4.7 GB
 
-    # 3. Smoke test on 5 cams:
-    .venv/bin/python -m server.poi_classify_local --limit 5
+    # 3. Smoke test on 5 cams (prints to stdout, doesn't write files):
+    .venv/bin/python -m server.poi_classify_local --limit 5 --dry-run
 
     # 4. Full sweep on all ~960 cams (resumable):
     .venv/bin/python -m server.poi_classify_local --resume
@@ -26,8 +26,9 @@ Outputs (identical schema to the Anthropic version):
     data/cam_pois.json      (full report)
     src/cam-pois.json       (frontend bundle copy)
 
-The shared schema means /poi page lights up the moment this finishes —
-no frontend changes needed.
+The shared schema is defined in server/poi_taxonomy.py — both this
+script and poi_classify.py emit identical records, so /poi page
+lights up the moment either finishes.
 
 Notes on speed: a 7B vision model on an M-series Mac runs ~3-8 s per
 image. ~960 cams ≈ 1-2 hours single-stream. Bump --concurrency if your
@@ -48,6 +49,14 @@ from typing import Any
 
 import httpx
 
+from .poi_taxonomy import (
+    PROMPT,
+    empty_error_record,
+    empty_skipped_record,
+    parse_response,
+    to_record,
+)
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 OUT_PATH = DATA_DIR / "cam_pois.json"
@@ -58,31 +67,6 @@ NYCTMC_IMAGE = "https://webcams.nyctmc.org/api/cameras/{cam_id}/image"
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 DEFAULT_MODEL = "llama3.2-vision"
-
-PROMPT = """\
-You are looking at a still frame from a NYC DOT traffic camera.
-Identify any notable visible point of interest.
-
-Categories to consider:
-- bridge          (Brooklyn, Manhattan, Williamsburg, Verrazano, GW, Queensboro, Triboro, etc.)
-- landmark        (Empire State, Statue of Liberty, Times Square, Wall St / Stock Exchange, MSG, etc.)
-- park            (Central Park, Prospect Park, Battery, Flushing Meadows)
-- waterway        (Hudson, East River, harbor, kill van kull)
-- tunnel          (Lincoln, Holland, Brooklyn-Battery, Queens-Midtown)
-- iconic          (any uniquely New York street view — elevated subway, brownstone block, etc.)
-- skyline         (sweeping cityscape view of buildings)
-- intersection    (clearly identifiable major crossing)
-
-If nothing notable is visible — just a generic street, highway shoulder, or unrecognizable scene — return null fields.
-
-Return ONE valid JSON object, no other text:
-{
-  "poi": "<name or null>",
-  "category": "<one of the categories above, or null>",
-  "description": "<8-word phrase max, or null>",
-  "confidence": <integer 0-100>
-}
-"""
 
 
 async def list_cameras(client: httpx.AsyncClient) -> list[dict[str, Any]]:
@@ -141,10 +125,9 @@ async def classify(
 ) -> dict[str, Any]:
     """Send the image to a local Ollama vision model.
 
-    Uses /api/chat with the structured-output `format: "json"` flag so
-    smaller models don't wrap the answer in markdown fences. We still
-    try to recover from "json prose" output the model occasionally
-    leaks through.
+    Uses /api/chat with structured-output `format: "json"` so smaller
+    models don't wrap the answer in markdown fences. Parsing is still
+    tolerant in case the model leaks prose.
     """
     body = {
         "model": model,
@@ -152,7 +135,9 @@ async def classify(
         "format": "json",
         "options": {
             "temperature": 0.1,   # low — we want consistent labeling
-            "num_predict": 200,   # short response
+            # The new prompt has 12 structured fields, so we need a
+            # bigger response budget than the old 4-field prompt.
+            "num_predict": 400,
         },
         "messages": [
             {
@@ -166,25 +151,7 @@ async def classify(
     r.raise_for_status()
     msg = r.json()
     text = (msg.get("message", {}) or {}).get("content", "") or ""
-    text = text.strip()
-    # Belt-and-suspenders: strip ```json fences if a stubborn model used them.
-    if text.startswith("```"):
-        text = text.strip("`")
-        if text.lower().startswith("json"):
-            text = text[4:].strip()
-    try:
-        out = json.loads(text)
-    except json.JSONDecodeError:
-        return {
-            "poi": None, "category": None, "description": None,
-            "confidence": 0, "_parse_error": text[:160],
-        }
-    return {
-        "poi": out.get("poi"),
-        "category": out.get("category"),
-        "description": out.get("description"),
-        "confidence": int(out.get("confidence", 0) or 0),
-    }
+    return parse_response(text)
 
 
 def _write(cameras: dict[str, Any], model: str) -> None:
@@ -198,17 +165,49 @@ def _write(cameras: dict[str, Any], model: str) -> None:
     FRONTEND_OUT.write_text(json.dumps(payload, indent=2))
 
 
+def _print_one(cam_id: str, name: str, rec: dict[str, Any]) -> None:
+    """Stdout summary for --dry-run smoke testing."""
+    flags = []
+    if not rec.get("image_usable", True):
+        flags.append("UNUSABLE")
+    if rec.get("sun_glare"):
+        flags.append("glare")
+    if rec.get("lens_obstruction"):
+        flags.append("lens")
+    if rec.get("crowd_or_event"):
+        flags.append("EVENT")
+    if rec.get("skyline_visible"):
+        flags.append("skyline")
+    flag_str = f" [{','.join(flags)}]" if flags else ""
+
+    extras = []
+    if rec.get("landmark_name"):
+        extras.append(f"landmark={rec['landmark_name']!r}")
+    if rec.get("event_description"):
+        extras.append(f"event={rec['event_description']!r}")
+
+    print(
+        f"  {cam_id[:8]}  {name[:38]:38s}  "
+        f"scene={rec.get('scene'):12s}  "
+        f"{rec.get('time_of_day'):4s}  {rec.get('weather'):5s}  "
+        f"cong={rec.get('congestion'):6s}  "
+        f"conf={rec.get('confidence'):3d}{flag_str}"
+        + (f"  {' '.join(extras)}" if extras else "")
+    )
+
+
 async def run(
     limit: int | None,
     resume: bool,
     concurrency: int,
     ollama_url: str,
     model: str,
+    dry_run: bool,
 ) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     existing: dict[str, Any] = {}
-    if resume and OUT_PATH.exists():
+    if resume and OUT_PATH.exists() and not dry_run:
         try:
             existing = json.loads(OUT_PATH.read_text()).get("cameras", {})
             logging.info("resume: %d cameras already classified", len(existing))
@@ -217,13 +216,22 @@ async def run(
 
     async with httpx.AsyncClient() as http:
         await preflight(http, ollama_url, model)
+        # Need a names lookup for the dry-run printout — pull from the
+        # local cameras.json since the GraphQL response only has lat/lng/id.
         cams = await list_cameras(http)
+        if dry_run:
+            try:
+                src_meta = json.loads((ROOT / "src" / "cameras.json").read_text())
+                names = {c["id"]: c.get("name", "") for c in src_meta.get("cameras", [])}
+            except Exception:
+                names = {}
+
         if limit:
             cams = cams[:limit]
         todo = [c for c in cams if c["id"] not in existing]
         logging.info(
-            "classifying %d cameras (skipping %d already done · concurrency=%d)",
-            len(todo), len(cams) - len(todo), concurrency,
+            "classifying %d cameras (skipping %d already done · concurrency=%d · dry_run=%s)",
+            len(todo), len(cams) - len(todo), concurrency, dry_run,
         )
 
         sem = asyncio.Semaphore(concurrency)
@@ -237,22 +245,21 @@ async def run(
             async with sem:
                 img = await fetch_image_b64(http, cid)
                 if not img:
-                    results[cid] = {
-                        "poi": None, "category": None, "description": None,
-                        "confidence": 0, "_skipped": "no_image",
-                    }
+                    rec = empty_skipped_record("no_image")
                 else:
                     try:
-                        out = await classify(http, img, ollama_url, model)
+                        parsed = await classify(http, img, ollama_url, model)
+                        rec = to_record(
+                            parsed,
+                            lat=cam.get("latitude"),
+                            lng=cam.get("longitude"),
+                        )
                     except Exception as e:
-                        out = {
-                            "poi": None, "category": None, "description": None,
-                            "confidence": 0, "_error": str(e)[:160],
-                        }
-                    out["_lat"] = cam.get("latitude")
-                    out["_lng"] = cam.get("longitude")
-                    results[cid] = out
+                        rec = empty_error_record(str(e))
+                results[cid] = rec
             done += 1
+            if dry_run:
+                _print_one(cid, names.get(cid, ""), rec)
             if done % 10 == 0:
                 elapsed = time.monotonic() - started
                 rate = done / max(elapsed, 0.01)
@@ -261,19 +268,37 @@ async def run(
                     "  progress: %d/%d · %.1fs/cam · ~%.0fs left",
                     done, len(todo), 1 / max(rate, 0.01), remaining,
                 )
-                _write(results, model)
+                if not dry_run:
+                    _write(results, model)
 
         await asyncio.gather(*(one(c) for c in todo))
-        _write(results, model)
 
-        # Tally what we got
-        by_cat: dict[str, int] = {}
+        # Tally what we got — useful regardless of dry-run.
+        by_scene: dict[str, int] = {}
+        usable = 0
+        events = 0
+        skyline = 0
         for v in results.values():
-            cat = v.get("category") or "_none"
-            by_cat[cat] = by_cat.get(cat, 0) + 1
-        logging.info("done — %d entries, by category: %s", len(results), by_cat)
-        logging.info("wrote %s", OUT_PATH)
-        logging.info("wrote %s", FRONTEND_OUT)
+            scene = v.get("scene") or "_none"
+            by_scene[scene] = by_scene.get(scene, 0) + 1
+            if v.get("image_usable"):
+                usable += 1
+            if v.get("crowd_or_event"):
+                events += 1
+            if v.get("skyline_visible"):
+                skyline += 1
+        logging.info(
+            "done — %d entries · usable=%d · events=%d · skyline=%d",
+            len(results), usable, events, skyline,
+        )
+        logging.info("  by scene: %s", by_scene)
+
+        if dry_run:
+            logging.info("dry-run: nothing written to disk")
+        else:
+            _write(results, model)
+            logging.info("wrote %s", OUT_PATH)
+            logging.info("wrote %s", FRONTEND_OUT)
 
 
 def main() -> None:
@@ -284,6 +309,7 @@ def main() -> None:
     p.add_argument("--concurrency", type=int, default=1, help="Parallel inference requests (default 1; Ollama serializes them anyway).")
     p.add_argument("--ollama-url", default=DEFAULT_OLLAMA_URL, help=f"Ollama HTTP base URL (default: {DEFAULT_OLLAMA_URL}).")
     p.add_argument("--model", default=DEFAULT_MODEL, help=f"Ollama model tag (default: {DEFAULT_MODEL}).")
+    p.add_argument("--dry-run", action="store_true", help="Smoke test mode: print each result, don't write files.")
     args = p.parse_args()
     asyncio.run(run(
         limit=args.limit,
@@ -291,6 +317,7 @@ def main() -> None:
         concurrency=args.concurrency,
         ollama_url=args.ollama_url,
         model=args.model,
+        dry_run=args.dry_run,
     ))
 
 
