@@ -13,22 +13,19 @@ export type Station = {
   url: string;
 };
 
+// Verified live 2026-04-27 — every URL here returned 200 + valid MP3/AAC
+// frame data on probe. Stations that 404'd, lost their cert, or had their
+// hostname go away (WNYC-AM, WBGO, WFUV, WBAI, WKCR, WSOU, The Lot, Jazz24)
+// were removed. If you re-add a station, probe its stream first.
 export const STATIONS: Station[] = [
   // ── nyc city radio
   { id: 'wnyc-fm',  call: 'WNYC',  freq: '93.9 FM',     vibe: 'public radio · news · talk',          url: 'https://fm939.wnyc.org/wnycfm' },
-  { id: 'wnyc-am',  call: 'WNYC',  freq: '820 AM',      vibe: 'spoken word · interviews',            url: 'https://am820.wnyc.org/wnycam' },
-  { id: 'wbgo',     call: 'WBGO',  freq: '88.3 FM',     vibe: 'jazz · 24/7',                          url: 'https://wbgo.streamguys1.com/wbgo128' },
   { id: 'wqxr',     call: 'WQXR',  freq: '105.9 FM',    vibe: 'classical',                            url: 'https://stream.wqxr.org/wqxr' },
-  { id: 'wfuv',     call: 'WFUV',  freq: '90.7 FM',     vibe: 'fordham · adult album alternative',    url: 'https://onair.wfuv.org/onair-hi.mp3' },
-  { id: 'wbai',     call: 'WBAI',  freq: '99.5 FM',     vibe: 'pacifica · community',                 url: 'https://wbai.streamguys1.com/wbai' },
-  { id: 'wkcr',     call: 'WKCR',  freq: '89.9 FM',     vibe: 'columbia · jazz / specialty',          url: 'https://wkcr-secure.cc.columbia.edu:8000/listen' },
   { id: 'wfmu',     call: 'WFMU',  freq: '91.1 FM',     vibe: 'freeform · weird in the best way',     url: 'https://stream0.wfmu.org/freeform-128k.mp3' },
-  { id: 'wsou',     call: 'WSOU',  freq: '89.5 FM',     vibe: 'seton hall · loud rock',               url: 'https://stream.wsou.net/wsou.mp3' },
-  { id: 'lot',      call: 'LOT',   freq: 'GREENPOINT',  vibe: 'brooklyn indie · live djs',            url: 'https://thelotradio.out.airtime.pro/thelotradio_a' },
   { id: 'nts1',     call: 'NTS',   freq: 'CH. 1',       vibe: 'global · curated · london ↔ ny',       url: 'https://stream-relay-geo.ntslive.net/stream' },
   { id: 'nts2',     call: 'NTS',   freq: 'CH. 2',       vibe: 'global · curated · b-side',            url: 'https://stream-relay-geo.ntslive.net/stream2' },
   { id: 'kexp',     call: 'KEXP',  freq: '90.3 SEA',    vibe: 'seattle · indie · sister station',     url: 'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
-  // ── lofi & late-night corners (SomaFM, Lo-Fi Girl, jazz cafés)
+  // ── lofi & late-night corners (SomaFM, Lo-Fi Girl, etc.)
   // SomaFM is a free, listener-supported public stream service — these
   // CHs lean lounge / chill / late-cab-ride. NYC night vibes.
   { id: 'soma-grovesalad', call: 'SOMA', freq: 'GRV SLD',  vibe: 'groove salad · downtempo electronica', url: 'https://ice2.somafm.com/groovesalad-128-mp3' },
@@ -40,7 +37,6 @@ export const STATIONS: Station[] = [
   { id: 'soma-chillits',   call: 'SOMA', freq: 'CHILL.IT', vibe: 'illinois street lounge · easy listen', url: 'https://ice2.somafm.com/illstreet-128-mp3' },
   { id: 'soma-deepspace',  call: 'SOMA', freq: 'DEEP-1',   vibe: 'deep space one · ambient lofi',        url: 'https://ice2.somafm.com/deepspaceone-128-mp3' },
   { id: 'lofi-girl',       call: 'LOFI', freq: 'GIRL.FM',  vibe: 'lo-fi beats to study/relax to',        url: 'https://play.streamafrica.net/lofiradio' },
-  { id: 'jazz24',          call: 'JZ24', freq: '24/7',     vibe: 'jazz24 · cool jazz at any hour',       url: 'https://live.streamguys1.com/jazz24-mp3' },
   { id: 'radioparadise-mellow', call: 'RP',  freq: 'MELLOW', vibe: 'radio paradise mellow · late drive', url: 'https://stream.radioparadise.com/mellow-128' },
   { id: 'kxlu',            call: 'KXLU', freq: '88.9 LA',  vibe: 'la college radio · jazz hours',        url: 'https://kxlu.streamguys1.com/kxlu-hi' },
 ];
