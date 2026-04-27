@@ -10,7 +10,6 @@ import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import confetti from 'canvas-confetti';
 import { RoughNotation } from 'react-rough-notation';
-import { apiUrl } from './api';
 
 /* CartoDB Voyager — cream-paper base, soft blue water, readable street
    labels. Way friendlier than the near-black "dark_all" raster, which
@@ -218,7 +217,9 @@ export default function GeoGuessr() {
     let stop = false;
     (async () => {
       try {
-        const r = await fetch(apiUrl(`/api/challenges/${initial.hash}`));
+        // Same-origin: handled by a CF Pages Function backed by KV.
+        // No Fly involvement, sub-100ms reads from any continent.
+        const r = await fetch(`/api/challenges/${initial.hash}`);
         if (!r.ok) {
           if (stop) return;
           setChallengeError(
@@ -734,7 +735,8 @@ function Summary({
     setShareMinting(true);
     setShareError(null);
     try {
-      const r = await fetch(apiUrl('/api/challenges'), {
+      // Same-origin POST → CF Pages Function → KV.
+      const r = await fetch('/api/challenges', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

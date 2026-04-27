@@ -1,0 +1,61 @@
+name: Sync cameras.json
+
+on:
+  # Every Monday at 09:15 UTC (~5 AM ET) — quiet upstream hour.
+  schedule:
+    - cron: "15 9 * * 1"
+  workflow_dispatch:
+
+# Single in-flight sync at a time; if a manual run overlaps the cron,
+# keep the most recent.
+concurrency:
+  group: sync-cameras
+  cancel-in-progress: true
+
+# We need write access to push the regenerated JSON back to main.
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: nyc-traffic-cam
+
+jobs:
+  sync:
+    name: Pull NYC DOT camera list → src/cameras.json
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: nyc-traffic-cam/server/requirements.txt
+      - name: Install
+        run: pip install -r server/requirements.txt
+      - name: Run sync
+        run: python -m server.sync_cameras
+      - name: Commit if changed
+        # Only commit when the JSON actually changed. The script
+        # rewrites the file every run (timestamp updates), so we
+        # diff content lines instead of just `git diff --quiet`.
+        run: |
+          if git diff --quiet -- src/cameras.json; then
+            echo "no upstream changes; skipping commit"
+            exit 0
+          fi
+          # Filter out the generated_at-only changes — those alone are
+          # not worth the commit churn. We do this with a count-based
+          # heuristic: if more than 2 lines changed, real cam data
+          # moved; if ≤2 lines, only the timestamp + count blipped.
+          changed=$(git diff --numstat -- src/cameras.json | awk '{print $1+$2}')
+          if [ "${changed:-0}" -le 2 ]; then
+            echo "only timestamp changed (${changed} lines); skipping commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/cameras.json
+          git commit -m "data: weekly cameras.json sync"
+          git push

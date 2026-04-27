@@ -1,4 +1,5 @@
-import type { Alert, Camera, Stats, WsEvent } from './types';
+import type { Camera } from './types';
+import baked from './cameras.json';
 
 /* Pick the API base.
    - If VITE_BACKEND_URL was provided at build time, always honor it.
@@ -6,7 +7,12 @@ import type { Alert, Camera, Stats, WsEvent } from './types';
      the dev proxy (`/api → http://127.0.0.1:8000`).
    - On any other host, fall back to the production Fly backend so the
      deployed Pages site is never broken just because the build env var
-     wasn't piped through. */
+     wasn't piped through.
+
+   Most of the site doesn't need this anymore — see the hybrid migration
+   notes in CLAUDE.md. fetchCameras() reads from a build-time JSON,
+   challenges live in CF KV via Pages Functions. The Fly backend is
+   only on the request path for fallbacks. */
 const FLY_BACKEND = 'https://nyc-cam-monitor.fly.dev';
 const ENV_BASE = (import.meta.env.VITE_BACKEND_URL ?? '').replace(/\/$/, '');
 const isLocal = typeof window !== 'undefined'
@@ -15,68 +21,45 @@ const BACKEND_BASE: string = ENV_BASE || (isLocal ? '' : FLY_BACKEND);
 
 export const apiUrl = (path: string): string => `${BACKEND_BASE}${path}`;
 
+/* Camera list — baked into the bundle by `python -m server.sync_cameras`.
+   The JSON ships at build time so the page renders instantly with the
+   full list, no spinner. Run the sync script weekly (or via the GH
+   Actions cron at .github/workflows/sync-cameras.yml) to keep it fresh
+   when NYC DOT adds/removes cameras. */
+type BakedCamera = {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  is_online: boolean;
+};
+type BakedPayload = {
+  generated_at: number;
+  count: number;
+  cameras: BakedCamera[];
+};
+const BAKED = baked as BakedPayload;
+
 export async function fetchCameras(): Promise<Camera[]> {
-  const r = await fetch(apiUrl('/api/cameras'));
-  if (!r.ok) throw new Error(`cameras: ${r.status}`);
-  return r.json();
+  // Async signature kept for API stability — callers already use
+  // .then() / await. The actual lookup is synchronous from the import.
+  return BAKED.cameras.map((c) => ({
+    id: c.id,
+    name: c.name || null,
+    lat: c.lat,
+    lng: c.lng,
+    // Camera type uses number-as-bool (legacy from the SQLite schema)
+    is_online: c.is_online ? 1 : 0,
+    last_polled_at: null,
+    last_image_at: null,
+    consecutive_failures: 0,
+    last_diff: null,
+    active_severity: null,
+  }));
 }
 
-export async function fetchAlerts(opts?: { activeOnly?: boolean; sinceSeconds?: number }): Promise<Alert[]> {
-  const params = new URLSearchParams();
-  if (opts?.activeOnly) params.set('active_only', 'true');
-  if (opts?.sinceSeconds) params.set('since', String(Math.floor(Date.now() / 1000) - opts.sinceSeconds));
-  const r = await fetch(apiUrl('/api/alerts?' + params.toString()));
-  if (!r.ok) throw new Error(`alerts: ${r.status}`);
-  return r.json();
-}
-
-export async function fetchStats(): Promise<Stats> {
-  const r = await fetch(apiUrl('/api/stats'));
-  if (!r.ok) throw new Error(`stats: ${r.status}`);
-  return r.json();
-}
-
-export function openAlertSocket(onEvent: (e: WsEvent) => void): () => void {
-  // If BACKEND_BASE is set (production), build the absolute ws(s) URL from it.
-  // Otherwise use the current page host (Vite proxy in dev).
-  let url: string;
-  if (BACKEND_BASE) {
-    url = BACKEND_BASE.replace(/^http/, 'ws') + '/ws/alerts';
-  } else {
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    url = `${proto}//${window.location.host}/ws/alerts`;
-  }
-
-  let ws: WebSocket | null = null;
-  let stopped = false;
-  let backoff = 1000;
-
-  const connect = () => {
-    if (stopped) return;
-    ws = new WebSocket(url);
-    ws.onopen = () => {
-      backoff = 1000;
-    };
-    ws.onmessage = (evt) => {
-      try {
-        const data = JSON.parse(evt.data) as WsEvent;
-        onEvent(data);
-      } catch {
-        /* ignore malformed */
-      }
-    };
-    ws.onclose = () => {
-      if (!stopped) {
-        setTimeout(connect, backoff);
-        backoff = Math.min(backoff * 2, 15000);
-      }
-    };
-    ws.onerror = () => ws?.close();
-  };
-  connect();
-
-  return () => {
-    stopped = true;
-    ws?.close();
-  };
+/* When the cameras bundle was generated. Useful in About / Footer for
+   "list as of YYYY-MM-DD" attribution. */
+export function camerasGeneratedAt(): Date {
+  return new Date(BAKED.generated_at * 1000);
 }
