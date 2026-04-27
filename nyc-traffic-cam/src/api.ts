@@ -1,8 +1,17 @@
 import type { Alert, Camera, Stats, WsEvent } from './types';
 
-// In dev (npm run dev) BACKEND_BASE is "" → requests go through the Vite proxy.
-// In production (Pages build) BACKEND_BASE = VITE_BACKEND_URL → absolute Fly URL.
-const BACKEND_BASE: string = (import.meta.env.VITE_BACKEND_URL ?? '').replace(/\/$/, '');
+/* Pick the API base.
+   - If VITE_BACKEND_URL was provided at build time, always honor it.
+   - On localhost (Vite dev server), fall back to "" so requests go through
+     the dev proxy (`/api → http://127.0.0.1:8000`).
+   - On any other host, fall back to the production Fly backend so the
+     deployed Pages site is never broken just because the build env var
+     wasn't piped through. */
+const FLY_BACKEND = 'https://nyc-cam-monitor.fly.dev';
+const ENV_BASE = (import.meta.env.VITE_BACKEND_URL ?? '').replace(/\/$/, '');
+const isLocal = typeof window !== 'undefined'
+  && /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(window.location.hostname);
+const BACKEND_BASE: string = ENV_BASE || (isLocal ? '' : FLY_BACKEND);
 
 export const apiUrl = (path: string): string => `${BACKEND_BASE}${path}`;
 
