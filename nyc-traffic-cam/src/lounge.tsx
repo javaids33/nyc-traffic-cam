@@ -173,7 +173,7 @@ export default function Lounge() {
       cameraId: c.id,
       caption: {
         title: c.name ?? c.id,
-        subtitle: 'pure roulette',
+        subtitle: null,
         meta: `ROULETTE · ${rough_borough(c.lat, c.lng)}`,
         coords: { lat: c.lat, lng: c.lng },
       },
@@ -529,54 +529,127 @@ function ScratchOffs() {
 }
 
 function CornerBrasstack() {
-  // Easter-egg corner — Greek "We Are Happy To Serve You" coffee cup with steam.
+  // The Anthora — "We Are Happy To Serve You" Greek diner cup. Doubles
+  // as the tip jar: clicking opens buymeacoffee.com/sjava in a new tab.
   return (
-    <div className="absolute right-6 bottom-32 z-10 pointer-events-none hidden md:block" aria-hidden>
-      {/* steam */}
-      <div className="relative h-10 w-12 mx-auto">
-        {[0, 1, 2].map((i) => (
+    <a
+      href="https://buymeacoffee.com/sjava"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group fixed right-4 bottom-24 z-30 hidden md:block transition-transform hover:scale-[1.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+      title="like the site? buy me a coffee — anthora optional"
+      aria-label="Buy me a coffee — opens in a new tab"
+    >
+      {/* steam — three plumes drifting up from the cup */}
+      <div className="relative h-14 w-24 mx-auto pointer-events-none" aria-hidden>
+        {[0, 1, 2, 3].map((i) => (
           <span
             key={i}
-            className="absolute bottom-0 left-1/2 w-6 h-8 rounded-full"
+            className="absolute bottom-0 w-6 h-12 rounded-full"
             style={{
+              left: `${20 + i * 18}%`,
               background:
-                'radial-gradient(ellipse at center, rgba(220,225,235,0.55), rgba(220,225,235,0))',
+                'radial-gradient(ellipse at center, rgba(235,238,245,0.7), rgba(235,238,245,0))',
               transform: 'translateX(-50%)',
-              animation: `steam-drift ${4 + i}s ease-out infinite`,
-              animationDelay: `${i * 1.3}s`,
+              animation: `steam-drift ${3.5 + (i % 2) * 1.4}s ease-out infinite`,
+              animationDelay: `${i * 0.9}s`,
+              filter: 'blur(0.6px)',
             }}
           />
         ))}
       </div>
-      <svg viewBox="0 0 80 90" width="78" height="86">
-        {/* cup body (taper) */}
+      <svg viewBox="0 0 100 130" width="120" height="156" aria-hidden>
         <defs>
-          <linearGradient id="cupBody" x1="0" x2="1">
+          <linearGradient id="anthoraSide" x1="0" x2="1">
             <stop offset="0%" stopColor="#0a3a82" />
-            <stop offset="100%" stopColor="#0049b0" />
+            <stop offset="50%" stopColor="#0049b0" />
+            <stop offset="100%" stopColor="#06306a" />
           </linearGradient>
+          <linearGradient id="anthoraShade" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.08)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.25)" />
+          </linearGradient>
+          <pattern id="meander" x="0" y="0" width="14" height="6" patternUnits="userSpaceOnUse">
+            <path d="M 0 4 L 4 4 L 4 1 L 8 1 L 8 4 L 12 4" stroke="#fff" strokeWidth="0.9" fill="none" />
+          </pattern>
         </defs>
-        <path d="M 10 28 L 18 86 L 62 86 L 70 28 Z" fill="#fff" stroke="#0a3a82" strokeWidth="1.5" />
-        {/* blue band */}
-        <path d="M 12.6 38 L 17.6 76 L 62.4 76 L 67.4 38 Z" fill="url(#cupBody)" />
-        {/* gold meander (super simplified) */}
-        <g stroke="#FFD600" strokeWidth="1" fill="none" opacity="0.95">
-          <path d="M 18 50 L 22 50 L 22 46 L 26 46 L 26 50 L 30 50" />
-          <path d="M 34 50 L 38 50 L 38 46 L 42 46 L 42 50 L 46 50" />
-          <path d="M 50 50 L 54 50 L 54 46 L 58 46 L 58 50 L 62 50" />
-        </g>
-        {/* "WE ARE HAPPY TO SERVE YOU" text — tiny */}
-        <text x="40" y="64" textAnchor="middle" fontSize="3.5" fill="#fff" fontFamily="Arial, sans-serif" letterSpacing="0.4">
+
+        {/* cup body — slight taper */}
+        <path d="M 12 22 L 22 124 L 78 124 L 88 22 Z" fill="url(#anthoraSide)" stroke="#04204c" strokeWidth="1" />
+
+        {/* white inner shield panel */}
+        <path
+          d="M 28 36 Q 30 32 34 32 L 66 32 Q 70 32 72 36 L 70 96 Q 68 100 64 100 L 36 100 Q 32 100 30 96 Z"
+          fill="#fdfdfb"
+          stroke="#04204c"
+          strokeWidth="0.6"
+        />
+
+        {/* Greek meander border — top */}
+        <rect x="14" y="30" width="72" height="4" fill="url(#meander)" />
+        {/* Greek meander border — bottom */}
+        <rect x="14" y="116" width="72" height="4" fill="url(#meander)" />
+
+        {/* "WE ARE HAPPY / TO SERVE YOU" — orange tabloid lettering */}
+        <text x="50" y="49" textAnchor="middle" fontSize="6.5" fontWeight="700" fontFamily="Anton, Impact, 'Bungee', sans-serif" fill="#d96412" letterSpacing="0.4">
           WE ARE HAPPY
         </text>
-        <text x="40" y="69" textAnchor="middle" fontSize="3.5" fill="#fff" fontFamily="Arial, sans-serif" letterSpacing="0.4">
+        <text x="50" y="58" textAnchor="middle" fontSize="6.5" fontWeight="700" fontFamily="Anton, Impact, 'Bungee', sans-serif" fill="#d96412" letterSpacing="0.4">
           TO SERVE YOU
         </text>
-        {/* lid rim */}
-        <ellipse cx="40" cy="28" rx="30" ry="5" fill="#1a1a1a" />
-        <ellipse cx="40" cy="27" rx="30" ry="4" fill="#0a3a82" />
+
+        {/* three little espresso cups with steam squiggles above each */}
+        {[34, 50, 66].map((cx, i) => (
+          <g key={i}>
+            {/* steam squiggles */}
+            <path
+              d={`M ${cx - 2} 70 q 1 -3 0 -6 q -1 -3 0 -6`}
+              stroke="#d96412"
+              strokeWidth="0.9"
+              fill="none"
+              opacity="0.85"
+            />
+            <path
+              d={`M ${cx} 71 q 1 -3 0 -6 q -1 -3 0 -6`}
+              stroke="#d96412"
+              strokeWidth="0.9"
+              fill="none"
+              opacity="0.65"
+            />
+            <path
+              d={`M ${cx + 2} 70 q 1 -3 0 -6 q -1 -3 0 -6`}
+              stroke="#d96412"
+              strokeWidth="0.9"
+              fill="none"
+              opacity="0.85"
+            />
+            {/* cup outline + saucer */}
+            <ellipse cx={cx} cy="84" rx="6.5" ry="1" fill="#d96412" opacity="0.9" />
+            <path
+              d={`M ${cx - 5} 76 L ${cx + 5} 76 L ${cx + 4} 83 L ${cx - 4} 83 Z`}
+              fill="#d96412"
+              stroke="#9c4708"
+              strokeWidth="0.4"
+            />
+            {/* handle */}
+            <path d={`M ${cx + 5} 78 q 3 0 3 3 q 0 2 -2 2`} stroke="#d96412" strokeWidth="1" fill="none" />
+          </g>
+        ))}
+
+        {/* outer shadow shading for depth */}
+        <path d="M 12 22 L 22 124 L 78 124 L 88 22 Z" fill="url(#anthoraShade)" />
+
+        {/* white rim at top */}
+        <ellipse cx="50" cy="22" rx="40" ry="6" fill="#fdfdfb" />
+        <ellipse cx="50" cy="20" rx="40" ry="5" fill="#0a3a82" />
+        <ellipse cx="50" cy="20" rx="36" ry="3.5" fill="#000814" />
+
+        {/* tiny "TIP THE COOK" overlay — only on hover */}
       </svg>
-    </div>
+      <div className="absolute -top-2 right-1 px-1.5 py-0.5 bg-[#FFD600] text-black font-bungee text-[9px] tracking-[0.16em] uppercase opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ boxShadow: '2px 2px 0 #d11a2a' }}>
+        ★ TIP $1
+      </div>
+    </a>
   );
 }
 

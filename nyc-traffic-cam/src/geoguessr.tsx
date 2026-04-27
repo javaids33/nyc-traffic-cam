@@ -9,37 +9,35 @@ import {
 import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-/* Self-contained MapLibre style backed by OSM raster tiles. We avoided
-   the cartocdn vector style because its tiles endpoint stopped serving
-   without a key in production. OSM tiles are free, ~256px raster, no
-   key required (with attribution). The paint dims them so the dark
-   chrome of the page reads through. */
+/* Self-contained MapLibre style backed by CartoDB's Dark Matter raster
+   tiles. They look way better than raw OSM for a dark site — clean
+   typography, muted streets, real water polygons. Free tier, no key,
+   CORS-friendly. */
 const OSM_STYLE: StyleSpecification = {
   version: 8,
   sources: {
-    osm: {
+    carto: {
       type: 'raster',
       tiles: [
-        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
       ],
       tileSize: 256,
-      attribution: '© OpenStreetMap contributors',
-      maxzoom: 19,
+      attribution: '© OpenStreetMap contributors © CARTO',
+      maxzoom: 20,
     },
   },
   layers: [
-    { id: 'bg', type: 'background', paint: { 'background-color': '#0a0a14' } },
+    { id: 'bg', type: 'background', paint: { 'background-color': '#0b0d12' } },
     {
-      id: 'osm',
+      id: 'carto',
       type: 'raster',
-      source: 'osm',
+      source: 'carto',
       paint: {
-        'raster-brightness-max': 0.78,
-        'raster-saturation': -0.25,
-        'raster-contrast': 0.08,
-        'raster-opacity': 0.92,
+        'raster-saturation': 0.05,
+        'raster-contrast': 0.05,
       },
     },
   ],
