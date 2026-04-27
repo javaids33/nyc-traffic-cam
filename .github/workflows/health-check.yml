@@ -1,0 +1,58 @@
+name: Health check
+
+on:
+  schedule:
+    # Hourly at :05 — GitHub's :00 cron slot is heavily oversubscribed
+    # and runs can drift 10+ minutes; :05 schedules more reliably.
+    - cron: "5 * * * *"
+  workflow_dispatch:
+
+# A queued health check shouldn't ride past the next hour's slot —
+# always let the most recent attempt run and drop the older one.
+concurrency:
+  group: health-check
+  cancel-in-progress: true
+
+permissions:
+  # We don't write anything from this job; least-privilege.
+  contents: read
+
+jobs:
+  ping:
+    name: Frontend + Backend uptime
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Frontend (Cloudflare Pages) — expect 200
+        run: |
+          set -euo pipefail
+          url="https://nyc-traffic-cam.pages.dev/"
+          # -sS: silent except errors; --max-time caps slow responses;
+          # --retry handles transient TCP hiccups without false alarms.
+          code=$(curl -sS --max-time 10 --retry 2 --retry-delay 3 \
+                  -o /dev/null -w "%{http_code}" "$url")
+          echo "  $url → $code"
+          if [ "$code" != "200" ]; then
+            echo "::error title=Frontend down::$url returned HTTP $code"
+            exit 1
+          fi
+
+      - name: Backend (Fly) — expect 200 + healthy JSON
+        run: |
+          set -euo pipefail
+          url="https://nyc-cam-monitor.fly.dev/api/health"
+          curl -sS --max-time 10 --retry 2 --retry-delay 3 \
+              -o /tmp/health.json -w "  $url → %{http_code}\n" \
+              --fail "$url" || {
+            echo "::error title=Backend down::$url did not return 200"
+            exit 1
+          }
+          # Body sanity — server explicitly returns {"ok":true,...} when
+          # the ingestor is alive. A 200 with ok=false would mean the
+          # process is up but degraded; still an alert.
+          if ! grep -q '"ok":true' /tmp/health.json; then
+            echo "::error title=Backend degraded::/api/health 200'd but ok!=true"
+            cat /tmp/health.json
+            exit 1
+          fi
+          echo "  ok"
