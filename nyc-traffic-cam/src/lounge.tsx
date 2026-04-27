@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { fetchAlerts, fetchCameras, openAlertSocket } from './api';
+import { fetchCameras } from './api';
 import type { Alert, Camera } from './types';
 import {
   BodegaAwning,
@@ -10,7 +10,7 @@ import {
 } from './bodega-tv';
 import { QuarterStash, RollingQuarter, QuarterIcon, useQuarters, HiddenCoin } from './quarter';
 import { AudioPanel } from './audio-panel';
-import { recordAlert, recordTune, loreLine } from './cam-lore';
+import { recordTune, loreLine } from './cam-lore';
 
 const ALERT_LABELS_LONG: Record<string, string> = {
   sudden_change: 'SUDDEN CHANGE',
@@ -47,7 +47,11 @@ function rough_borough(lat: number, lng: number): Borough {
 
 export default function Lounge() {
   const [cameras, setCameras] = useState<Camera[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  // Alerts pipeline disabled — keep an empty alerts array so child
+  // components that still take an `alerts` prop (ChannelGuide,
+  // CityServicesRail) gracefully render their empty states without
+  // having to be re-plumbed.
+  const alerts: Alert[] = [];
 
   const [focus, setFocus] = useState<Channel | null>(null);
   const [channelIdx, setChannelIdx] = useState(0);
@@ -64,10 +68,9 @@ export default function Lounge() {
     return !sessionStorage.getItem('nyc-cam-seen');
   });
 
-  // initial fetch
+  // initial fetch — alerts pipeline disabled, cameras only
   useEffect(() => {
     fetchCameras().then(setCameras).catch(() => {});
-    fetchAlerts({ sinceSeconds: 6 * 3600 }).then(setAlerts).catch(() => {});
   }, []);
 
   // periodic cameras refresh (status updates)
@@ -78,49 +81,11 @@ export default function Lounge() {
     return () => clearInterval(i);
   }, []);
 
-  // live alert stream
-  useEffect(() => {
-    const close = openAlertSocket((evt) => {
-      if (evt.type === 'alert_opened') {
-        recordAlert(evt.camera_id);
-      }
-      if (evt.type === 'alert_opened' || evt.type === 'alert_updated') {
-        setAlerts((prev) => {
-          const idx = prev.findIndex((a) => a.id === evt.id);
-          const merged: Alert = {
-            id: evt.id,
-            camera_id: evt.camera_id,
-            camera_name: evt.camera_name,
-            lat: evt.lat,
-            lng: evt.lng,
-            kind: evt.kind,
-            severity: evt.severity,
-            message: evt.message,
-            details: null,
-            thumbnail_b64: idx >= 0 ? prev[idx].thumbnail_b64 : null,
-            has_image: evt.has_image ?? (idx >= 0 ? prev[idx].has_image : false),
-            created_at: idx >= 0 ? prev[idx].created_at : evt.created_at ?? evt.updated_at,
-            updated_at: evt.updated_at,
-            resolved_at: null,
-            occurrence_count: evt.occurrence_count,
-          };
-          if (idx >= 0) {
-            const next = prev.slice();
-            next[idx] = merged;
-            return next;
-          }
-          return [merged, ...prev].slice(0, 200);
-        });
-      } else if (evt.type === 'alert_resolved') {
-        setAlerts((prev) =>
-          prev.map((a) =>
-            a.id === evt.alert_id ? { ...a, resolved_at: Math.floor(Date.now() / 1000) } : a,
-          ),
-        );
-      }
-    });
-    return close;
-  }, []);
+  // The live-alert websocket + alert-merge effect was removed when we
+  // retired realtime anomaly detection. ChannelGuide gracefully shows
+  // its empty state ("quiet streets · b-roll only") so the UI stays
+  // intact. To resurrect, re-import openAlertSocket / fetchAlerts and
+  // restore the merge logic.
 
   // Roulette state: just refs to the current focus and the live camera
   // pool, so surfNext doesn't need them as dependencies.
@@ -812,6 +777,14 @@ const MODES: Mode[] = [
     title: 'Mamdani Shrine',
     sub: 'civic temple · live council bills · scriptures of the platform',
     accent: '#FFD600',
+  },
+  {
+    href: '/poi',
+    badge: '🌉',
+    badgeBg: '#FF6319',
+    title: 'POI Feed',
+    sub: 'cameras with a point of interest · classified once · static',
+    accent: '#FF6319',
     cta: '★ NEW',
   },
 ];

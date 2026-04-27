@@ -1,15 +1,24 @@
-"""FastAPI app — REST + WebSocket for the dashboard frontend."""
+"""FastAPI app — REST endpoints for the dashboard frontend.
+
+Alerts pipeline disabled (2026-04). The frame-diff anomaly detector
+and the /api/alerts* + /ws/alerts surface are commented out below; the
+ingestor still runs in list-refresh-only mode so /api/cameras stays
+current. To resurrect the alerts surface, flip Ingestor's
+frame_diff_enabled back to True and uncomment the routes below.
+"""
 from __future__ import annotations
 
-import asyncio
+import asyncio  # noqa: F401  (kept for potential future async helpers)
+import json
 import logging
 import re
 import secrets
 import time
 from collections import deque
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
@@ -27,7 +36,11 @@ log = logging.getLogger("api")
 async def lifespan(app: FastAPI):
     conn = await db.connect()
     api = NycApi()
-    ingestor = Ingestor(api, conn)
+    # frame_diff_enabled=False (default): the ingestor only refreshes
+    # the cameras list every ~30 min. The per-camera fetch + diff +
+    # alerts pipeline is dormant. Camera-list freshness is what keeps
+    # /api/cameras current.
+    ingestor = Ingestor(api, conn, frame_diff_enabled=False)
     task = asyncio.create_task(_run_ingestor(ingestor))
 
     app.state.conn = conn
@@ -77,30 +90,38 @@ async def get_cameras() -> JSONResponse:
     return JSONResponse(rows)
 
 
-@app.get("/api/alerts")
-async def get_alerts(
-    active_only: bool = Query(False),
-    since: int | None = Query(None, description="unix seconds"),
-    limit: int = Query(200, le=1000),
-) -> JSONResponse:
-    if active_only:
-        rows = await db.list_active_alerts(app.state.conn)
-    else:
-        rows = await db.list_recent_alerts(app.state.conn, since_ts=since, limit=limit)
-    return JSONResponse(rows)
-
-
-@app.get("/api/alerts/{alert_id}/image.jpg")
-async def get_alert_image(alert_id: int) -> Response:
-    """Returns the JPEG that triggered this alert (or last-known frame for offline alerts)."""
-    img = await db.get_alert_image(app.state.conn, alert_id)
-    if img is None:
-        raise HTTPException(status_code=404, detail="no image for this alert")
-    return Response(
-        content=img,
-        media_type="image/jpeg",
-        headers={"Cache-Control": "public, max-age=86400, immutable"},
-    )
+# ────────────────────────────────────────────────────────────────────
+# Alerts surface — DISABLED (2026-04)
+# We replaced realtime anomaly detection with a one-time POI
+# classification pass. The /api/alerts* routes and the /ws/alerts
+# websocket below are commented out; the legacy frontend code that
+# called them no longer does. To resurrect: flip Ingestor's
+# frame_diff_enabled=True in lifespan() and uncomment.
+# ────────────────────────────────────────────────────────────────────
+#
+# @app.get("/api/alerts")
+# async def get_alerts(
+#     active_only: bool = Query(False),
+#     since: int | None = Query(None, description="unix seconds"),
+#     limit: int = Query(200, le=1000),
+# ) -> JSONResponse:
+#     if active_only:
+#         rows = await db.list_active_alerts(app.state.conn)
+#     else:
+#         rows = await db.list_recent_alerts(app.state.conn, since_ts=since, limit=limit)
+#     return JSONResponse(rows)
+#
+#
+# @app.get("/api/alerts/{alert_id}/image.jpg")
+# async def get_alert_image(alert_id: int) -> Response:
+#     img = await db.get_alert_image(app.state.conn, alert_id)
+#     if img is None:
+#         raise HTTPException(status_code=404, detail="no image for this alert")
+#     return Response(
+#         content=img,
+#         media_type="image/jpeg",
+#         headers={"Cache-Control": "public, max-age=86400, immutable"},
+#     )
 
 
 @app.get("/api/cameras/{camera_id}/snapshot.jpg")
@@ -250,18 +271,46 @@ async def get_arrivals(
     return await transit.next_arrivals(stop_id=sid, line=line_norm)
 
 
-@app.websocket("/ws/alerts")
-async def ws_alerts(ws: WebSocket) -> None:
-    await ws.accept()
-    q = hub.subscribe()
-    try:
-        await ws.send_json({"type": "hello", "metrics": hub.metrics})
-        while True:
-            msg = await q.get()
-            await ws.send_text(msg)
-    except WebSocketDisconnect:
-        pass
-    except Exception as e:
-        log.warning("ws error: %s", e)
-    finally:
-        hub.unsubscribe(q)
+# /ws/alerts — DISABLED (2026-04). See note at top of file.
+#
+# @app.websocket("/ws/alerts")
+# async def ws_alerts(ws: WebSocket) -> None:
+#     await ws.accept()
+#     q = hub.subscribe()
+#     try:
+#         await ws.send_json({"type": "hello", "metrics": hub.metrics})
+#         while True:
+#             msg = await q.get()
+#             await ws.send_text(msg)
+#     except WebSocketDisconnect:
+#         pass
+#     except Exception as e:
+#         log.warning("ws error: %s", e)
+#     finally:
+#         hub.unsubscribe(q)
+
+
+# ────────────────────────────────────────────────────────────────────
+# /api/pois — points-of-interest classification (one-time, static)
+# Camera locations don't move, so we classify each cam's most notable
+# visible landmark ONCE (via server/poi_classify.py) and serve the
+# resulting JSON statically. Cheap, no recomputation, no per-request
+# work. This endpoint is mostly a fallback — the UI imports the same
+# JSON at build time so it works fully offline / edge-only.
+# ────────────────────────────────────────────────────────────────────
+
+_POI_PATH = Path(__file__).resolve().parent.parent / "data" / "cam_pois.json"
+_POI_CACHE: dict | None = None
+
+
+@app.get("/api/pois")
+async def get_pois() -> dict:
+    global _POI_CACHE
+    if _POI_CACHE is None:
+        try:
+            _POI_CACHE = json.loads(_POI_PATH.read_text())
+        except FileNotFoundError:
+            return {"generated_at": None, "cameras": {}}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"pois: {e}")
+    return _POI_CACHE

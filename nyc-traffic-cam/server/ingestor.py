@@ -25,9 +25,22 @@ log = logging.getLogger("ingestor")
 
 
 class Ingestor:
-    def __init__(self, api: NycApi, conn: aiosqlite.Connection) -> None:
+    def __init__(
+        self,
+        api: NycApi,
+        conn: aiosqlite.Connection,
+        *,
+        frame_diff_enabled: bool = False,
+    ) -> None:
+        # frame_diff_enabled controls whether we run the per-camera
+        # fetch + diff + alerts pipeline. Disabled by default in the
+        # current site since we replaced realtime alerts with a one-time
+        # POI classification job. Flip to True to re-enable the legacy
+        # behavior (along with re-enabling the /api/alerts endpoints in
+        # main.py and rules.py wiring).
         self.api = api
         self.conn = conn
+        self.frame_diff_enabled = frame_diff_enabled
         self.cameras: dict[str, dict[str, Any]] = {}
         self.next_due: dict[str, float] = {}  # camera_id -> monotonic timestamp
         self._sem = asyncio.Semaphore(MAX_CONCURRENT_FETCHES)
@@ -107,35 +120,50 @@ class Ingestor:
 
     async def run(self) -> None:
         await self.refresh_camera_list()
-        log.info("ingestor: %d cameras loaded", len(self.cameras))
+        log.info(
+            "ingestor: %d cameras loaded (frame-diff %s)",
+            len(self.cameras),
+            "ENABLED" if self.frame_diff_enabled else "disabled — list-refresh only",
+        )
         last_refresh = time.monotonic()
 
         while not self._stop.is_set():
-            now = time.monotonic()
-            due = [cid for cid, t in self.next_due.items() if t <= now and cid in self.cameras]
-            tasks = []
-            for cid in due[:MAX_CONCURRENT_FETCHES * 4]:  # cap per-tick batch
-                self.next_due[cid] = now + self._cadence_for(cid) + random.uniform(-1, 1)
-                tasks.append(asyncio.create_task(self._process_one(cid)))
-            if tasks:
-                await asyncio.gather(*tasks, return_exceptions=True)
-                hub.metrics["last_tick_at"] = int(time.time())
+            # Per-camera frame fetch + diff + alerts pipeline. Gated off
+            # by default; only runs if frame_diff_enabled was set true.
+            if self.frame_diff_enabled:
+                now = time.monotonic()
+                due = [cid for cid, t in self.next_due.items() if t <= now and cid in self.cameras]
+                tasks = []
+                for cid in due[:MAX_CONCURRENT_FETCHES * 4]:  # cap per-tick batch
+                    self.next_due[cid] = now + self._cadence_for(cid) + random.uniform(-1, 1)
+                    tasks.append(asyncio.create_task(self._process_one(cid)))
+                if tasks:
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                    hub.metrics["last_tick_at"] = int(time.time())
 
-            # Periodic camera-list refresh (every 30 min).
+            # Periodic camera-list refresh (every 30 min). Always-on,
+            # regardless of frame-diff: this is what keeps /api/cameras
+            # current as upstream cameras come on/off.
             if time.monotonic() - last_refresh > 1800:
                 try:
                     await self.refresh_camera_list()
+                    log.info("ingestor: refreshed camera list (%d)", len(self.cameras))
                 except Exception as e:
                     log.warning("camera list refresh failed: %s", e)
                 last_refresh = time.monotonic()
 
-            # Sleep until the next due camera, capped to avoid busy-loop on cold start.
-            future_due = [t for t in self.next_due.values() if t > time.monotonic()]
-            if future_due:
-                next_at = min(future_due)
-                await asyncio.sleep(min(max(next_at - time.monotonic(), 0.1), 1.0))
+            # When frame-diff is on, sleep just long enough to hit the
+            # next due camera. When it's off, this loop has nothing to
+            # do but check the 30-min refresh — sleep a full minute.
+            if self.frame_diff_enabled:
+                future_due = [t for t in self.next_due.values() if t > time.monotonic()]
+                if future_due:
+                    next_at = min(future_due)
+                    await asyncio.sleep(min(max(next_at - time.monotonic(), 0.1), 1.0))
+                else:
+                    await asyncio.sleep(0.5)
             else:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(60)
 
     def stop(self) -> None:
         self._stop.set()
