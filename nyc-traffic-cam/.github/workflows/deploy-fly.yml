@@ -1,0 +1,35 @@
+name: Deploy backend to Fly.io
+
+on:
+  # Auto-deploy whenever server-side code changes on main.
+  push:
+    branches: [main]
+    paths:
+      - "server/**"
+      - "Dockerfile"
+      - "fly.toml"
+      - ".github/workflows/deploy-fly.yml"
+  # Always allow manual one-click deploys from the Actions tab.
+  workflow_dispatch:
+
+# Only one deploy at a time per branch — fly itself handles serial
+# rollouts but cancelling stale runs avoids step-on-each-other logs.
+concurrency:
+  group: fly-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: fly deploy → nyc-cam-monitor
+    runs-on: ubuntu-latest
+    # The CI workflow's backend smoke import gates a clean state. Keep
+    # this light — no separate test re-runs here, just deploy.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: fly deploy
+        run: flyctl deploy --remote-only
+        env:
+          # FLY_API_TOKEN must be set in repo Settings → Secrets and
+          # variables → Actions. Generate with `fly tokens create deploy`.
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

@@ -292,6 +292,72 @@ body::after {
   100% { transform: translateX(-200px); }
 }
 
+/* Delivery scooter — left to right, faster than the cab */
+@keyframes scooter-zip {
+  0%   { transform: translateX(-140px); }
+  100% { transform: translateX(calc(100vw + 140px)); }
+}
+
+/* Crumpled $1 blowing along the curb. Slight upward bobs as wind catches. */
+@keyframes buck-blow {
+  0%   { transform: translateX(-90px) translateY(0); }
+  20%  { transform: translateX(20vw) translateY(-6px); }
+  45%  { transform: translateX(45vw) translateY(2px); }
+  72%  { transform: translateX(72vw) translateY(-4px); }
+  100% { transform: translateX(calc(100vw + 90px)) translateY(0); }
+}
+@keyframes buck-tumble {
+  0%, 100% { transform: rotate(-12deg); }
+  50%      { transform: rotate(8deg); }
+}
+
+/* Red balloon escaping the right side rail — straight up, stays
+   inside its narrow rail container so it doesn't cross content */
+@keyframes rail-balloon-rise {
+  0%   { transform: translateY(0); opacity: 0; }
+  6%   { opacity: 1; }
+  100% { transform: translateY(-160vh); opacity: 1; }
+}
+@keyframes balloon-bob {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(6px); }
+}
+
+/* Pizza slice gliding across the top sky band — flat traverse, the
+   sky band is only 14vh tall so vertical motion gets clipped */
+@keyframes pizza-skim {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(100vw + 120px)); }
+}
+@keyframes pizza-spin {
+  from { transform: rotate(0); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Pigeon flock V */
+@keyframes flock-glide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(100vw + 220px)); }
+}
+@keyframes flock-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes wing-flap {
+  0%, 100% { transform: rotate(-8deg); }
+  50%      { transform: rotate(28deg); }
+}
+
+/* Ticker-tape parade */
+@keyframes ticker-fall {
+  from { transform: translateY(-30px) rotate(0); }
+  to   { transform: translateY(110vh) rotate(720deg); }
+}
+@keyframes ticker-sway {
+  0%, 100% { margin-left: 0; }
+  50%      { margin-left: 6px; }
+}
+
 /* Manhole steam — wisps drifting up at random points */
 @keyframes steam-drift {
   0% { transform: translateY(0) scale(0.8); opacity: 0; }

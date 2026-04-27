@@ -864,8 +864,14 @@ export function StreetFauna({ ratMode = false, motion = false }: { ratMode?: boo
           <NewspaperFlying />
           <ManholeSteam left="22%" delay="2s" />
           <ManholeSteam left="71%" delay="11s" />
+          <DeliveryScooter />
+          <DollarBlowing />
         </div>
       )}
+      {/* Ambient layer — always on, very rare cadence so the page feels
+          alive without becoming a busy screensaver. Each piece spawns
+          on its own (long) timer and removes itself on animation end. */}
+      <AmbientSky />
       {ratMode && <FlyingPizza />}
       <FireHydrant />
       <SodiumStreetLamp />
@@ -873,6 +879,69 @@ export function StreetFauna({ ratMode = false, motion = false }: { ratMode?: boo
       <BodegaCat />
     </>
   );
+}
+
+/* AmbientSky: very-occasional set-pieces that drift in the EMPTY sky
+   areas of the page — outside the centered content column. Each lives
+   in a `pointer-events-none` layer at z:0 so even at peak motion they
+   never block clicks or sit over the TV.
+
+   Pieces are clipped to specific bands:
+     - pigeons  → top 14vh, never enters the content band
+     - pizza    → top 14vh, same arc band as the pigeons
+     - balloon  → right side rail (or left rail), rises straight up
+
+   The full-viewport TickerTape was pulled — overlapped controls. */
+function AmbientSky() {
+  return (
+    <>
+      {/* sky band — top 14vh of viewport, ambient gliders only */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 overflow-hidden" style={{ height: '14vh' }}>
+        <RareDrifter intervalMs={[200_000, 400_000]} render={(k) => <PizzaArc key={k} />} />
+        <RareDrifter intervalMs={[180_000, 360_000]} render={(k) => <PigeonFlock key={k} />} />
+      </div>
+      {/* right rail — narrow vertical slot for balloon escapes; only
+          shows on lg+ screens where there's room outside the 1400px
+          content column for the balloon to rise without crossing the UI */}
+      <div
+        className="pointer-events-none fixed top-0 bottom-0 z-0 overflow-hidden hidden lg:block"
+        style={{ right: 0, width: 'max(60px, calc((100vw - 1400px) / 2))' }}
+      >
+        <RareDrifter intervalMs={[120_000, 240_000]} render={(k) => <RailBalloon key={k} />} />
+      </div>
+    </>
+  );
+}
+
+function RareDrifter({
+  intervalMs,
+  render,
+  initialDelayMs = 8_000,
+}: {
+  intervalMs: [number, number];
+  render: (key: number) => React.ReactNode;
+  initialDelayMs?: number;
+}) {
+  // Mounts a child once, lets its CSS animation play out, then waits a
+  // random gap before remounting. Each mount uses a fresh key so the
+  // browser starts the keyframes from 0 every time.
+  const [seed, setSeed] = useState(0);
+  useEffect(() => {
+    let stop = false;
+    const tick = () => {
+      const wait = intervalMs[0] + Math.random() * (intervalMs[1] - intervalMs[0]);
+      setTimeout(() => {
+        if (stop) return;
+        setSeed((s) => s + 1);
+        tick();
+      }, wait);
+    };
+    setTimeout(() => { if (!stop) setSeed((s) => s + 1); }, initialDelayMs);
+    tick();
+    return () => { stop = true; };
+  }, [intervalMs, initialDelayMs]);
+  if (seed === 0) return null;
+  return <>{render(seed)}</>;
 }
 
 function Rat({ seedOffset = 0 }: { seedOffset?: number }) {
@@ -1389,3 +1458,195 @@ function BodegaCat() {
     </div>
   );
 }
+
+
+/* ──────────────────────────────────────── new ambient set-pieces */
+
+/* DeliveryScooter — orange Vespa-ish scooter with a delivery box on
+   the back. Zips along the bottom faster than the cab. */
+function DeliveryScooter() {
+  const [seed, setSeed] = useState(0);
+  useEffect(() => {
+    let stop = false;
+    const tick = () => {
+      const wait = 80_000 + Math.random() * 140_000;
+      setTimeout(() => {
+        if (stop) return;
+        setSeed((s) => s + 1);
+        tick();
+      }, wait);
+    };
+    tick();
+    return () => { stop = true; };
+  }, []);
+  return (
+    <div key={`scoot-${seed}`} className="absolute bottom-5 will-change-transform" style={{ animation: 'scooter-zip 6s linear' }}>
+      <svg viewBox="0 0 110 50" width="92" height="42" aria-hidden>
+        <ellipse cx="55" cy="46" rx="42" ry="2" fill="rgba(0,0,0,0.45)" />
+        {/* delivery box */}
+        <rect x="14" y="6" width="22" height="20" rx="2" fill="#FF6319" stroke="#1a1a1a" strokeWidth="1" />
+        <rect x="16" y="9" width="18" height="3" fill="#FFD600" />
+        <text x="25" y="22" textAnchor="middle" fontSize="6" fontFamily="Bungee, Impact, sans-serif" fill="#fff">EATS</text>
+        {/* body */}
+        <path d="M 30 26 L 70 26 L 86 36 L 26 36 Z" fill="#d96412" stroke="#1a1a1a" strokeWidth="1" />
+        {/* seat */}
+        <rect x="38" y="22" width="22" height="6" rx="2" fill="#1a1a1a" />
+        {/* handlebars */}
+        <path d="M 78 16 L 92 16 M 92 16 L 92 30" stroke="#1a1a1a" strokeWidth="2" fill="none" strokeLinecap="round" />
+        {/* headlight */}
+        <circle cx="92" cy="32" r="3" fill="#FFD600" />
+        {/* rider — silhouette */}
+        <ellipse cx="62" cy="14" rx="6" ry="6" fill="#1a1a1a" />
+        <path d="M 56 20 Q 62 8, 68 20 L 70 32 L 56 32 Z" fill="#1a1a1a" />
+        <rect x="56" y="6" width="12" height="9" rx="2" fill="#FFD600" />
+        {/* wheels */}
+        <circle cx="32" cy="40" r="6" fill="#1a1a1a" />
+        <circle cx="32" cy="40" r="2" fill="#666" />
+        <circle cx="84" cy="40" r="6" fill="#1a1a1a" />
+        <circle cx="84" cy="40" r="2" fill="#666" />
+      </svg>
+    </div>
+  );
+}
+
+/* DollarBlowing — a $1 bill tumbling along the sidewalk. Slow drift,
+   tumble rotation suggests the wind decided this. */
+function DollarBlowing() {
+  const [seed, setSeed] = useState(0);
+  useEffect(() => {
+    let stop = false;
+    const tick = () => {
+      const wait = 50_000 + Math.random() * 100_000;
+      setTimeout(() => {
+        if (stop) return;
+        setSeed((s) => s + 1);
+        tick();
+      }, wait);
+    };
+    tick();
+    return () => { stop = true; };
+  }, []);
+  const drift = ((seed * 41) % 24) - 12;
+  return (
+    <div
+      key={`buck-${seed}`}
+      className="absolute will-change-transform"
+      style={{
+        bottom: 14 + drift,
+        animation: 'buck-blow 11s linear',
+      }}
+    >
+      <svg viewBox="0 0 60 26" width="56" height="24" aria-hidden style={{ animation: 'buck-tumble 1.3s ease-in-out infinite' }}>
+        <rect x="1" y="1" width="58" height="24" rx="1" fill="#9bb892" stroke="#3d5a35" strokeWidth="0.6" />
+        <circle cx="30" cy="13" r="6" fill="#dde8d6" stroke="#3d5a35" strokeWidth="0.4" />
+        <text x="30" y="16" textAnchor="middle" fontSize="7" fontFamily="serif" fill="#3d5a35" fontWeight="700">1</text>
+        <text x="6" y="6" fontSize="3.5" fontFamily="serif" fill="#3d5a35">ONE</text>
+        <text x="46" y="22" fontSize="3.5" fontFamily="serif" fill="#3d5a35">DOLLAR</text>
+        <circle cx="6" cy="22" r="2" fill="none" stroke="#3d5a35" strokeWidth="0.4" />
+        <circle cx="54" cy="6" r="2" fill="none" stroke="#3d5a35" strokeWidth="0.4" />
+      </svg>
+    </div>
+  );
+}
+
+/* RailBalloon — single red balloon, rises straight up the right side
+   rail. Stays inside its parent container so it never enters the
+   centered content column. */
+function RailBalloon() {
+  return (
+    <div
+      className="absolute left-1/2 -translate-x-1/2 will-change-transform"
+      style={{
+        bottom: -90,
+        animation: 'rail-balloon-rise 24s linear forwards',
+      }}
+      aria-hidden
+    >
+      <div style={{ animation: 'balloon-bob 3.4s ease-in-out infinite' }}>
+        <svg viewBox="0 0 70 110" width="44" height="70">
+          <path d="M 35 56 Q 38 80, 32 108" stroke="#1a1a1a" strokeWidth="0.6" fill="none" />
+          <ellipse cx="35" cy="32" rx="26" ry="30" fill="#d11a2a" />
+          <ellipse cx="24" cy="20" rx="6" ry="9" fill="#fff" opacity="0.5" />
+          <path d="M 31 60 L 35 56 L 39 60 L 35 64 Z" fill="#9c0e1c" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* PizzaArc — single slice flying left-to-right across the top sky band
+   only. Stays in its parent's 14vh container so it never enters the
+   content area. The "arc" is now a flat traverse (vertical motion is
+   subtle bobbing) so it sits flush in the band. */
+function PizzaArc() {
+  const yPx = 8 + Math.random() * 30; // px from top of the 14vh band
+  return (
+    <div
+      className="absolute will-change-transform"
+      style={{
+        left: -80,
+        top: yPx,
+        animation: 'pizza-skim 14s linear forwards',
+      }}
+      aria-hidden
+    >
+      <div style={{ animation: 'pizza-spin 2.6s linear infinite' }}>
+        <svg viewBox="0 0 80 80" width="44" height="44">
+          <path d="M 8 8 L 72 8 L 40 76 Z" fill="#f7c66a" stroke="#a86a2a" strokeWidth="1.2" />
+          <path d="M 8 8 L 72 8 L 70 14 L 10 14 Z" fill="#d09c4f" />
+          <path d="M 12 14 L 68 14 L 42 70 Z" fill="#d11a2a" opacity="0.7" />
+          <path d="M 14 18 L 66 18 L 42 64 Z" fill="#fff8c2" opacity="0.55" />
+          <circle cx="28" cy="28" r="4" fill="#a32424" />
+          <circle cx="50" cy="28" r="4" fill="#a32424" />
+          <circle cx="38" cy="46" r="4" fill="#a32424" />
+          <circle cx="30" cy="54" r="3" fill="#a32424" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/* PigeonFlock — a 3-pigeon V drifts across the upper screen. Each
+   pigeon has its own wing-flap delay so they look loosely synced. */
+function PigeonFlock() {
+  const yPx = 16 + Math.random() * 40; // pixels from top of the 14vh band
+  return (
+    <div
+      className="absolute will-change-transform"
+      style={{
+        left: -120,
+        top: yPx,
+        animation: 'flock-glide 18s linear forwards',
+      }}
+      aria-hidden
+    >
+      <FlockPigeon delay="0s"   offsetX={0}  offsetY={0} />
+      <FlockPigeon delay="0.2s" offsetX={-22} offsetY={14} />
+      <FlockPigeon delay="0.1s" offsetX={-22} offsetY={-14} />
+    </div>
+  );
+}
+
+function FlockPigeon({ delay, offsetX, offsetY }: { delay: string; offsetX: number; offsetY: number }) {
+  return (
+    <div
+      className="absolute"
+      style={{ left: offsetX, top: offsetY, animation: `flock-bob 2.4s ease-in-out infinite`, animationDelay: delay }}
+    >
+      <svg viewBox="0 0 60 28" width="42" height="20">
+        <ellipse cx="30" cy="18" rx="16" ry="5" fill="#5a6068" />
+        <circle cx="46" cy="14" r="4" fill="#5a6068" />
+        <circle cx="48" cy="13" r="0.8" fill="#fff" />
+        <path d="M 50 14 L 56 12 L 50 16 Z" fill="#FF6319" />
+        {/* flapping wings — independent vertical via animation */}
+        <path d="M 18 16 Q 22 4, 32 12" stroke="#3e434a" strokeWidth="3" fill="none" strokeLinecap="round" style={{ transformOrigin: '32px 14px', animation: `wing-flap 0.36s ease-in-out infinite`, animationDelay: delay }} />
+        <path d="M 18 18 Q 22 28, 32 20" stroke="#3e434a" strokeWidth="3" fill="none" strokeLinecap="round" style={{ transformOrigin: '32px 18px', animation: `wing-flap 0.36s ease-in-out infinite reverse`, animationDelay: delay }} />
+      </svg>
+    </div>
+  );
+}
+
+/* TickerTape removed — full-viewport confetti drift conflicted with
+   the centered UI. If we want a parade effect, fire canvas-confetti
+   at a specific event (jackpot, transfer success) instead of running
+   it as ambient background. */

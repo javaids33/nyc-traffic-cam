@@ -9,6 +9,7 @@ import {
 import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import confetti from 'canvas-confetti';
+import { RoughNotation } from 'react-rough-notation';
 import { apiUrl } from './api';
 
 /* CartoDB Voyager — cream-paper base, soft blue water, readable street
@@ -831,8 +832,10 @@ function Summary({
   return (
     <div>
       <div className="text-center mb-6">
-        <div className="font-bungee text-[40px] sm:text-[64px] leading-[0.95] uppercase text-[#FFD600]">
-          ★ FINAL ★
+        <div className="font-bungee text-[40px] sm:text-[64px] leading-[0.95] uppercase text-[#FFD600] inline-block">
+          <RoughNotation type="underline" color="#FF6319" show strokeWidth={3} padding={0} animationDelay={250} animationDuration={1100}>
+            <span>★ FINAL ★</span>
+          </RoughNotation>
         </div>
         <div className="font-tabloid text-[88px] leading-none mt-2 tabular" style={{ color: grade.color }}>
           {totalScore}<span className="text-white/45 text-[42px]"> / {max}</span>

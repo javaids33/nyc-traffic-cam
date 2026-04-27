@@ -284,9 +284,11 @@ export default function Lounge() {
 
           <div className="min-w-0">
             {/* borough filter — its own sub-header bar so it doesn't get
-                visually swallowed by the awning's toothy bottom edge */}
+                visually swallowed by the awning's toothy bottom edge.
+                Opaque so the TV's "ON AIR / live broadcast" neon sign
+                behind it doesn't bleed through. */}
             <div
-              className="mb-3 px-2 py-1.5 flex flex-wrap items-center gap-1 font-typewriter text-[10px] uppercase tracking-[0.18em] bg-black/55 border border-[#FFD600]/40"
+              className="relative z-20 mb-3 px-2 py-1.5 flex flex-wrap items-center gap-1 font-typewriter text-[10px] uppercase tracking-[0.18em] bg-[#0a0a14] border border-[#FFD600]/40"
               style={{ boxShadow: '2px 2px 0 #d11a2a' }}
             >
               <span className="text-[#FFD600] mr-1.5 font-bungee text-[11px] tracking-[0.06em] hidden sm:inline">★ TUNE BY BOROUGH</span>
@@ -803,6 +805,15 @@ const MODES: Mode[] = [
     sub: 'type nyc slang · 3 difficulties · grab quarters from the lounge',
     accent: '#B5F500',
   },
+  {
+    href: '/shrine',
+    badge: '✦',
+    badgeBg: '#0039A6',
+    title: 'Mamdani Shrine',
+    sub: 'civic temple · live council bills · scriptures of the platform',
+    accent: '#FFD600',
+    cta: '★ NEW',
+  },
 ];
 
 function ModesRack() {
@@ -820,17 +831,17 @@ function ModesRack() {
           back rooms · pick a door
         </span>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2">
         {MODES.map((m) => (
           <a
             key={m.href}
             href={m.href}
-            className="group relative bg-[#0a0a14] border-2 border-white/15 hover:border-[color:var(--accent)] hover:bg-black px-2.5 pt-2 pb-7 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+            className="group relative bg-[#0a0a14] border-2 border-white/15 hover:border-[color:var(--accent)] hover:bg-black px-2.5 pt-2 pb-6 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
             style={{ ['--accent' as string]: m.accent }}
           >
-            <div className="flex items-start gap-2 pr-10">
+            <div className="flex items-start gap-2">
               {m.badge === 'MTA' ? (
-                <MtaLogo size={28} />
+                <MtaLogo size={26} />
               ) : (
                 <span
                   className="grid place-items-center w-7 h-7 rounded-full font-bungee text-[12px] leading-none shrink-0"
@@ -840,7 +851,7 @@ function ModesRack() {
                 </span>
               )}
               <span
-                className="font-bungee text-[13px] sm:text-[14px] uppercase leading-tight tracking-[0.02em] group-hover:text-[color:var(--accent)] transition-colors"
+                className="font-bungee text-[12px] sm:text-[13px] uppercase leading-tight tracking-[0.02em] group-hover:text-[color:var(--accent)] transition-colors min-w-0 break-words"
                 style={{ color: '#fff' }}
               >
                 {m.title}
@@ -849,21 +860,23 @@ function ModesRack() {
             <div className="font-typewriter text-[9px] uppercase tracking-[0.16em] text-white/65 mt-1.5 line-clamp-2">
               {m.sub}
             </div>
-            {m.cta ? (
-              <span
-                className="absolute top-2 right-2 font-bungee text-[9px] tracking-[0.18em] uppercase px-1.5 py-0.5"
-                style={{
-                  background: m.accent,
-                  color: m.accent === '#FFD600' || m.accent === '#B5F500' ? '#000' : '#fff',
-                  boxShadow: '2px 2px 0 #000',
-                }}
-              >
-                {m.cta}
+            <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between gap-2">
+              {m.cta ? (
+                <span
+                  className="font-bungee text-[8.5px] tracking-[0.16em] uppercase px-1.5 py-0.5"
+                  style={{
+                    background: m.accent,
+                    color: m.accent === '#FFD600' || m.accent === '#B5F500' ? '#000' : '#fff',
+                    boxShadow: '2px 2px 0 #000',
+                  }}
+                >
+                  {m.cta}
+                </span>
+              ) : <span />}
+              <span className="font-typewriter text-[9px] tracking-[0.22em] uppercase text-white/35 group-hover:text-[color:var(--accent)] transition-colors">
+                go →
               </span>
-            ) : null}
-            <span className="absolute bottom-1 right-2 font-typewriter text-[9px] tracking-[0.22em] uppercase text-white/35 group-hover:text-[color:var(--accent)] transition-colors">
-              go →
-            </span>
+            </div>
           </a>
         ))}
       </div>

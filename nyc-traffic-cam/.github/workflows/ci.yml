@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-flight runs of the same branch — saves CI minutes when
+# pushing rapid follow-up commits.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend · typecheck + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Production build
+        # We don't need the build artifact in CI — Cloudflare Pages does
+        # its own build on its side. We run it here purely to fail fast
+        # on TS / Tailwind / Vite errors before they hit Pages.
+        run: npm run build
+
+  backend:
+    name: Backend · smoke import
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: server/requirements.txt
+      - name: Install backend deps
+        run: pip install -r server/requirements.txt
+      - name: Smoke import
+        # If a syntax error or missing import sneaks in, this catches it
+        # before fly deploy attempts to start uvicorn in prod.
+        run: python -c "from server import main, db, transit; print('ok')"

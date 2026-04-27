@@ -45,11 +45,12 @@ export const STATIONS: Station[] = [
   { id: 'kxlu',            call: 'KXLU', freq: '88.9 LA',  vibe: 'la college radio · jazz hours',        url: 'https://kxlu.streamguys1.com/kxlu-hi' },
 ];
 
-export type AmbienceMode = 'ac' | 'subway' | 'street';
+export type AmbienceMode = 'ac' | 'subway' | 'street' | 'lofi';
 export const AMBIENCE: { id: AmbienceMode; label: string; gloss: string }[] = [
   { id: 'ac',     label: 'AC HUM',  gloss: 'window unit, july' },
   { id: 'subway', label: 'SUBWAY',  gloss: 'tracks below the deli' },
   { id: 'street', label: 'STREET',  gloss: 'sirens, distant' },
+  { id: 'lofi',   label: 'LOFI',    gloss: 'late-cab pads, generative' },
 ];
 
 export type AudioSource =
@@ -211,6 +212,64 @@ export function audioStartAmbience(mode: AmbienceMode) {
       o.start(t); o.stop(t + 1.7);
     }, 45_000 + Math.random() * 45_000);
     stops.push(() => { try { noise.stop(); } catch { /* noop */ } clearInterval(swell); clearInterval(squeal); });
+  } else if (mode === 'lofi') {
+    // Generative lofi via Tone.js — slow Cmaj7 pad chords cycling on a
+    // long loop, gentle pink-noise tape hiss underneath. Imported
+    // dynamically so the page that doesn't pick LOFI never pays the
+    // ~80kb gzip Tone bundle cost.
+    const noise = makePinkNoise(c);
+    const noiseGain = c.createGain(); noiseGain.gain.value = 0.06;
+    noise.connect(noiseGain).connect(dest);
+    noise.start();
+
+    let dispose: (() => void) | null = null;
+    let cancelled = false;
+    (async () => {
+      try {
+        const Tone = await import('tone');
+        if (cancelled) return;
+        // Have Tone share the existing AudioContext we already opened
+        Tone.setContext(c);
+        await Tone.start();
+        // Soft Rhodes-y pad: triangle synth → reverb → master
+        const reverb = new Tone.Reverb({ decay: 7.5, wet: 0.55 });
+        await reverb.generate();
+        const filter = new Tone.Filter({ type: 'lowpass', frequency: 1100, Q: 0.6 });
+        const synth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: 'triangle' },
+          envelope: { attack: 1.4, decay: 0.5, sustain: 0.85, release: 3.2 },
+        }).set({ volume: -22 });
+        synth.chain(filter, reverb, Tone.getDestination());
+        // Cmaj7 → Am7 → Fmaj7 → G7 — classic lofi turnaround. 6s per chord.
+        const chords: string[][] = [
+          ['C3', 'E3', 'G3', 'B3'],
+          ['A2', 'C3', 'E3', 'G3'],
+          ['F2', 'A2', 'C3', 'E3'],
+          ['G2', 'B2', 'D3', 'F3'],
+        ];
+        let i = 0;
+        const playNext = () => {
+          if (cancelled) return;
+          synth.triggerAttackRelease(chords[i % chords.length], 5.6);
+          i++;
+        };
+        playNext();
+        const t = setInterval(playNext, 6_000);
+        dispose = () => {
+          clearInterval(t);
+          try { synth.releaseAll(); } catch { /* noop */ }
+          try { synth.dispose(); filter.dispose(); reverb.dispose(); } catch { /* noop */ }
+        };
+      } catch {
+        // Tone failed to load — keep the pink-noise hiss as a fallback
+      }
+    })();
+
+    stops.push(() => {
+      cancelled = true;
+      dispose?.();
+      try { noise.stop(); } catch { /* noop */ }
+    });
   } else if (mode === 'street') {
     const noise = makePinkNoise(c);
     const gn = c.createGain(); gn.gain.value = 0.4;
