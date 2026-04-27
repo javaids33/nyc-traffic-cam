@@ -198,6 +198,74 @@ def _empty_record() -> dict[str, Any]:
     }
 
 
+# ── Interest score ──────────────────────────────────────────────────
+# A 0-100 ranking of "how visually/news-worthy is this cam right now"
+# derived purely from the structured fields. Computed at bake time
+# and shipped in cam-pois.json so the frontend can sort instantly.
+#
+# Weights are tuned so the typical highway + clear day + light traffic
+# scores near 0; a bridge with skyline at dusk scores ~20-30; a
+# crowd/event on a rainy night with a landmark in frame scores 70+.
+
+_SCENE_BONUS = {
+    "skyline":      12,   # primary subject is the cityscape — striking
+    "tunnel":       12,   # rare and visually distinctive
+    "bridge":       10,
+    "intersection":  4,
+    "boulevard":     3,
+    "residential":   2,
+    "highway":       0,   # baseline
+    "other":        -5,
+}
+_WEATHER_BONUS = {"snow": 25, "fog": 15, "wet": 10, "clear": 0}
+_TIME_BONUS    = {"night": 10, "dawn": 8, "dusk": 4, "day": 0}
+_CONG_BONUS    = {"jammed": 12, "busy": 5, "light": 0, "empty": -3}
+
+
+def interest_score(rec: dict[str, Any]) -> int:
+    """Compute a 0-100 interest score from a parsed/canonical record.
+
+    Returns 0 for any frame flagged image_usable=false — broken cams
+    should never bubble up regardless of their other fields.
+
+    Confidence acts as a multiplier so low-confidence guesses can't
+    dominate the leaderboard with phantom events.
+    """
+    if not rec.get("image_usable", True):
+        return 0
+
+    score = 0.0
+
+    # Quality penalties — visible artifacts lower the rank
+    if rec.get("sun_glare"):
+        score -= 20
+    if rec.get("lens_obstruction"):
+        score -= 30
+
+    # Event payload — the gold. A real crowd/event is the biggest signal.
+    if rec.get("crowd_or_event"):
+        score += 35
+    if rec.get("landmark_name"):
+        score += 18
+
+    # Scene-type visual rarity
+    score += _SCENE_BONUS.get(rec.get("scene") or "other", 0)
+    if rec.get("skyline_visible") and rec.get("scene") != "skyline":
+        score += 8
+
+    # Atmospheric / temporal interest
+    score += _WEATHER_BONUS.get(rec.get("weather") or "clear", 0)
+    score += _TIME_BONUS.get(rec.get("time_of_day") or "day", 0)
+    score += _CONG_BONUS.get(rec.get("congestion") or "empty", 0)
+
+    # Confidence multiplier so a 30%-confident "event" can't outrank
+    # a 90%-confident landmark shot.
+    confidence = rec.get("confidence", 0) or 0
+    score *= max(0.0, min(1.0, confidence / 100.0))
+
+    return max(0, min(100, int(round(score))))
+
+
 def to_record(
     parsed: dict[str, Any],
     *,
@@ -208,7 +276,9 @@ def to_record(
 
     Adds the legacy poi / category / description fields so the
     existing /poi page keeps working without changes — they're
-    derived from the new structured fields.
+    derived from the new structured fields. Also computes a
+    moment-in-time `interest` score the frontend uses to rank
+    "what's worth looking at right now".
     """
     out = dict(parsed)
 
@@ -243,6 +313,7 @@ def to_record(
     out["poi"] = legacy_poi
     out["category"] = legacy_cat
     out["description"] = legacy_desc
+    out["interest"] = interest_score(out)
     if lat is not None:
         out["_lat"] = lat
     if lng is not None:
@@ -286,6 +357,7 @@ def empty_skipped_record(reason: str) -> dict[str, Any]:
         "poi": None,
         "category": None,
         "description": None,
+        "interest": 0,
         "_skipped": reason,
     }
 
@@ -297,5 +369,6 @@ def empty_error_record(err: str) -> dict[str, Any]:
         "poi": None,
         "category": None,
         "description": None,
+        "interest": 0,
         "_error": err[:200],
     }

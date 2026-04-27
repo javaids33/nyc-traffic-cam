@@ -26,6 +26,18 @@ type PoiEntry = {
   category: string | null;
   description: string | null;
   confidence: number;
+  // New structured fields from poi_taxonomy.py — optional so older
+  // pre-rev cam-pois.json files keep parsing.
+  interest?: number;
+  scene?: string | null;
+  weather?: string | null;
+  time_of_day?: string | null;
+  congestion?: string | null;
+  crowd_or_event?: boolean;
+  event_description?: string | null;
+  landmark_name?: string | null;
+  skyline_visible?: boolean;
+  image_usable?: boolean;
   _lat?: number;
   _lng?: number;
 };
@@ -67,14 +79,19 @@ export default function Poi() {
   }, []);
 
   // Merge baked POI data with live camera list. Cameras without a
-  // confident classification are skipped.
+  // confident classification are skipped. Sorted by interest score
+  // (highest first) so /poi reads as a "what's worth looking at"
+  // ranked feed instead of a flat dump.
   const tagged = useMemo(() => {
     const out: { cam: Camera; poi: PoiEntry }[] = [];
     for (const c of cameras) {
       const p = POI.cameras[c.id];
       if (!p || !p.category || (p.confidence ?? 0) < MIN_CONFIDENCE) continue;
+      // Drop cams the classifier explicitly flagged as broken.
+      if (p.image_usable === false) continue;
       out.push({ cam: c, poi: p });
     }
+    out.sort((a, b) => (b.poi.interest ?? 0) - (a.poi.interest ?? 0));
     return out;
   }, [cameras]);
 
@@ -91,9 +108,23 @@ export default function Poi() {
   const visible =
     activeCategory === 'all' ? tagged : (byCategory.get(activeCategory) ?? []);
 
-  // Featured POI: rotates among the highest-confidence picks every minute
+  // "Hottest right now" — top-N by interest score, regardless of
+  // category. This is the dynamic ranking the new taxonomy unlocks:
+  // events + landmarks + rare-weather cams bubble up automatically.
+  const hotNow = useMemo(() => {
+    return tagged.filter((e) => (e.poi.interest ?? 0) > 0).slice(0, 8);
+  }, [tagged]);
+
+  // Featured POI: rotates among the highest-interest picks every minute.
+  // Falls back to confidence on older cam-pois.json shapes that don't
+  // carry the interest score yet.
   const featured = useMemo(() => {
-    const top = [...tagged].sort((a, b) => b.poi.confidence - a.poi.confidence).slice(0, 12);
+    const ranked = [...tagged].sort(
+      (a, b) =>
+        (b.poi.interest ?? b.poi.confidence) -
+        (a.poi.interest ?? a.poi.confidence),
+    );
+    const top = ranked.slice(0, 12);
     if (top.length === 0) return null;
     const idx = Math.floor(Date.now() / 60_000) % top.length;
     return top[idx];
@@ -202,6 +233,25 @@ export default function Poi() {
           </div>
         )}
 
+        {/* Hottest right now — dynamic ranking by interest score */}
+        {hotNow.length > 0 && activeCategory === 'all' && (
+          <div className="mb-5">
+            <div className="flex items-baseline justify-between mb-2">
+              <span className="font-bungee text-[15px] uppercase tracking-[0.06em] text-[#FF5582]">
+                🔥 Hot Right Now
+              </span>
+              <span className="font-typewriter text-[9px] uppercase tracking-[0.22em] text-white/50">
+                ranked by interest · events · landmarks · rare weather
+              </span>
+            </div>
+            <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 lg:grid-cols-8">
+              {hotNow.map(({ cam, poi }) => (
+                <HotTile key={cam.id} cam={cam} poi={poi} tick={tick} />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Grid of POI cams */}
         {!hasData ? (
           <EmptyState />
@@ -265,6 +315,57 @@ function PoiTile({ cam, poi, tick }: { cam: Camera; poi: PoiEntry; tick: number 
         {emojiFor(poi.category)} {poi.poi}
       </div>
       <div className="absolute bottom-0 inset-x-0 px-1.5 py-0.5 font-typewriter text-[8.5px] uppercase tracking-[0.12em] text-white/85 line-clamp-1" style={{ background: 'rgba(0,0,0,0.65)' }}>
+        {cam.name ?? cam.id}
+      </div>
+    </div>
+  );
+}
+
+function HotTile({ cam, poi, tick }: { cam: Camera; poi: PoiEntry; tick: number }) {
+  const score = poi.interest ?? 0;
+  // Hottest cams get the alert-pink frame; warm ones use the category color.
+  const accent = score >= 50 ? '#FF5582' : (colorFor(poi.category) ?? '#FFD600');
+  // Pick the tag that explains *why* this cam is hot — events first,
+  // then landmarks, then weather/state.
+  const reason =
+    (poi.crowd_or_event && (poi.event_description || 'event')) ||
+    poi.landmark_name ||
+    (poi.weather && poi.weather !== 'clear' && poi.weather) ||
+    (poi.congestion === 'jammed' && 'jammed') ||
+    (poi.skyline_visible && 'skyline') ||
+    poi.poi ||
+    null;
+  return (
+    <div
+      className="relative bg-black border"
+      style={{ borderColor: accent, aspectRatio: '16 / 11', minHeight: 90, boxShadow: `2px 2px 0 ${accent}44` }}
+    >
+      <img
+        src={NYCTMC_IMG(cam.id, tick)}
+        alt={cam.name ?? cam.id}
+        referrerPolicy="no-referrer"
+        decoding="async"
+        loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div
+        className="absolute top-1 left-1 px-1 py-0.5 font-bungee text-[8px] uppercase tracking-[0.14em] tabular"
+        style={{ background: accent, color: '#000' }}
+      >
+        {score}
+      </div>
+      {reason && (
+        <div
+          className="absolute top-1 right-1 px-1 py-0.5 font-typewriter text-[8px] uppercase tracking-[0.1em] truncate max-w-[70%]"
+          style={{ background: '#000', color: accent, border: `1px solid ${accent}` }}
+        >
+          {reason}
+        </div>
+      )}
+      <div
+        className="absolute bottom-0 inset-x-0 px-1 py-0.5 font-typewriter text-[8px] uppercase tracking-[0.1em] text-white/85 line-clamp-1"
+        style={{ background: 'rgba(0,0,0,0.7)' }}
+      >
         {cam.name ?? cam.id}
       </div>
     </div>
