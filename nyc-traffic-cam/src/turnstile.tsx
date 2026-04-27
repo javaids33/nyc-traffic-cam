@@ -1,23 +1,33 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Map as MapLibre,
+  Marker,
+  Source,
+  Layer,
+  type MapRef,
+} from 'react-map-gl/maplibre';
+import type { StyleSpecification } from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { BodegaAwning, StreetFauna } from './bodega-tv';
 import { QuarterStash, RollingQuarter, QuarterIcon, useQuarters } from './quarter';
 import { fetchCameras } from './api';
 import type { Camera } from './types';
 
 /* ──────────────────────────────────────────────────────────────────────
-   /turnstile — Hop the Turnstile.
-   Real station data from NYC Open Data (MTA Subway Stations dataset).
-   Pick any line, pick a station to ride to, then sit inside an R32-ish
-   subway car (POV from the bench) while the train rolls through 5
-   stops. The "door window" across the aisle frames the NYC TMC traffic
-   cam closest to each stop.
+   /turnstile — Hop the Turnstile, v2.
+   - Pick a line. The map shows every station that line serves, in
+     subway-bullet style. Click one to set origin, click another to set
+     destination.
+   - Ride: side-view POV from inside the car. The cam frames the door
+     window across from your seat — motion blur on the edges sells the
+     "riding past it" feel. Progress tracker at the top counts stops.
    ──────────────────────────────────────────────────────────────────── */
 
 type Station = {
   name: string;
   lat: number;
   lng: number;
-  lines: string[]; // e.g. ['A','C','E']
+  lines: string[];
 };
 
 const MTA_STATIONS_URL =
@@ -25,13 +35,9 @@ const MTA_STATIONS_URL =
   '?$select=stop_name,gtfs_latitude,gtfs_longitude,daytime_routes,borough' +
   '&$limit=600';
 
-// Canonical NYC subway line set (north–south + crosstown). Express
-// variants share the same trunk so we keep them as their own pickable
-// "trains" — just like the bullets riders see.
 const ALL_LINES = [
   '1','2','3','4','5','6','7',
-  'A','B','C','D','E','F','G','J','L','M','N','Q','R','W','Z',
-  'SI', // Staten Island Railway
+  'A','B','C','D','E','F','G','J','L','M','N','Q','R','W','Z','SI',
 ] as const;
 type Line = typeof ALL_LINES[number];
 
@@ -49,11 +55,10 @@ const LINE_COLOR: Record<string, string> = {
 };
 
 function lineTextColor(line: string): string {
-  // Yellow lines need black text; everything else white.
   return line === 'N' || line === 'Q' || line === 'R' || line === 'W' || line === 'L' ? '#000' : '#fff';
 }
 
-const STATION_DWELL_MS = 5800;
+const STATION_DWELL_MS = 6200;
 const NYCTMC_IMG = (id: string, t: number) =>
   `https://webcams.nyctmc.org/api/cameras/${id}/image?t=${t}`;
 
@@ -66,15 +71,9 @@ function nearestCamera(cams: Camera[], s: Station): Camera | null {
   return best?.cam ?? null;
 }
 
-/* Use the MTA Open Data subway stations endpoint to enumerate every
-   stop (lat/lng + the lines that serve it). Cached to localStorage
-   for a day so reloads don't keep refetching ~470 stations. */
-type RawStation = {
-  stop_name: string;
-  gtfs_latitude: string;
-  gtfs_longitude: string;
-  daytime_routes: string;
-};
+/* MTA Open Data subway stations — every stop with lat/lng + the lines
+   it serves. Cached to localStorage for a day. */
+type RawStation = { stop_name: string; gtfs_latitude: string; gtfs_longitude: string; daytime_routes: string };
 const STATIONS_CACHE_KEY = 'nyc-mta-stations-v1';
 const STATIONS_CACHE_MS = 24 * 60 * 60 * 1000;
 
@@ -89,7 +88,6 @@ function useMtaStations() {
     return [];
   });
   const [loaded, setLoaded] = useState<boolean>(stations.length > 0);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (loaded) return;
@@ -105,13 +103,9 @@ function useMtaStations() {
             name: row.stop_name,
             lat: parseFloat(row.gtfs_latitude),
             lng: parseFloat(row.gtfs_longitude),
-            lines: (row.daytime_routes ?? '')
-              .split(/\s+/)
-              .map((s) => s.trim())
-              .filter(Boolean),
+            lines: (row.daytime_routes ?? '').split(/\s+/).map((s) => s.trim()).filter(Boolean),
           }))
           .filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lng) && s.name && s.lines.length > 0);
-        // Dedupe by name+lines fingerprint (some stops repeat per platform)
         const seen = new Set<string>();
         const dedup: Station[] = [];
         for (const s of out) {
@@ -125,53 +119,90 @@ function useMtaStations() {
         try {
           localStorage.setItem(STATIONS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data: dedup }));
         } catch { /* noop */ }
-      } catch (e) {
-        if (!stop) {
-          setError(String(e));
-          setLoaded(true);
-        }
+      } catch {
+        if (!stop) setLoaded(true);
       }
     })();
     return () => { stop = true; };
   }, [loaded]);
 
-  return { stations, loaded, error };
+  return { stations, loaded };
 }
+
+/* CARTO Dark Matter raster tiles — the same basemap used by /geoguessr,
+   chosen for legibility on dark backgrounds. */
+const SUBWAY_MAP_STYLE: StyleSpecification = {
+  version: 8,
+  sources: {
+    carto: {
+      type: 'raster',
+      tiles: [
+        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+      ],
+      tileSize: 256,
+      attribution: '© OpenStreetMap contributors © CARTO',
+      maxzoom: 20,
+    },
+  },
+  layers: [
+    { id: 'bg', type: 'background', paint: { 'background-color': '#0b0d12' } },
+    { id: 'carto', type: 'raster', source: 'carto' },
+  ],
+};
 
 type Stage = 'idle' | 'boarding' | 'riding' | 'arrived';
 
 export default function Turnstile() {
   const [stage, setStage] = useState<Stage>('idle');
   const [line, setLine] = useState<Line>('F');
-  const [destIdx, setDestIdx] = useState<number>(0);
+  const [originIdx, setOriginIdx] = useState<number | null>(null);
+  const [destIdx, setDestIdx] = useState<number | null>(null);
   const [stationIdx, setStationIdx] = useState(0);
   const [cameras, setCameras] = useState<Camera[]>([]);
   const { count: quarters, spend } = useQuarters();
-
   const { stations, loaded: stationsLoaded } = useMtaStations();
 
   useEffect(() => {
     fetchCameras().then(setCameras).catch(() => {});
   }, []);
 
-  // Stations on the picked line, ordered roughly north → south by lat.
+  /* Stations on the picked line, ordered N→S by latitude. (For E-W
+     trunks like G/L/7 lat-order still produces a reasonable strip.) */
   const lineStations = useMemo(() => {
-    const onLine = stations.filter((s) => s.lines.includes(line));
-    // Sort north-south so the strip-map reads geographically. Manhattan
-    // bias: most lines run roughly N→S; for E-W trunks (G, L, 7) this
-    // still produces a reasonable ordering by lat.
-    return onLine.slice().sort((a, b) => b.lat - a.lat);
+    return stations
+      .filter((s) => s.lines.includes(line))
+      .slice()
+      .sort((a, b) => b.lat - a.lat);
   }, [stations, line]);
 
-  // The 5-station ride window leading to destination
-  const ridePlan = useMemo(() => {
-    if (!lineStations.length) return [];
-    const dest = Math.min(destIdx, lineStations.length - 1);
-    const start = Math.max(0, dest - 4);
-    return lineStations.slice(start, dest + 1);
-  }, [lineStations, destIdx]);
+  // Reset selections when the line changes
+  useEffect(() => {
+    setOriginIdx(null);
+    setDestIdx(null);
+  }, [line]);
 
-  // Auto-advance through stations during the ride
+  /* ridePlan: ordered list of stations from origin → destination, capped
+     at MAX_RIDE_STOPS so the ride doesn't take forever on long routes. */
+  const MAX_RIDE_STOPS = 8;
+  const ridePlan = useMemo<Station[]>(() => {
+    if (originIdx == null || destIdx == null || lineStations.length === 0) return [];
+    const a = Math.min(originIdx, destIdx);
+    const b = Math.max(originIdx, destIdx);
+    const reverse = originIdx > destIdx;
+    const slice = lineStations.slice(a, b + 1);
+    const ordered = reverse ? slice.slice().reverse() : slice;
+    if (ordered.length <= MAX_RIDE_STOPS) return ordered;
+    // Sample evenly so the user gets a feel for the whole ride
+    const step = (ordered.length - 1) / (MAX_RIDE_STOPS - 1);
+    const out: Station[] = [];
+    for (let i = 0; i < MAX_RIDE_STOPS; i++) out.push(ordered[Math.round(i * step)]);
+    return out;
+  }, [lineStations, originIdx, destIdx]);
+
+  // Auto-advance during ride
   useEffect(() => {
     if (stage !== 'riding') return;
     if (stationIdx >= ridePlan.length - 1) {
@@ -195,10 +226,12 @@ export default function Turnstile() {
   const exit = () => {
     setStage('idle');
     setStationIdx(0);
+    setOriginIdx(null);
+    setDestIdx(null);
   };
 
-  const currentStation = ridePlan[Math.min(stationIdx, ridePlan.length - 1)];
-  const nextStation = ridePlan[Math.min(stationIdx + 1, ridePlan.length - 1)];
+  const currentStation = ridePlan[Math.min(stationIdx, Math.max(0, ridePlan.length - 1))];
+  const nextStation = ridePlan[Math.min(stationIdx + 1, Math.max(0, ridePlan.length - 1))];
   const cam = currentStation ? nearestCamera(cameras, currentStation) : null;
 
   return (
@@ -225,10 +258,13 @@ export default function Turnstile() {
           <Boarding
             line={line}
             setLine={setLine}
-            destIdx={destIdx}
-            setDestIdx={setDestIdx}
             lineStations={lineStations}
             stationsLoaded={stationsLoaded}
+            originIdx={originIdx}
+            destIdx={destIdx}
+            setOriginIdx={setOriginIdx}
+            setDestIdx={setDestIdx}
+            ridePlan={ridePlan}
             onBoard={board}
             onCancel={() => setStage('idle')}
           />
@@ -263,7 +299,7 @@ function TurnstileGate({ quarters, onSwipe }: { quarters: number; onSwipe: () =>
         ★ Hop the <span className="text-[#FF6319]">Turnstile</span>
       </div>
       <div className="font-typewriter text-[12px] uppercase tracking-[0.22em] text-white/65 mt-1 mb-7">
-        ride any nyc line · 5 stops · door window = the cam nearest your stop
+        ride any nyc line · click your stops on the map · cam in the door window
       </div>
 
       <div
@@ -308,9 +344,9 @@ function TurnstileGate({ quarters, onSwipe }: { quarters: number; onSwipe: () =>
       </div>
 
       <ul className="mt-8 space-y-1 font-typewriter text-[11px] uppercase tracking-[0.18em] text-white/55">
-        <li>★ pick any of the 24 lines (1–7, a–z, sir)</li>
-        <li>★ stations pulled live from mta open data</li>
-        <li>★ each stop's door window shows the closest nyc dot cam</li>
+        <li>★ pick your origin and destination on a real subway map</li>
+        <li>★ stations come straight from mta open data</li>
+        <li>★ the door window across the aisle = closest nyc dot cam</li>
       </ul>
     </div>
   );
@@ -346,52 +382,65 @@ function Turnstile3D() {
   );
 }
 
-/* ──────────────────────────────────────── stage 2: line + destination */
+/* ──────────────────────────────────────── stage 2: line + map picker */
 
 function Boarding({
   line,
   setLine,
-  destIdx,
-  setDestIdx,
   lineStations,
   stationsLoaded,
+  originIdx,
+  destIdx,
+  setOriginIdx,
+  setDestIdx,
+  ridePlan,
   onBoard,
   onCancel,
 }: {
   line: Line;
   setLine: (l: Line) => void;
-  destIdx: number;
-  setDestIdx: (i: number) => void;
   lineStations: Station[];
   stationsLoaded: boolean;
+  originIdx: number | null;
+  destIdx: number | null;
+  setOriginIdx: (i: number | null) => void;
+  setDestIdx: (i: number | null) => void;
+  ridePlan: Station[];
   onBoard: () => void;
   onCancel: () => void;
 }) {
-  // Reset destination when the line switches
-  useEffect(() => {
-    setDestIdx(Math.min(destIdx, Math.max(0, lineStations.length - 1)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [line, lineStations.length]);
+  const onMapPick = (stationIdx: number) => {
+    if (originIdx == null) {
+      setOriginIdx(stationIdx);
+    } else if (destIdx == null && stationIdx !== originIdx) {
+      setDestIdx(stationIdx);
+    } else {
+      // Reset and start a new origin selection
+      setOriginIdx(stationIdx);
+      setDestIdx(null);
+    }
+  };
 
-  const dest = Math.min(destIdx, Math.max(0, lineStations.length - 1));
-  const start = Math.max(0, dest - 4);
-  const ride = lineStations.slice(start, dest + 1);
-  const destStation = lineStations[dest];
+  const origin = originIdx != null ? lineStations[originIdx] : null;
+  const dest = destIdx != null ? lineStations[destIdx] : null;
+  const ready = origin && dest;
 
   return (
-    <div className="max-w-[920px] mx-auto">
+    <div className="max-w-[1100px] mx-auto">
       <div className="flex items-baseline justify-between mb-2">
-        <div className="font-bungee text-[32px] sm:text-[44px] leading-none uppercase">
-          ★ Pick a Line
-        </div>
-        <button onClick={onCancel} className="font-typewriter text-[10px] uppercase tracking-[0.22em] text-white/65 hover:text-[#FFD600] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]">
+        <div className="font-bungee text-[32px] sm:text-[44px] leading-none uppercase">★ Pick a Line</div>
+        <button
+          onClick={onCancel}
+          className="font-typewriter text-[10px] uppercase tracking-[0.22em] text-white/65 hover:text-[#FFD600] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+        >
           ← back
         </button>
       </div>
       <div className="font-typewriter text-[11px] uppercase tracking-[0.22em] text-white/65 mb-5">
-        every nyc subway line · stations live from mta open data · pick a destination
+        every nyc subway line · click stops on the map to set your boarding + destination
       </div>
 
+      {/* line bullets */}
       <div className="flex flex-wrap gap-1.5 mb-5">
         {ALL_LINES.map((l) => {
           const active = line === l;
@@ -419,65 +468,54 @@ function Boarding({
 
       <MtaLineStatus line={line} />
 
-      <div className="mt-3 mb-2 font-typewriter text-[10px] uppercase tracking-[0.22em] text-white/65">
-        ★ destinations on the {line} ({lineStations.length} stops)
-      </div>
-      <div
-        className="bg-[#0a0a14] border-2 border-white/15 px-2 py-3 max-h-[260px] overflow-y-auto"
-        role="listbox"
-        aria-label="Destinations"
-      >
-        {!stationsLoaded ? (
-          <div className="font-typewriter text-[11px] uppercase tracking-[0.22em] text-white/55 px-2 py-4">
-            loading mta stations…
-          </div>
-        ) : lineStations.length === 0 ? (
-          <div className="font-typewriter text-[11px] uppercase tracking-[0.22em] text-[#ff8a9a] px-2 py-4">
-            no daytime stops found for {line}
-          </div>
-        ) : (
-          <ul className="space-y-0.5">
-            {lineStations.map((s, i) => {
-              const isDest = i === dest;
-              const inRide = i >= start && i <= dest;
-              return (
-                <li key={`${s.name}-${i}`}>
-                  <button
-                    type="button"
-                    onClick={() => setDestIdx(i)}
-                    className={`w-full text-left px-2 py-1 flex items-center gap-2 font-typewriter text-[11px] uppercase tracking-[0.12em] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600] ${
-                      isDest ? 'bg-[#FFD600]/15 text-[#FFD600]' : inRide ? 'text-white/85 hover:bg-white/5' : 'text-white/65 hover:bg-white/5'
-                    }`}
-                    aria-selected={isDest}
-                    role="option"
-                  >
-                    <span
-                      className="block rounded-full shrink-0"
-                      style={{
-                        width: isDest ? 12 : 8,
-                        height: isDest ? 12 : 8,
-                        background: isDest ? '#fff' : inRide ? LINE_COLOR[line] : '#3a3a3a',
-                        border: `2px solid ${LINE_COLOR[line]}`,
-                        boxShadow: isDest ? `0 0 10px ${LINE_COLOR[line]}` : 'none',
-                      }}
-                    />
-                    <span className="truncate flex-1">{s.name}</span>
-                    {inRide && <span className="text-[8px] tracking-[0.3em] text-white/45">in ride</span>}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+      {/* the map */}
+      <div className="mt-3 mb-3 font-typewriter text-[10px] uppercase tracking-[0.22em] text-white/65 flex items-center gap-3 flex-wrap">
+        <span>★ pick your stops</span>
+        <span className="inline-flex items-center gap-1">
+          <span className="block w-3 h-3 rounded-full" style={{ background: '#6CBE45', border: '2px solid #fff' }} />
+          <span>origin</span>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="block w-3 h-3 rounded-full" style={{ background: '#FF5582', border: '2px solid #fff' }} />
+          <span>destination</span>
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="block w-2 h-2 rounded-full" style={{ background: LINE_COLOR[line] }} />
+          <span>{line} line stops</span>
+        </span>
+        {(origin || dest) && (
+          <button
+            type="button"
+            onClick={() => { setOriginIdx(null); setDestIdx(null); }}
+            className="ml-auto px-2 py-0.5 border border-white/30 text-white/75 hover:border-[#FFD600] hover:text-[#FFD600] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+          >
+            reset
+          </button>
         )}
       </div>
 
-      {destStation && (
+      <SubwayLineMap
+        line={line}
+        lineStations={lineStations}
+        stationsLoaded={stationsLoaded}
+        originIdx={originIdx}
+        destIdx={destIdx}
+        onPick={onMapPick}
+      />
+
+      {/* selection summary */}
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <SelectedStop label="ORIGIN" station={origin} dotColor="#6CBE45" line={line} />
+        <SelectedStop label="DESTINATION" station={dest} dotColor="#FF5582" line={line} />
+      </div>
+
+      {ready && (
         <>
-          <div className="mt-5 mb-3">
-            <RollSign line={line} destination={destStation.name} />
+          <div className="mt-5 mb-2">
+            <RollSign line={line} destination={dest!.name} />
           </div>
-          <div className="font-typewriter text-[10px] uppercase tracking-[0.18em] text-white/55 mb-5">
-            ride: {ride.map((s) => s.name).join(' → ')}
+          <div className="font-typewriter text-[10px] uppercase tracking-[0.18em] text-white/55 mb-4">
+            ride: {ridePlan.map((s) => s.name).join(' → ')} · {ridePlan.length} stop{ridePlan.length === 1 ? '' : 's'}
           </div>
         </>
       )}
@@ -485,7 +523,7 @@ function Boarding({
       <button
         type="button"
         onClick={onBoard}
-        disabled={!destStation}
+        disabled={!ready}
         className="px-5 py-2.5 font-bungee text-[18px] uppercase tracking-[0.06em] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
         style={{
           background: LINE_COLOR[line],
@@ -496,6 +534,202 @@ function Boarding({
       >
         ★ BOARD THE {line} ★
       </button>
+    </div>
+  );
+}
+
+function SelectedStop({
+  label,
+  station,
+  dotColor,
+  line,
+}: {
+  label: string;
+  station: Station | null;
+  dotColor: string;
+  line: Line;
+}) {
+  return (
+    <div
+      className="px-3 py-2 border-2 flex items-center gap-3 font-typewriter text-[11px] uppercase tracking-[0.18em]"
+      style={{
+        background: '#0e0f14',
+        borderColor: station ? dotColor : 'rgba(255,255,255,0.18)',
+      }}
+    >
+      <span
+        className="block w-3.5 h-3.5 rounded-full shrink-0"
+        style={{ background: station ? dotColor : 'transparent', border: `2px solid ${dotColor}` }}
+        aria-hidden
+      />
+      <span className="text-white/55 tracking-[0.22em]">{label}</span>
+      <span className="text-white truncate">
+        {station ? station.name : '— click a stop on the map —'}
+      </span>
+      {station && (
+        <span
+          className="ml-auto subway-bullet text-[10px] shrink-0"
+          style={{ background: LINE_COLOR[line], color: lineTextColor(line) }}
+        >
+          {line}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* The interactive subway-line map: shows every stop on the chosen
+   line as a bullet-styled marker, plus a polyline connecting them. */
+function SubwayLineMap({
+  line,
+  lineStations,
+  stationsLoaded,
+  originIdx,
+  destIdx,
+  onPick,
+}: {
+  line: Line;
+  lineStations: Station[];
+  stationsLoaded: boolean;
+  originIdx: number | null;
+  destIdx: number | null;
+  onPick: (i: number) => void;
+}) {
+  const mapRef = useRef<MapRef | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Resize trigger so MapLibre paints reliably
+  useEffect(() => {
+    const fire = () => {
+      const m = mapRef.current?.getMap?.();
+      try { m?.resize(); m?.triggerRepaint(); } catch { /* noop */ }
+    };
+    const ids = [80, 240, 600, 1400].map((d) => window.setTimeout(fire, d));
+    let ro: ResizeObserver | null = null;
+    if (containerRef.current && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(fire);
+      ro.observe(containerRef.current);
+    }
+    return () => { ids.forEach(clearTimeout); ro?.disconnect(); };
+  }, []);
+
+  // Fit the line into view when stations or line change
+  useEffect(() => {
+    if (!lineStations.length) return;
+    const m = mapRef.current?.getMap?.();
+    if (!m) return;
+    let minLat = lineStations[0].lat, maxLat = minLat, minLng = lineStations[0].lng, maxLng = minLng;
+    for (const s of lineStations) {
+      if (s.lat < minLat) minLat = s.lat;
+      if (s.lat > maxLat) maxLat = s.lat;
+      if (s.lng < minLng) minLng = s.lng;
+      if (s.lng > maxLng) maxLng = s.lng;
+    }
+    try {
+      m.fitBounds([[minLng, minLat], [maxLng, maxLat]], { padding: 50, duration: 600 });
+    } catch { /* noop */ }
+  }, [line, lineStations]);
+
+  // Don't draw the full-line connector — lat-sort zigzags for E-W
+  // segments and looks like spaghetti. Draw a clean STRAIGHT line just
+  // between origin and destination once both are picked.
+  const rideGeo = (() => {
+    if (originIdx == null || destIdx == null) return null;
+    const o = lineStations[originIdx];
+    const d = lineStations[destIdx];
+    if (!o || !d) return null;
+    return {
+      type: 'FeatureCollection' as const,
+      features: [{
+        type: 'Feature' as const,
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: [[o.lng, o.lat], [d.lng, d.lat]],
+        },
+        properties: {},
+      }],
+    };
+  })();
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative bg-[#0a0a14] border-2 border-white/15 overflow-hidden h-[420px] sm:h-[480px] lg:h-[540px]"
+    >
+      {!stationsLoaded ? (
+        <div className="absolute inset-0 grid place-items-center font-typewriter text-[11px] uppercase tracking-[0.22em] text-white/55">
+          loading mta stations…
+        </div>
+      ) : lineStations.length === 0 ? (
+        <div className="absolute inset-0 grid place-items-center font-typewriter text-[11px] uppercase tracking-[0.22em] text-[#ff8a9a]">
+          no daytime stops found for {line}
+        </div>
+      ) : (
+        <MapLibre
+          ref={mapRef}
+          initialViewState={{ longitude: -73.97, latitude: 40.74, zoom: 10.4 }}
+          mapStyle={SUBWAY_MAP_STYLE}
+          attributionControl={false}
+          style={{ position: 'absolute', inset: 0 }}
+          onLoad={() => {
+            const m = mapRef.current?.getMap?.();
+            try { m?.resize(); m?.triggerRepaint(); } catch { /* noop */ }
+          }}
+        >
+          {rideGeo && (
+            <Source id="ride-route" type="geojson" data={rideGeo}>
+              <Layer
+                id="ride-route-layer"
+                type="line"
+                paint={{
+                  'line-color': LINE_COLOR[line],
+                  'line-width': 5,
+                  'line-opacity': 0.85,
+                  'line-dasharray': [2, 2],
+                }}
+              />
+            </Source>
+          )}
+          {lineStations.map((s, i) => {
+            const isOrigin = i === originIdx;
+            const isDest = i === destIdx;
+            return (
+              <Marker
+                key={`${s.name}-${i}`}
+                longitude={s.lng}
+                latitude={s.lat}
+                anchor="center"
+              >
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPick(i);
+                  }}
+                  className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+                  title={s.name}
+                  aria-label={`${s.name} on the ${line} line`}
+                  style={{
+                    width: isOrigin || isDest ? 22 : 12,
+                    height: isOrigin || isDest ? 22 : 12,
+                    borderRadius: '50%',
+                    background: isOrigin ? '#6CBE45' : isDest ? '#FF5582' : LINE_COLOR[line],
+                    border: isOrigin || isDest ? '3px solid #fff' : '2px solid #000',
+                    boxShadow: isOrigin || isDest ? `0 0 0 3px ${isOrigin ? '#6CBE45' : '#FF5582'}55, 0 0 12px rgba(0,0,0,0.7)` : '0 0 4px rgba(0,0,0,0.7)',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                />
+              </Marker>
+            );
+          })}
+        </MapLibre>
+      )}
+      <div
+        className="absolute top-2 left-2 px-2 py-1 bg-black/85 border border-[#FFD600] font-bungee text-[10px] uppercase tracking-[0.16em] text-[#FFD600] pointer-events-none"
+      >
+        ★ {line} line · {lineStations.length} stops
+      </div>
     </div>
   );
 }
@@ -521,7 +755,6 @@ function MtaLineStatus({ line }: { line: Line }) {
     })();
     return () => { stop = true; };
   }, [line]);
-
   const ok = status.includes('good');
   return (
     <div
@@ -539,12 +772,7 @@ function MtaLineStatus({ line }: { line: Line }) {
   );
 }
 
-/* ──────────────────────────────────────── stage 3: POV from the seat
-   Real R32-ish car interior, drawn from the perspective of someone
-   sitting on the bench. The opposite wall (with doors and the strip
-   map) is in the upper half; floor + your-bench-edge in the lower.
-   The "door window" between the doors frames the live traffic cam
-   for the current stop. */
+/* ──────────────────────────────────────── stage 3: side-view POV */
 
 function SubwayCarPOV({
   line,
@@ -576,77 +804,30 @@ function SubwayCarPOV({
 
   return (
     <div className="max-w-[1200px] mx-auto">
-      {/* roll sign + strip map sits above the POV — like the destination
-          sign you'd see on the platform end of the car */}
+      {/* roll-sign banner above the car */}
       <RollSign line={line} destination={finalStation?.name ?? ''} />
-      <div className="mt-2 mb-4 px-2 py-2 bg-[#0e0f14] border-2 border-white/15">
-        <StripMap
-          line={line}
-          stations={ridePlan}
-          highlighted={stationIdx}
-          rideStart={0}
-          rideEnd={Math.max(0, ridePlan.length - 1)}
-          riding
-        />
-      </div>
 
-      <div
-        className="relative overflow-hidden"
-        style={{
-          // the car interior — silver-aluminum walls, ceiling lights
-          background:
-            'linear-gradient(180deg,#9ea4ad 0%,#bcc1c8 8%,#cdd2d8 16%,#cdd2d8 60%,#1a1a1a 60%,#1a1a1a 100%)',
-          border: '6px solid #2a2a2a',
-          borderRadius: 12,
-          boxShadow: 'inset 0 0 80px rgba(0,0,0,0.55), 0 18px 30px rgba(0,0,0,0.55)',
-        }}
-      >
-        {/* ceiling fluorescents */}
-        <CeilingLights />
+      {/* progress tracker — segmented bar with stop names */}
+      <ProgressTracker
+        line={line}
+        ridePlan={ridePlan}
+        stationIdx={stationIdx}
+        arrived={arrived}
+      />
 
-        {/* upper rail of ad placards across the OPPOSITE side of the car */}
-        <UpperAdRail line={line} />
+      {/* the car interior — side view */}
+      <SideViewCar
+        line={line}
+        cam={cam}
+        tick={tick}
+        currentStation={currentStation}
+        nextStationName={nextStationName}
+        arrived={arrived}
+        isLast={isLast}
+        riding={!arrived}
+      />
 
-        {/* hand-strap row */}
-        <HandStraps />
-
-        {/* the wall across from you: doors with windows + bench beneath +
-            two end-panels. We place this as a centered strip with the
-            two side benches flanking it. */}
-        <div className="relative grid grid-cols-[110px_minmax(0,1fr)_110px] gap-0 px-2 pt-1">
-          {/* left end-of-car panel: route map placard */}
-          <SidePanelMap line={line} />
-
-          {/* middle: the doors and the live cam framed by them */}
-          <DoorWall
-            line={line}
-            cam={cam}
-            tick={tick}
-            currentStation={currentStation}
-            nextStationName={nextStationName}
-            arrived={arrived}
-            isLast={isLast}
-          />
-
-          {/* right end-of-car panel: ad poster */}
-          <SidePanelAd />
-        </div>
-
-        {/* opposite bench — orange R32 plastic, in front of the doors */}
-        <OppositeBench />
-
-        {/* floor — perspective tiles vanishing forward; this gives the
-            POV its "I'm sitting and looking across" feel */}
-        <PerspectiveFloor />
-
-        {/* the very bottom edge: a sliver of YOUR bench (foreground) */}
-        <ForegroundBench />
-
-        {/* center grab pole, foreground (between you and the doors) */}
-        <FrontPoles />
-      </div>
-
-      {/* below-car: status / exit */}
+      {/* status + exit */}
       <div className="mt-4 flex flex-wrap items-center gap-3">
         {arrived ? (
           <>
@@ -677,108 +858,106 @@ function SubwayCarPOV({
   );
 }
 
-/* ──────────────────────────────────────── POV parts */
-
-function CeilingLights() {
+/* The horizontal stop-by-stop progress tracker. Big stations, current
+   one bright + glowing, train icon parked on the current dot. */
+function ProgressTracker({
+  line,
+  ridePlan,
+  stationIdx,
+  arrived,
+}: {
+  line: Line;
+  ridePlan: Station[];
+  stationIdx: number;
+  arrived: boolean;
+}) {
+  if (ridePlan.length === 0) return null;
+  const total = ridePlan.length;
+  const progress = total > 1 ? stationIdx / (total - 1) : 1;
   return (
-    <div className="absolute top-0 inset-x-0 h-2 flex justify-around overflow-hidden" aria-hidden>
-      {Array.from({ length: 18 }).map((_, i) => (
-        <span
-          key={i}
-          className="block h-full"
+    <div className="mt-3 mb-3 px-3 py-3 bg-black border-2 border-[#FFD600]/45" style={{ boxShadow: '4px 4px 0 #d11a2a' }}>
+      <div className="flex items-baseline justify-between mb-2">
+        <span className="font-bungee text-[12px] uppercase tracking-[0.06em] text-[#FFD600]">
+          ★ Progress · stop {Math.min(stationIdx + 1, total)} / {total}
+        </span>
+        <span className="font-typewriter text-[9px] uppercase tracking-[0.22em] text-white/65">
+          {arrived ? 'arrived' : `next: ${ridePlan[Math.min(stationIdx + 1, total - 1)]?.name ?? '—'}`}
+        </span>
+      </div>
+      <div className="relative pt-2 pb-7">
+        {/* base track */}
+        <div className="absolute left-2 right-2 top-[14px] h-1.5" style={{ background: 'rgba(255,255,255,0.12)' }} />
+        {/* travelled track */}
+        <div
+          className="absolute left-2 top-[14px] h-1.5 transition-[width] duration-700 ease-out"
           style={{
-            width: 36,
-            background: 'linear-gradient(180deg,#fff7d0,#ffe69a 60%,transparent)',
-            opacity: 0.85,
-            margin: '0 4px',
+            background: LINE_COLOR[line],
+            width: `calc(${progress * 100}% * (1 - 16px / 100%))`,
+            boxShadow: `0 0 10px ${LINE_COLOR[line]}88`,
           }}
         />
-      ))}
-    </div>
-  );
-}
-
-function UpperAdRail({ line }: { line: Line }) {
-  return (
-    <div
-      className="px-3 py-1.5 flex items-center gap-2 text-[10px] font-typewriter uppercase tracking-[0.18em] border-y border-[#8a8a82]"
-      style={{ background: '#fffae6', color: '#1a1410' }}
-    >
-      <span className="font-bungee text-[12px] text-[#0039A6]">★ Dr. Zizmor</span>
-      <span className="text-[#1a1410]/70">— clear skin · fresh start</span>
-      <span className="ml-auto subway-bullet text-[12px]" style={{ background: LINE_COLOR[line], color: lineTextColor(line) }}>
-        {line}
-      </span>
-      <span className="text-[#d11a2a] font-bungee text-[12px]">if you see something</span>
-      <span className="text-[#1a1410]/70">say something</span>
-    </div>
-  );
-}
-
-function HandStraps() {
-  return (
-    <div
-      className="h-7 flex items-start justify-around overflow-hidden"
-      style={{ background: 'linear-gradient(180deg,#cdd2d8,#a8aeb6)' }}
-      aria-hidden
-    >
-      {Array.from({ length: 22 }).map((_, i) => (
-        <span
-          key={i}
-          className="block"
-          style={{
-            width: 2,
-            height: 18,
-            background: '#5a3820',
-            marginTop: -2,
-            animation: `strap-sway ${1.4 + (i % 5) * 0.18}s ease-in-out infinite alternate`,
-            animationDelay: `${i * 0.06}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-function SidePanelMap({ line }: { line: Line }) {
-  return (
-    <div
-      className="hidden md:block self-stretch border-y border-[#8a8a82]"
-      style={{ background: '#0e0f14' }}
-      aria-label="Subway route map placard"
-    >
-      <div className="h-full flex flex-col items-center justify-center px-2 py-2">
-        <div className="font-bungee text-[10px] tracking-[0.18em] text-[#FFD600] uppercase mb-1">★ ROUTE</div>
-        <div className="subway-bullet text-[16px] mb-1.5" style={{ background: LINE_COLOR[line], color: lineTextColor(line), width: 36, height: 36 }}>
-          {line}
+        {/* dots + names */}
+        <div className="relative flex items-center justify-between px-2">
+          {ridePlan.map((s, i) => {
+            const passed = i < stationIdx || (i === stationIdx && arrived);
+            const here = i === stationIdx && !arrived;
+            return (
+              <div key={`${s.name}-${i}`} className="flex flex-col items-center w-0">
+                <span
+                  className="block rounded-full"
+                  style={{
+                    width: here ? 16 : 12,
+                    height: here ? 16 : 12,
+                    background: passed || here ? LINE_COLOR[line] : '#1a1a1a',
+                    border: `2px solid ${passed || here ? '#fff' : LINE_COLOR[line]}`,
+                    boxShadow: here ? `0 0 14px ${LINE_COLOR[line]}, 0 0 0 4px rgba(255,255,255,0.18)` : 'none',
+                    transition: 'all 0.4s ease',
+                  }}
+                />
+                <div
+                  className="absolute top-[28px] text-[8.5px] font-typewriter uppercase tracking-[0.1em] whitespace-nowrap"
+                  style={{
+                    color: here ? '#fff' : passed ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)',
+                    transform: 'rotate(-22deg)',
+                    transformOrigin: 'top left',
+                  }}
+                >
+                  {s.name}
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <div className="text-[8px] uppercase tracking-[0.22em] font-typewriter text-white/55 text-center leading-tight">
-          IND/IRT/BMT<br/>NEW YORK CITY<br/>TRANSIT
+        {/* the train icon, parked on the current stop */}
+        <div
+          className="absolute -top-1 transition-[left] duration-700 ease-out"
+          style={{ left: `calc(8px + ${progress * 100}% - 12px)` }}
+          aria-hidden
+        >
+          <span
+            className="block w-6 h-6 rounded grid place-items-center font-bungee text-[10px] leading-none"
+            style={{
+              background: LINE_COLOR[line],
+              color: lineTextColor(line),
+              border: '2px solid #fff',
+              boxShadow: `0 0 12px ${LINE_COLOR[line]}cc`,
+            }}
+          >
+            {line}
+          </span>
         </div>
       </div>
     </div>
   );
 }
 
-function SidePanelAd() {
-  return (
-    <div
-      className="hidden md:block self-stretch border-y border-[#8a8a82]"
-      style={{ background: '#0e0f14' }}
-      aria-hidden
-    >
-      <div className="h-full flex flex-col items-center justify-center px-2 py-2">
-        <div className="font-bungee text-[14px] text-[#ff5582] neon">RX</div>
-        <div className="text-[8px] uppercase tracking-[0.18em] font-typewriter text-white/65 text-center leading-tight mt-1">
-          SEE A<br/>DOCTOR<br/>ABOUT IT
-        </div>
-        <div className="text-[7px] uppercase tracking-[0.22em] font-typewriter text-white/35 mt-2">★ poets ad ★</div>
-      </div>
-    </div>
-  );
-}
-
-function DoorWall({
+/* The big visual: side view of the subway car. Top half = the wall
+   across from your seat — ad rail, hand strap row, stainless panels,
+   and the door window with the live cam. Bottom half = your bench
+   (foreground orange sliver) + dark floor with safety strip + a yellow
+   grab pole on the right edge selling the "I'm sitting on the bench"
+   POV from the reference photo. */
+function SideViewCar({
   line,
   cam,
   tick,
@@ -786,6 +965,7 @@ function DoorWall({
   nextStationName,
   arrived,
   isLast,
+  riding,
 }: {
   line: Line;
   cam: Camera | null;
@@ -794,251 +974,322 @@ function DoorWall({
   nextStationName: string;
   arrived: boolean;
   isLast: boolean;
+  riding: boolean;
 }) {
-  return (
-    <div className="relative" style={{ background: 'linear-gradient(180deg,#cdd2d8,#a8aeb6)' }}>
-      {/* "next stop" dot-matrix marquee above the doors */}
-      <div
-        className="absolute -top-7 left-2 right-2 z-10 px-2 py-0.5 text-center font-mono text-[11px] tracking-[0.18em] uppercase"
-        style={{ background: '#000', color: '#ff8a3a', textShadow: '0 0 6px #ff8a3a, 0 0 14px #ff8a3a55', border: '1px solid #1a1a1a' }}
-      >
-        {arrived
-          ? `★ NOW ARRIVING · ${currentStation?.name ?? ''} ★`
-          : isLast
-          ? `★ NEXT STOP · ${currentStation?.name ?? ''} ★`
-          : `★ NEXT STOP · ${nextStationName} ★`}
-      </div>
-
-      <div className="grid grid-cols-[16px_minmax(0,1fr)_16px] gap-0 pt-1">
-        <DoorEdge side="left" />
-
-        {/* between the doors: the cam window */}
-        <div
-          className="relative"
-          style={{
-            background: '#0a0a0a',
-            border: '6px solid #2a2a2a',
-            borderTop: '6px solid #FFD600',
-            borderBottom: '6px solid #FFD600',
-          }}
-        >
-          <div
-            className="relative"
-            style={{ aspectRatio: '16 / 9', minHeight: 240, background: '#000', overflow: 'hidden' }}
-          >
-            <div className="absolute inset-0 tunnel-scroll" />
-            {cam ? (
-              <img
-                key={cam.id}
-                src={NYCTMC_IMG(cam.id, tick)}
-                alt={`Traffic camera near ${currentStation?.name ?? 'stop'}`}
-                referrerPolicy="no-referrer"
-                decoding="async"
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ filter: arrived ? 'none' : 'contrast(1.05) saturate(0.92)' }}
-              />
-            ) : (
-              <div className="absolute inset-0 grid place-items-center text-[#FFD600]/65 font-typewriter text-[10px] uppercase tracking-[0.22em]">
-                — tunnel —
-              </div>
-            )}
-            {/* whoosh banner when the station appears */}
-            <div key={`${currentStation?.name}-${tick}`} className="absolute top-0 left-0 right-0 station-whoosh">
-              <div
-                className="bg-[#FFD600] text-black px-3 py-1 font-bungee uppercase tracking-[0.06em] text-[15px] inline-block"
-                style={{ boxShadow: '3px 3px 0 #d11a2a' }}
-              >
-                {currentStation?.name}
-              </div>
-            </div>
-            {/* glass reflection */}
-            <div className="absolute inset-x-0 top-0 h-1/3" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0))' }} />
-          </div>
-          <div className="px-2 py-1 flex items-center gap-2 bg-[#1a1a1a]">
-            <span className="text-[#FFD600] font-bungee text-[10px] uppercase tracking-[0.18em]">★ DO NOT HOLD DOORS</span>
-            <span className="text-white/55 font-typewriter text-[8px] uppercase tracking-[0.22em]">car #{4400 + (line.charCodeAt(0) % 50)}</span>
-          </div>
-        </div>
-
-        <DoorEdge side="right" />
-      </div>
-    </div>
-  );
-}
-
-function DoorEdge({ side }: { side: 'left' | 'right' }) {
-  return (
-    <div
-      className="relative h-full"
-      style={{
-        background: 'linear-gradient(90deg,#FFD600 0%,#E5C200 100%)',
-        borderLeft: side === 'right' ? '2px solid #1a1a1a' : 'none',
-        borderRight: side === 'left' ? '2px solid #1a1a1a' : 'none',
-      }}
-      aria-hidden
-    />
-  );
-}
-
-function OppositeBench() {
-  return (
-    <div className="relative px-3" aria-hidden>
-      <svg viewBox="0 0 1100 88" preserveAspectRatio="none" width="100%" height="88">
-        <defs>
-          <linearGradient id="benchGrad" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="#FF8A3A" />
-            <stop offset="60%" stopColor="#E5641F" />
-            <stop offset="100%" stopColor="#9c3f10" />
-          </linearGradient>
-        </defs>
-        {/* the bench seat row across the car */}
-        <rect x="0" y="2" width="1100" height="46" fill="url(#benchGrad)" stroke="#1a1410" strokeWidth="1" />
-        {/* individual buckets */}
-        {Array.from({ length: 14 }).map((_, i) => (
-          <g key={i} transform={`translate(${i * 78 + 6} 48)`}>
-            <path d="M 0 0 H 70 V 32 Q 35 36 0 32 Z" fill="url(#benchGrad)" stroke="#1a1410" strokeWidth="1" />
-            <path d="M 6 32 Q 35 36 64 32" stroke="#1a1410" strokeWidth="0.6" fill="none" opacity="0.5" />
-          </g>
-        ))}
-      </svg>
-    </div>
-  );
-}
-
-function PerspectiveFloor() {
   return (
     <div
       className="relative overflow-hidden"
-      style={{ height: 60, background: 'linear-gradient(180deg,#5a5a5a 0%,#1a1a1a 100%)' }}
-      aria-hidden
+      style={{
+        // stainless steel walls + dark floor split horizontally
+        background: 'linear-gradient(180deg,#9da3ac 0%,#bcc1c8 8%,#cdd2d8 18%,#a8aeb6 58%,#1a1a1a 58%,#0a0a0a 100%)',
+        border: '6px solid #0a0a0a',
+        borderRadius: 12,
+        boxShadow: 'inset 0 0 80px rgba(0,0,0,0.55), 0 18px 30px rgba(0,0,0,0.55)',
+        minHeight: 420,
+      }}
     >
-      {/* perspective tile lines vanishing toward the doors */}
+      {/* ceiling fluorescents */}
+      <div className="absolute top-0 inset-x-0 h-[10px] flex justify-around" aria-hidden>
+        {Array.from({ length: 22 }).map((_, i) => (
+          <span
+            key={i}
+            className="block h-full"
+            style={{
+              width: 38,
+              background: 'linear-gradient(180deg,#fff7d0,#ffe69a 60%,transparent)',
+              opacity: 0.9,
+              margin: '0 4px',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* upper ad rail */}
       <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'repeating-linear-gradient(90deg,rgba(255,255,255,0.05) 0px,rgba(255,255,255,0.05) 1px,transparent 1px,transparent 28px)',
-          transform: 'perspective(220px) rotateX(48deg)',
-          transformOrigin: 'center top',
-        }}
-      />
-      {/* yellow safety strip at the door */}
-      <div className="absolute top-0 inset-x-[12%] h-1.5" style={{ background: '#FFD600', boxShadow: '0 0 6px #FFD60088' }} />
+        className="px-3 py-1.5 mt-2 flex items-center gap-2 text-[10px] font-typewriter uppercase tracking-[0.18em] border-y border-[#8a8a82]"
+        style={{ background: '#fffae6', color: '#1a1410' }}
+      >
+        <span className="font-bungee text-[12px] text-[#0039A6]">★ Dr. Zizmor</span>
+        <span className="text-[#1a1410]/70">— clear skin · fresh start</span>
+        <span className="ml-auto subway-bullet text-[12px]" style={{ background: LINE_COLOR[line], color: lineTextColor(line) }}>
+          {line}
+        </span>
+        <span className="text-[#d11a2a] font-bungee text-[12px]">if you see something</span>
+        <span className="text-[#1a1410]/70">say something</span>
+      </div>
+
+      {/* hand-strap row */}
+      <div
+        className="h-7 flex items-start justify-around overflow-hidden"
+        style={{ background: 'linear-gradient(180deg,#cdd2d8,#a8aeb6)' }}
+        aria-hidden
+      >
+        {Array.from({ length: 28 }).map((_, i) => (
+          <span
+            key={i}
+            className="block"
+            style={{
+              width: 2,
+              height: 18,
+              background: '#5a3820',
+              marginTop: -2,
+              animation: `strap-sway ${1.4 + (i % 5) * 0.18}s ease-in-out infinite alternate`,
+              animationDelay: `${i * 0.06}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* the door + window strip — the cam frame is the WINDOW */}
+      <div className="relative px-2 sm:px-4 pt-1">
+        {/* "next stop" dot-matrix above the doors */}
+        <div
+          className="mx-auto mb-2 px-3 py-0.5 text-center font-mono text-[11px] tracking-[0.18em] uppercase max-w-[640px]"
+          style={{
+            background: '#000',
+            color: '#ff8a3a',
+            textShadow: '0 0 6px #ff8a3a, 0 0 14px #ff8a3a55',
+            border: '1px solid #1a1a1a',
+          }}
+        >
+          {arrived
+            ? `★ NOW ARRIVING · ${currentStation?.name ?? ''} ★`
+            : isLast
+            ? `★ NEXT STOP · ${currentStation?.name ?? ''} ★`
+            : `★ NEXT STOP · ${nextStationName} ★`}
+        </div>
+
+        {/* the door wall — flanked by stainless panels, with a vent
+            up top and the window cutout containing the cam */}
+        <div
+          className="grid grid-cols-[60px_minmax(0,1fr)_60px] sm:grid-cols-[110px_minmax(0,1fr)_110px] gap-0"
+        >
+          {/* left stainless wall panel — vent + ad sliver */}
+          <StainlessWall side="left" />
+
+          {/* THE WINDOW — the cam goes here. Yellow door edges, dark
+              window frame, the live cam image, motion-blur edge masks
+              that pulse during the ride to sell the "passing by" feel. */}
+          <div className="relative">
+            {/* yellow door edges (the sliding doors of the car) */}
+            <div
+              className="absolute top-0 bottom-0 w-3"
+              style={{ left: 0, background: 'linear-gradient(180deg,#FFD600,#E5C200)', borderRight: '2px solid #1a1a1a' }}
+              aria-hidden
+            />
+            <div
+              className="absolute top-0 bottom-0 w-3"
+              style={{ right: 0, background: 'linear-gradient(180deg,#FFD600,#E5C200)', borderLeft: '2px solid #1a1a1a' }}
+              aria-hidden
+            />
+
+            {/* the window itself — recessed, dark frame, rounded corners
+                like an actual subway window */}
+            <div
+              className="relative mx-3"
+              style={{
+                aspectRatio: '16 / 9',
+                minHeight: 220,
+                background: '#000',
+                border: '4px solid #1a1a1a',
+                borderRadius: '14px / 10px',
+                overflow: 'hidden',
+                boxShadow:
+                  'inset 0 0 0 4px rgba(255,255,255,0.06), inset 0 0 60px rgba(0,0,0,0.7), 0 6px 14px rgba(0,0,0,0.6)',
+              }}
+            >
+              {/* tunnel scroll — visible behind the cam */}
+              <div className="absolute inset-0 tunnel-scroll" />
+              {/* the live camera image */}
+              {cam ? (
+                <img
+                  key={cam.id}
+                  src={NYCTMC_IMG(cam.id, tick)}
+                  alt={`Traffic camera near ${currentStation?.name ?? 'stop'}`}
+                  referrerPolicy="no-referrer"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{
+                    filter: arrived ? 'none' : 'contrast(1.05) saturate(0.92)',
+                  }}
+                />
+              ) : (
+                <div className="absolute inset-0 grid place-items-center text-[#FFD600]/65 font-typewriter text-[10px] uppercase tracking-[0.22em]">
+                  — tunnel —
+                </div>
+              )}
+              {/* MOTION BLUR edges — fade dark on left + right; pulses
+                  while riding so it reads as "passing by", static on
+                  arrival when the train has stopped */}
+              {riding && <MotionEdges />}
+              {/* glass reflection */}
+              <div
+                className="absolute inset-x-0 top-0 h-1/3 pointer-events-none"
+                style={{ background: 'linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0))' }}
+                aria-hidden
+              />
+              {/* station whoosh banner */}
+              <div key={`${currentStation?.name}-${tick}`} className="absolute top-2 left-2 station-whoosh">
+                <div
+                  className="bg-[#FFD600] text-black px-3 py-1 font-bungee uppercase tracking-[0.06em] text-[15px] inline-block"
+                  style={{ boxShadow: '3px 3px 0 #d11a2a' }}
+                >
+                  {currentStation?.name}
+                </div>
+              </div>
+            </div>
+
+            {/* tiny "DO NOT HOLD DOORS" sticker, positioned over the door
+                between the window and the floor */}
+            <div className="absolute bottom-1 left-6 right-6 px-2 py-0.5 flex items-center gap-2 bg-[#1a1a1a] z-10">
+              <span className="text-[#FFD600] font-bungee text-[9px] uppercase tracking-[0.18em]">★ DO NOT HOLD DOORS</span>
+              <span className="text-white/55 font-typewriter text-[8px] uppercase tracking-[0.22em]">car #{4400 + (line.charCodeAt(0) % 50)}</span>
+            </div>
+          </div>
+
+          {/* right stainless wall panel */}
+          <StainlessWall side="right" />
+        </div>
+      </div>
+
+      {/* opposite bench — orange R32-ish vinyl, runs the width of the car */}
+      <div className="absolute bottom-[42%] inset-x-2 sm:inset-x-4" style={{ pointerEvents: 'none' }}>
+        {/* hidden, just for spacing reference; bench is rendered below */}
+      </div>
+
+      {/* aisle floor — perspective tile lines and yellow safety strip */}
+      <div
+        className="relative mt-1"
+        style={{ height: 60, background: 'linear-gradient(180deg,#3a3a3e 0%,#0e0e10 100%)' }}
+        aria-hidden
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'repeating-linear-gradient(90deg,rgba(255,255,255,0.04) 0px,rgba(255,255,255,0.04) 1px,transparent 1px,transparent 28px)',
+            transform: 'perspective(220px) rotateX(48deg)',
+            transformOrigin: 'center top',
+          }}
+        />
+        {/* yellow safety strip at the door */}
+        <div className="absolute top-0 inset-x-[18%] h-1.5" style={{ background: '#FFD600', boxShadow: '0 0 6px #FFD60088' }} />
+      </div>
+
+      {/* foreground bench — your bench, just a sliver visible at the
+          bottom of the frame so the POV reads as seated */}
+      <ForegroundBench />
+
+      {/* yellow grab pole on the right side, foreground; from the
+          reference image that pole is unmistakable */}
+      <ForegroundPole side="right" />
+      {/* a quieter chrome pole on the left */}
+      <ForegroundPole side="left" chrome />
     </div>
   );
 }
 
-function ForegroundBench() {
-  // The very bottom of the screen: a sliver of orange vinyl + chrome
-  // edge, "your" bench. Sells the seated POV.
+function StainlessWall({ side }: { side: 'left' | 'right' }) {
   return (
     <div
-      className="relative h-3"
+      className="hidden sm:flex flex-col self-stretch"
       style={{
         background:
-          'linear-gradient(180deg,#FF8A3A 0%,#E5641F 60%,#9c3f10 100%)',
-        borderTop: '1px solid #1a1410',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 -2px 6px rgba(0,0,0,0.55)',
+          'linear-gradient(180deg,#cdd2d8 0%,#a8aeb6 60%,#7e8189 100%)',
+        borderLeft: side === 'right' ? '1px solid #6a6e76' : 'none',
+        borderRight: side === 'left' ? '1px solid #6a6e76' : 'none',
+        position: 'relative',
       }}
       aria-hidden
-    />
+    >
+      {/* rivet line + thin window slits (suggestive only) */}
+      <div className="absolute top-2 bottom-2 w-1 rounded-full" style={{ left: side === 'left' ? '8px' : 'auto', right: side === 'right' ? '8px' : 'auto', background: 'repeating-linear-gradient(180deg,#5a5e66 0px,#5a5e66 2px,transparent 2px,transparent 6px)' }} />
+      {/* ad placard */}
+      <div
+        className="m-auto w-[80%] aspect-[3/4] flex items-center justify-center text-center px-1"
+        style={{ background: '#0e0f14', border: '1px solid #1a1a1a' }}
+      >
+        <div>
+          <div className="font-bungee text-[10px] sm:text-[12px] text-[#ff5582] neon">RX</div>
+          <div className="font-typewriter text-[7px] sm:text-[8px] uppercase tracking-[0.2em] text-white/65 mt-1 leading-tight">
+            See A<br/>Doctor<br/>About It
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
-function FrontPoles() {
-  // Two vertical chrome poles in the foreground, between the seated
-  // viewer and the door wall. Layered above floor/bench.
+function MotionEdges() {
+  // Two side gradients that fade dark in from the edges, plus a
+  // "speed-line" overlay that animates horizontally — sells the feeling
+  // that the camera is being seen through a moving subway window.
   return (
     <>
-      <span
-        className="absolute left-[14%] top-2 bottom-3 z-20 hidden sm:block"
-        style={{
-          width: 6,
-          background: 'linear-gradient(90deg,#9aa0a8 0%,#e8ecef 50%,#7a808a 100%)',
-          boxShadow: '0 0 10px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(0,0,0,0.4)',
-        }}
+      <div
+        className="absolute inset-y-0 left-0 w-12 motion-fade-l pointer-events-none"
         aria-hidden
       />
-      <span
-        className="absolute right-[14%] top-2 bottom-3 z-20 hidden sm:block"
-        style={{
-          width: 6,
-          background: 'linear-gradient(90deg,#9aa0a8 0%,#e8ecef 50%,#7a808a 100%)',
-          boxShadow: '0 0 10px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(0,0,0,0.4)',
-        }}
+      <div
+        className="absolute inset-y-0 right-0 w-12 motion-fade-r pointer-events-none"
         aria-hidden
       />
+      <div className="absolute inset-0 motion-streaks pointer-events-none" aria-hidden />
     </>
   );
 }
 
-/* ──────────────────────────────────────── shared parts */
-
-function StripMap({
-  line,
-  stations,
-  highlighted,
-  rideStart,
-  rideEnd,
-  riding = false,
-}: {
-  line: Line;
-  stations: Station[];
-  highlighted: number;
-  onPick?: (i: number) => void;
-  rideStart: number;
-  rideEnd: number;
-  riding?: boolean;
-}) {
-  if (stations.length === 0) return null;
+function ForegroundBench() {
+  // Two-tone orange — the bucket-seat row at the very bottom, with a
+  // chrome rim. Just a sliver so it reads as foreground, not the focus.
   return (
-    <div className="overflow-x-auto">
-      <div className="relative pt-4 pb-7 min-w-[640px]">
-        <div className="absolute left-3 right-3 top-1/2 -translate-y-1/2 h-1.5" style={{ background: LINE_COLOR[line], opacity: 0.3 }} />
-        <div
-          className="absolute h-1.5 top-1/2 -translate-y-1/2"
-          style={{
-            background: LINE_COLOR[line],
-            left: `calc(12px + ${(rideStart / Math.max(1, stations.length - 1)) * 100}% - 0px)`,
-            width: `${((rideEnd - rideStart) / Math.max(1, stations.length - 1)) * 100}%`,
-            boxShadow: `0 0 12px ${LINE_COLOR[line]}88`,
-          }}
-        />
-        <div className="relative flex items-center justify-between px-3">
-          {stations.map((s, i) => {
-            const isHi = i === highlighted;
-            const isRide = i >= rideStart && i <= rideEnd;
-            return (
-              <div key={`${s.name}-${i}`} className="flex flex-col items-center w-0">
-                <span
-                  className="block rounded-full"
-                  style={{
-                    width: isHi ? 18 : 11,
-                    height: isHi ? 18 : 11,
-                    background: isHi ? '#fff' : isRide ? LINE_COLOR[line] : '#1a1a1a',
-                    border: `2px solid ${isHi ? LINE_COLOR[line] : '#000'}`,
-                    boxShadow: isHi ? `0 0 14px ${LINE_COLOR[line]}, 0 0 0 3px rgba(255,255,255,0.15)` : 'none',
-                  }}
-                />
-                <div
-                  className="absolute top-full mt-1.5 text-[8px] font-typewriter uppercase tracking-[0.12em] whitespace-nowrap"
-                  style={{
-                    color: isHi ? '#fff' : isRide ? '#fff' : 'rgba(255,255,255,0.45)',
-                    transform: 'rotate(-30deg)',
-                    transformOrigin: 'top left',
-                  }}
-                  aria-hidden={!isHi && !riding}
-                >
-                  {s.name}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+    <div
+      className="absolute bottom-0 inset-x-0 z-10 h-[40px] sm:h-[52px]"
+      style={{
+        background:
+          'linear-gradient(180deg,#FF8A3A 0%,#E5641F 32%,#9c3f10 70%,#1a1a1a 100%)',
+        borderTop: '2px solid #1a1410',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 -3px 8px rgba(0,0,0,0.65)',
+      }}
+      aria-hidden
+    >
+      {/* bucket dividers — vertical creases */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'repeating-linear-gradient(90deg,transparent 0px,transparent 78px,rgba(0,0,0,0.4) 78px,rgba(0,0,0,0.4) 80px)',
+        }}
+      />
+      {/* a hint of chrome edge along the front of the bench */}
+      <div
+        className="absolute top-[2px] inset-x-0 h-0.5"
+        style={{ background: 'linear-gradient(90deg,#9aa0a8 0%,#e8ecef 50%,#7a808a 100%)' }}
+      />
     </div>
   );
 }
+
+function ForegroundPole({ side, chrome = false }: { side: 'left' | 'right'; chrome?: boolean }) {
+  return (
+    <span
+      className="absolute top-2 bottom-[58px] z-20 hidden sm:block"
+      style={{
+        [side]: '4%',
+        width: 8,
+        background: chrome
+          ? 'linear-gradient(90deg,#9aa0a8 0%,#e8ecef 50%,#7a808a 100%)'
+          : 'linear-gradient(90deg,#c8a000 0%,#FFD600 35%,#fff8a0 50%,#FFD600 65%,#c8a000 100%)',
+        boxShadow: chrome
+          ? '0 0 8px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(0,0,0,0.4)'
+          : '0 0 12px rgba(255,214,0,0.45), inset 0 0 0 1px rgba(0,0,0,0.4)',
+      } as React.CSSProperties}
+      aria-hidden
+    />
+  );
+}
+
+/* ──────────────────────────────────────── shared parts */
 
 function RollSign({ line, destination }: { line: Line; destination: string }) {
   const text = `${line} TO ${(destination || '—').toUpperCase()}`;
@@ -1155,7 +1406,39 @@ const TRAIN_KEYFRAMES = `
   100% { transform: translateX(-120%); opacity: 0; }
 }
 .station-whoosh {
-  animation: station-whoosh 5.6s ease-in-out 1;
+  animation: station-whoosh 6s ease-in-out 1;
   padding: 6px 8px;
+}
+/* motion blur on left + right edges of the cam window */
+.motion-fade-l {
+  background: linear-gradient(90deg, rgba(0,0,0,0.85), rgba(0,0,0,0.0));
+  animation: motion-pulse-l 0.65s ease-in-out infinite;
+}
+.motion-fade-r {
+  background: linear-gradient(270deg, rgba(0,0,0,0.85), rgba(0,0,0,0.0));
+  animation: motion-pulse-r 0.65s ease-in-out infinite;
+}
+@keyframes motion-pulse-l {
+  from { opacity: 0.55; transform: translateX(-2px); }
+  to   { opacity: 0.85; transform: translateX(0); }
+}
+@keyframes motion-pulse-r {
+  from { opacity: 0.55; transform: translateX(2px); }
+  to   { opacity: 0.85; transform: translateX(0); }
+}
+/* horizontal speed-streaks layered over the cam to sell motion */
+.motion-streaks {
+  background-image:
+    linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 8%, transparent 14%),
+    linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.05) 38%, transparent 44%),
+    linear-gradient(90deg, transparent 60%, rgba(255,255,255,0.04) 68%, transparent 74%);
+  background-size: 240px 2px, 240px 1px, 240px 2px;
+  background-position: 0 30%, 0 55%, 0 80%;
+  animation: motion-streaks 0.45s linear infinite;
+  mix-blend-mode: screen;
+}
+@keyframes motion-streaks {
+  from { background-position: 0 30%, 0 55%, 0 80%; }
+  to   { background-position: -300px 30%, -340px 55%, -260px 80%; }
 }
 `;
