@@ -6,6 +6,7 @@ import About from './about';
 import Game from './game';
 import Turnstile from './turnstile';
 import GeoGuessr from './geoguessr';
+import Scratch from './scratch';
 
 const path = window.location.pathname;
 const Page = path.startsWith('/about')
@@ -16,7 +17,9 @@ const Page = path.startsWith('/about')
       ? Turnstile
       : path.startsWith('/geoguessr') || path.startsWith('/guess')
         ? GeoGuessr
-        : Lounge;
+        : path.startsWith('/scratch') || path.startsWith('/lotto')
+          ? Scratch
+          : Lounge;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

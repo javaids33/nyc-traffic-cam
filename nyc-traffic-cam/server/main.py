@@ -3,13 +3,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
+import secrets
+import time
+from collections import deque
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
+from pydantic import BaseModel, Field
 
-from . import db
+from . import db, transit
 from .ingestor import Ingestor
 from .nyc_api import NycApi
 from .state import hub
@@ -122,6 +127,127 @@ async def get_stats() -> dict:
         "cameras_polled": polled_recently,
         "metrics": hub.metrics,
     }
+
+
+# ────────────────────────────────────────────────────────────────────
+# /api/challenges — geoguessr "play the same 5 cameras as your friend"
+# Snapshot the 5 camera UUIDs at share time, store under a 6-char hash,
+# expire after 24h. Bounded storage and per-IP rate limit guard memory.
+# ────────────────────────────────────────────────────────────────────
+
+# In-memory per-IP token buckets. Cheap, single-process: this server
+# runs as one uvicorn worker, so a Python dict is fine. If we ever scale
+# horizontally this would need to move to redis or similar.
+_RATE_BUCKET: dict[str, deque[float]] = {}
+_RATE_WINDOW_SEC = 60 * 60
+_RATE_LIMIT_PER_WINDOW = 30  # 30 challenge creates per IP per hour
+
+_CAM_ID_RE = re.compile(r"^[0-9a-fA-F-]{36}$")  # uuid-shaped
+_HASH_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no I/O/0/1 → fewer "is that a one?" issues
+
+
+def _client_ip(req: Request) -> str:
+    fwd = req.headers.get("x-forwarded-for") or req.headers.get("cf-connecting-ip")
+    if fwd:
+        return fwd.split(",", 1)[0].strip()
+    return req.client.host if req.client else "unknown"
+
+
+def _check_rate_limit(ip: str) -> None:
+    now = time.time()
+    bucket = _RATE_BUCKET.setdefault(ip, deque())
+    # Drop expired timestamps from the head
+    while bucket and bucket[0] < now - _RATE_WINDOW_SEC:
+        bucket.popleft()
+    if len(bucket) >= _RATE_LIMIT_PER_WINDOW:
+        raise HTTPException(status_code=429, detail="rate limit exceeded — try again later")
+    bucket.append(now)
+    # Defensive: if the bucket dict grows unbounded over time, prune
+    # buckets that are completely empty after dropping expired entries.
+    if len(_RATE_BUCKET) > 5_000:
+        for k in list(_RATE_BUCKET.keys()):
+            b = _RATE_BUCKET[k]
+            while b and b[0] < now - _RATE_WINDOW_SEC:
+                b.popleft()
+            if not b:
+                del _RATE_BUCKET[k]
+
+
+def _make_hash(n: int = 6) -> str:
+    return "".join(secrets.choice(_HASH_ALPHABET) for _ in range(n))
+
+
+class CreateChallengeBody(BaseModel):
+    cameras: list[str] = Field(..., min_length=1, max_length=10)
+    score: int | None = Field(None, ge=0, le=100_000)
+    grade: str | None = Field(None, max_length=64)
+
+
+@app.post("/api/challenges")
+async def create_challenge(body: CreateChallengeBody, request: Request) -> dict:
+    ip = _client_ip(request)
+    _check_rate_limit(ip)
+
+    # Validate camera IDs look like UUIDs — keeps junk out of storage.
+    for cid in body.cameras:
+        if not _CAM_ID_RE.match(cid):
+            raise HTTPException(status_code=400, detail=f"bad camera id: {cid}")
+
+    # Sweep before insert: keeps the table near its target size and
+    # expired rows clear out lazily on real traffic, no cron needed.
+    await db.sweep_challenges(app.state.conn)
+
+    # Generate a fresh hash, retry up to a few times on the rare collision.
+    last_err: Exception | None = None
+    for _ in range(6):
+        h = _make_hash()
+        try:
+            await db.insert_challenge(
+                app.state.conn,
+                hash_=h,
+                cameras=body.cameras,
+                score=body.score,
+                grade=body.grade,
+            )
+            return {"hash": h, "expires_in_seconds": db.CHALLENGE_TTL_SECONDS}
+        except Exception as e:  # most likely UNIQUE constraint failed
+            last_err = e
+            continue
+    raise HTTPException(status_code=500, detail=f"could not allocate challenge hash: {last_err}")
+
+
+@app.get("/api/challenges/{hash_}")
+async def get_challenge(hash_: str) -> dict:
+    if not re.fullmatch(r"[A-Z0-9]{4,12}", hash_):
+        raise HTTPException(status_code=400, detail="bad hash format")
+    row = await db.get_challenge(app.state.conn, hash_)
+    if not row:
+        raise HTTPException(status_code=404, detail="challenge not found or expired")
+    # Lazy TTL check — entries past TTL get reaped on the next sweep.
+    if row["expires_at"] < int(time.time()):
+        raise HTTPException(status_code=410, detail="challenge expired")
+    return row
+
+
+# ────────────────────────────────────────────────────────────────────
+# /api/transit/arrivals — GTFS-RT next-train predictions
+# Real-time arrivals at a given GTFS stop_id, parsed from the MTA's
+# protobuf feeds. Server-side decode keeps the client lean.
+# ────────────────────────────────────────────────────────────────────
+
+
+@app.get("/api/transit/arrivals")
+async def get_arrivals(
+    stop_id: str = Query(..., min_length=2, max_length=12),
+    line: str | None = Query(None, max_length=4),
+) -> dict:
+    sid = stop_id.strip().upper()
+    if not re.fullmatch(r"[A-Z0-9]{2,12}", sid):
+        raise HTTPException(status_code=400, detail="bad stop id")
+    line_norm = line.strip().upper() if line else None
+    if line_norm and line_norm not in transit.LINE_TO_FEED:
+        raise HTTPException(status_code=400, detail=f"unknown line: {line}")
+    return await transit.next_arrivals(stop_id=sid, line=line_norm)
 
 
 @app.websocket("/ws/alerts")

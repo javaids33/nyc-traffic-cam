@@ -115,7 +115,111 @@ export function QuarterStash() {
   );
 }
 
-/* Spawns a clickable rolling quarter every 25-70s.
+/* A "found change" easter egg pinned to a specific spot on the page.
+   - Renders at fixed/absolute coords (caller supplies positioning via
+     style / className).
+   - Sparkles softly so it's visible-but-not-blaring on second look.
+   - Clicking it adds coins to the stash and hides the coin. After
+     `respawnMs` the coin reappears so repeat visits stay rewarding.
+   - localStorage stamp is per spotId, so coins respect their own
+     cooldowns across reloads / tabs. */
+export function HiddenCoin({
+  spotId,
+  payout = 1,
+  respawnMs = 6 * 60 * 1000,   // 6 min — easy enough to refind
+  size = 20,
+  hint,
+  style,
+  className,
+  whisper = true,
+}: {
+  spotId: string;
+  payout?: number;
+  respawnMs?: number;
+  size?: number;
+  hint?: string;
+  style?: React.CSSProperties;
+  className?: string;
+  whisper?: boolean;
+}) {
+  const STORE_KEY = `nyc-coin-spot-${spotId}`;
+  const [present, setPresent] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const last = parseInt(localStorage.getItem(STORE_KEY) || '0', 10) || 0;
+    return Date.now() - last >= respawnMs;
+  });
+  const [toast, setToast] = useState<{ x: number; y: number } | null>(null);
+  const { add } = useQuarters();
+
+  // Re-check respawn periodically (cheap timer, only when coin is hidden)
+  useEffect(() => {
+    if (present) return;
+    const i = setInterval(() => {
+      const last = parseInt(localStorage.getItem(STORE_KEY) || '0', 10) || 0;
+      if (Date.now() - last >= respawnMs) setPresent(true);
+    }, 8000);
+    return () => clearInterval(i);
+  }, [present, STORE_KEY, respawnMs]);
+
+  const grab = (e: React.MouseEvent) => {
+    if (!present) return;
+    e.preventDefault();
+    e.stopPropagation();
+    add(payout);
+    localStorage.setItem(STORE_KEY, String(Date.now()));
+    setPresent(false);
+    setToast({ x: e.clientX, y: e.clientY });
+    setTimeout(() => setToast(null), 1300);
+  };
+
+  if (!present) return null;
+  return (
+    <>
+      <button
+        type="button"
+        onClick={grab}
+        aria-label={hint ?? `hidden quarter — +${payout}`}
+        title={hint ?? 'hidden quarter — click to grab'}
+        className={`fixed z-30 cursor-pointer p-0 m-0 border-0 bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600] ${className ?? ''}`}
+        style={{
+          // The whisper-mode coin is dim until hovered, so it reads as
+          // an easter egg rather than a banner ad. Set whisper={false}
+          // for full-volume coins on slow / lonely props.
+          opacity: whisper ? 0.55 : 1,
+          transition: 'opacity 0.2s, transform 0.2s',
+          ...style,
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.18)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.opacity = whisper ? '0.55' : '1'; e.currentTarget.style.transform = 'scale(1)'; }}
+      >
+        <span
+          className="block"
+          style={{
+            animation: 'quarter-spin 1.6s linear infinite',
+            filter: 'drop-shadow(0 0 6px rgba(255,214,0,0.55))',
+          }}
+        >
+          <QuarterIcon size={size} />
+        </span>
+      </button>
+      {toast && (
+        <div
+          className="fixed pointer-events-none z-50 font-bungee text-[#FFD600] text-[16px]"
+          style={{
+            left: toast.x - 14,
+            top: toast.y - 24,
+            textShadow: '0 0 8px #FFD600, 2px 2px 0 #d11a2a',
+            animation: 'quarter-toast 1.3s ease-out forwards',
+          }}
+        >
+          +{payout} ★
+        </div>
+      )}
+    </>
+  );
+}
+
+/* Spawns a clickable rolling quarter every 22-55s.
    Clicking it: increments stash, fires a tiny "+1" toast. */
 export function RollingQuarter() {
   const [seed, setSeed] = useState(0);
@@ -127,9 +231,10 @@ export function RollingQuarter() {
   useEffect(() => {
     let stop = false;
     const tick = () => {
-      // 45-105s cadence — frequent enough that the hunt feels rewarding,
-      // sparse enough that it isn't a screensaver.
-      const wait = 45_000 + Math.random() * 60_000;
+      // 22-55s cadence — frequent enough that just hanging on the page
+      // is rewarded with coins, infrequent enough that the screen
+      // doesn't read as a slot machine.
+      const wait = 22_000 + Math.random() * 33_000;
       setTimeout(() => {
         if (stop) return;
         setGrabbed(false);
@@ -137,9 +242,8 @@ export function RollingQuarter() {
         tick();
       }, wait);
     };
-    // First spawn ~12s in — gives the page a moment to settle, then a
-    // coin shows up so new visitors learn the mechanic quickly.
-    setTimeout(() => { if (!stop) { setSeed((s) => s + 1); } }, 12_000);
+    // First spawn ~6s in — visitors learn the mechanic fast.
+    setTimeout(() => { if (!stop) { setSeed((s) => s + 1); } }, 6_000);
     tick();
     return () => { stop = true; };
   }, []);

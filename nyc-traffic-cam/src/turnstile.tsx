@@ -10,7 +10,7 @@ import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { BodegaAwning, StreetFauna } from './bodega-tv';
 import { QuarterStash, RollingQuarter, QuarterIcon, useQuarters } from './quarter';
-import { fetchCameras } from './api';
+import { apiUrl, fetchCameras } from './api';
 import type { Camera } from './types';
 
 /* ──────────────────────────────────────────────────────────────────────
@@ -28,11 +28,15 @@ type Station = {
   lat: number;
   lng: number;
   lines: string[];
+  // Parent GTFS stop id (e.g. "F25", "L08", "120"). The MTA dataset has
+  // one parent stop per station and per-direction children "<id>N" /
+  // "<id>S" — we only ever need the parent here.
+  stopId?: string;
 };
 
 const MTA_STATIONS_URL =
   'https://data.ny.gov/resource/39hk-dx4f.json' +
-  '?$select=stop_name,gtfs_latitude,gtfs_longitude,daytime_routes,borough' +
+  '?$select=stop_name,gtfs_stop_id,gtfs_latitude,gtfs_longitude,daytime_routes,borough' +
   '&$limit=600';
 
 const ALL_LINES = [
@@ -72,9 +76,17 @@ function nearestCamera(cams: Camera[], s: Station): Camera | null {
 }
 
 /* MTA Open Data subway stations — every stop with lat/lng + the lines
-   it serves. Cached to localStorage for a day. */
-type RawStation = { stop_name: string; gtfs_latitude: string; gtfs_longitude: string; daytime_routes: string };
-const STATIONS_CACHE_KEY = 'nyc-mta-stations-v1';
+   it serves. Cached to localStorage for a day.
+   v2 of the cache key: schema now includes gtfs_stop_id (needed for the
+   GTFS-RT arrival lookup), so old v1 caches must be discarded. */
+type RawStation = {
+  stop_name: string;
+  gtfs_stop_id?: string;
+  gtfs_latitude: string;
+  gtfs_longitude: string;
+  daytime_routes: string;
+};
+const STATIONS_CACHE_KEY = 'nyc-mta-stations-v2';
 const STATIONS_CACHE_MS = 24 * 60 * 60 * 1000;
 
 function useMtaStations() {
@@ -104,6 +116,7 @@ function useMtaStations() {
             lat: parseFloat(row.gtfs_latitude),
             lng: parseFloat(row.gtfs_longitude),
             lines: (row.daytime_routes ?? '').split(/\s+/).map((s) => s.trim()).filter(Boolean),
+            stopId: row.gtfs_stop_id?.toUpperCase(),
           }))
           .filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lng) && s.name && s.lines.length > 0);
         const seen = new Set<string>();
@@ -129,18 +142,125 @@ function useMtaStations() {
   return { stations, loaded };
 }
 
-/* CARTO Dark Matter raster tiles — the same basemap used by /geoguessr,
-   chosen for legibility on dark backgrounds. */
+/* Browser geolocation, opt-in only. Returns coords once granted; does
+   nothing until trigger() is called. NYC bounding box check so a wrong
+   answer (or a user in another city) doesn't quietly pin them at the
+   nearest BQE stop they'll never realistically reach. */
+type GeoCoords = { lat: number; lng: number };
+type GeoState =
+  | { status: 'idle' }
+  | { status: 'locating' }
+  | { status: 'ok'; coords: GeoCoords; outsideNyc: boolean }
+  | { status: 'denied' }
+  | { status: 'error'; message: string };
+
+function useGeolocation() {
+  const [state, setState] = useState<GeoState>({ status: 'idle' });
+  const trigger = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setState({ status: 'error', message: 'geolocation not supported by this browser' });
+      return;
+    }
+    setState({ status: 'locating' });
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        // Loose NYC bounding box: covers all five boroughs + close enough
+        // for "im on the nj path side" to still resolve to the nearest stop
+        const outsideNyc = !(lat > 40.45 && lat < 40.95 && lng > -74.30 && lng < -73.65);
+        setState({ status: 'ok', coords: { lat, lng }, outsideNyc });
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) setState({ status: 'denied' });
+        else setState({ status: 'error', message: err.message || 'could not get location' });
+      },
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
+    );
+  };
+  return { state, trigger };
+}
+
+/* Real-time GTFS-RT arrivals for a station. Backed by /api/transit/arrivals
+   on the FastAPI server. Returns null until the first response lands. */
+type Arrival = { route: string; minutes: number; epoch: number };
+type Arrivals = {
+  stopId: string;
+  fetchedAt: number;
+  north: Arrival[];
+  south: Arrival[];
+  error?: string;
+};
+
+function useArrivals(stopId: string | undefined, line: Line | null): Arrivals | null {
+  const [arrivals, setArrivals] = useState<Arrivals | null>(null);
+  const reqIdRef = useRef(0);
+  useEffect(() => {
+    if (!stopId) {
+      setArrivals(null);
+      return;
+    }
+    const id = ++reqIdRef.current;
+    let cancelled = false;
+    const go = async () => {
+      try {
+        const params = new URLSearchParams({ stop_id: stopId });
+        if (line) params.set('line', line);
+        const r = await fetch(apiUrl(`/api/transit/arrivals?${params}`));
+        if (!r.ok) throw new Error(`arrivals: ${r.status}`);
+        const j = await r.json();
+        if (cancelled || reqIdRef.current !== id) return;
+        setArrivals({
+          stopId,
+          fetchedAt: j.fetched_at ?? Math.floor(Date.now() / 1000),
+          north: j.north ?? [],
+          south: j.south ?? [],
+          error: j.error,
+        });
+      } catch (e) {
+        if (cancelled || reqIdRef.current !== id) return;
+        setArrivals({
+          stopId,
+          fetchedAt: Math.floor(Date.now() / 1000),
+          north: [],
+          south: [],
+          error: e instanceof Error ? e.message : 'failed',
+        });
+      }
+    };
+    go();
+    const i = setInterval(go, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(i);
+    };
+  }, [stopId, line]);
+  return arrivals;
+}
+
+/* Find the closest station to a coordinate. */
+function nearestStation(stations: Station[], coords: GeoCoords): Station | null {
+  let best: { s: Station; d: number } | null = null;
+  for (const s of stations) {
+    const d = Math.hypot(s.lat - coords.lat, s.lng - coords.lng);
+    if (!best || d < best.d) best = { s, d };
+  }
+  return best?.s ?? null;
+}
+
+/* CARTO Voyager — same lighter, more accessible basemap as /geoguessr.
+   Cream paper, soft blue water, legible street labels — easier on the
+   eyes than the near-black dark_all variant. */
 const SUBWAY_MAP_STYLE: StyleSpecification = {
   version: 8,
   sources: {
     carto: {
       type: 'raster',
       tiles: [
-        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
       ],
       tileSize: 256,
       attribution: '© OpenStreetMap contributors © CARTO',
@@ -148,18 +268,30 @@ const SUBWAY_MAP_STYLE: StyleSpecification = {
     },
   },
   layers: [
-    { id: 'bg', type: 'background', paint: { 'background-color': '#0b0d12' } },
+    { id: 'bg', type: 'background', paint: { 'background-color': '#e8e2d0' } },
     { id: 'carto', type: 'raster', source: 'carto' },
   ],
 };
 
 type Stage = 'idle' | 'boarding' | 'riding' | 'arrived';
 
+/* A picked station + the line the rider boarded on. Storing the line
+   alongside the station is what makes transfers possible: origin can be
+   on the F, destination on the L, and the route plan stitches them
+   together via a station that serves both. */
+type Pick = { station: Station; lineRiden: Line };
+
+/* A ride plan is a list of legs. Each leg is an ordered list of stops
+   on a single line. A direct route has one leg; a transfer route has
+   two. The last station of leg N === the first station of leg N+1
+   (the transfer station). */
+type Leg = { line: Line; stops: Station[] };
+
 export default function Turnstile() {
   const [stage, setStage] = useState<Stage>('idle');
   const [line, setLine] = useState<Line>('F');
-  const [originIdx, setOriginIdx] = useState<number | null>(null);
-  const [destIdx, setDestIdx] = useState<number | null>(null);
+  const [origin, setOrigin] = useState<Pick | null>(null);
+  const [dest, setDest] = useState<Pick | null>(null);
   const [stationIdx, setStationIdx] = useState(0);
   const [cameras, setCameras] = useState<Camera[]>([]);
   const { count: quarters, spend } = useQuarters();
@@ -169,49 +301,108 @@ export default function Turnstile() {
     fetchCameras().then(setCameras).catch(() => {});
   }, []);
 
-  /* Stations on the picked line, ordered N→S by latitude. (For E-W
+  /* Every line indexed to its stops, ordered N→S by latitude. (For E-W
      trunks like G/L/7 lat-order still produces a reasonable strip.) */
-  const lineStations = useMemo(() => {
-    return stations
-      .filter((s) => s.lines.includes(line))
-      .slice()
-      .sort((a, b) => b.lat - a.lat);
-  }, [stations, line]);
+  const stationsByLine = useMemo(() => {
+    const m = new Map<Line, Station[]>();
+    for (const l of ALL_LINES) {
+      const list = stations
+        .filter((s) => s.lines.includes(l))
+        .slice()
+        .sort((a, b) => b.lat - a.lat);
+      if (list.length) m.set(l, list);
+    }
+    return m;
+  }, [stations]);
 
-  // Reset selections when the line changes
-  useEffect(() => {
-    setOriginIdx(null);
-    setDestIdx(null);
-  }, [line]);
+  // Stations on the currently-DISPLAYED line (the map filter).
+  const lineStations = useMemo(
+    () => stationsByLine.get(line) ?? [],
+    [stationsByLine, line],
+  );
 
-  /* ridePlan: ordered list of stations from origin → destination, capped
-     at MAX_RIDE_STOPS so the ride doesn't take forever on long routes. */
-  const MAX_RIDE_STOPS = 8;
-  const ridePlan = useMemo<Station[]>(() => {
-    if (originIdx == null || destIdx == null || lineStations.length === 0) return [];
-    const a = Math.min(originIdx, destIdx);
-    const b = Math.max(originIdx, destIdx);
-    const reverse = originIdx > destIdx;
-    const slice = lineStations.slice(a, b + 1);
-    const ordered = reverse ? slice.slice().reverse() : slice;
-    if (ordered.length <= MAX_RIDE_STOPS) return ordered;
-    // Sample evenly so the user gets a feel for the whole ride
-    const step = (ordered.length - 1) / (MAX_RIDE_STOPS - 1);
-    const out: Station[] = [];
-    for (let i = 0; i < MAX_RIDE_STOPS; i++) out.push(ordered[Math.round(i * step)]);
+  /* ridePlan: array of legs. Direct = 1 leg, transfer = 2.
+     Total stop count is capped per leg so long routes don't take forever. */
+  const MAX_PER_LEG = 6;
+  const ridePlan = useMemo<Leg[]>(() => {
+    if (!origin || !dest) return [];
+    const sliceLine = (l: Line, fromName: string, toName: string): Station[] => {
+      const list = stationsByLine.get(l) ?? [];
+      const a = list.findIndex((s) => s.name === fromName);
+      const b = list.findIndex((s) => s.name === toName);
+      if (a < 0 || b < 0) return [];
+      const lo = Math.min(a, b), hi = Math.max(a, b);
+      const reverse = a > b;
+      const segs = list.slice(lo, hi + 1);
+      const ordered = reverse ? segs.slice().reverse() : segs;
+      if (ordered.length <= MAX_PER_LEG) return ordered;
+      const step = (ordered.length - 1) / (MAX_PER_LEG - 1);
+      const out: Station[] = [];
+      for (let i = 0; i < MAX_PER_LEG; i++) out.push(ordered[Math.round(i * step)]);
+      return out;
+    };
+
+    // Direct route — origin's line === dest's line, just slice it.
+    if (origin.lineRiden === dest.lineRiden) {
+      const stops = sliceLine(origin.lineRiden, origin.station.name, dest.station.name);
+      return stops.length ? [{ line: origin.lineRiden, stops }] : [];
+    }
+
+    // Transfer route — find a station that serves BOTH lines and is
+    // closest to the geographic midpoint. NYC has many such stations
+    // (Times Sq, 14 St / Union Sq, Broadway-Lafayette / B'way…).
+    const A = origin.lineRiden, B = dest.lineRiden;
+    const aStations = stationsByLine.get(A) ?? [];
+    const candidates = aStations.filter((s) => s.lines.includes(B));
+    if (candidates.length === 0) {
+      // No direct transfer between these two lines — punt to a stub
+      // single leg so the ride still happens. (Rare in NYC; covers SI ↔ rest.)
+      return [{ line: A, stops: [origin.station, dest.station] }];
+    }
+    const midLat = (origin.station.lat + dest.station.lat) / 2;
+    const midLng = (origin.station.lng + dest.station.lng) / 2;
+    candidates.sort((s1, s2) => {
+      const d1 = Math.hypot(s1.lat - midLat, s1.lng - midLng);
+      const d2 = Math.hypot(s2.lat - midLat, s2.lng - midLng);
+      return d1 - d2;
+    });
+    const transfer = candidates[0];
+    const legA = sliceLine(A, origin.station.name, transfer.name);
+    const legB = sliceLine(B, transfer.name, dest.station.name);
+    if (legA.length === 0 || legB.length === 0) return [];
+    return [
+      { line: A, stops: legA },
+      { line: B, stops: legB },
+    ];
+  }, [stationsByLine, origin, dest]);
+
+  // Flat stop list — used by the in-ride iteration. Last stop of leg N
+  // is the same station as first stop of leg N+1, so we drop the
+  // duplicate when flattening.
+  const flatStops = useMemo<Station[]>(() => {
+    if (!ridePlan.length) return [];
+    const out: Station[] = [...ridePlan[0].stops];
+    for (let i = 1; i < ridePlan.length; i++) out.push(...ridePlan[i].stops.slice(1));
     return out;
-  }, [lineStations, originIdx, destIdx]);
+  }, [ridePlan]);
+
+  // Index in flatStops where the transfer happens (= last stop of leg 0,
+  // which is also the first stop of leg 1). null if no transfer.
+  const transferStopIdx = useMemo<number | null>(() => {
+    if (ridePlan.length < 2) return null;
+    return ridePlan[0].stops.length - 1;
+  }, [ridePlan]);
 
   // Auto-advance during ride
   useEffect(() => {
     if (stage !== 'riding') return;
-    if (stationIdx >= ridePlan.length - 1) {
+    if (stationIdx >= flatStops.length - 1) {
       const t = setTimeout(() => setStage('arrived'), STATION_DWELL_MS);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => setStationIdx((i) => i + 1), STATION_DWELL_MS);
     return () => clearTimeout(t);
-  }, [stage, stationIdx, ridePlan.length]);
+  }, [stage, stationIdx, flatStops.length]);
 
   useTrainRumble(stage === 'riding');
 
@@ -226,13 +417,23 @@ export default function Turnstile() {
   const exit = () => {
     setStage('idle');
     setStationIdx(0);
-    setOriginIdx(null);
-    setDestIdx(null);
+    setOrigin(null);
+    setDest(null);
   };
 
-  const currentStation = ridePlan[Math.min(stationIdx, Math.max(0, ridePlan.length - 1))];
-  const nextStation = ridePlan[Math.min(stationIdx + 1, Math.max(0, ridePlan.length - 1))];
+  const currentStation = flatStops[Math.min(stationIdx, Math.max(0, flatStops.length - 1))];
+  const nextStation = flatStops[Math.min(stationIdx + 1, Math.max(0, flatStops.length - 1))];
   const cam = currentStation ? nearestCamera(cameras, currentStation) : null;
+  // Which leg is the rider currently on? Used so the door bullets +
+  // car colors match the line they're actually riding RIGHT NOW.
+  const activeLeg: Leg | null = (() => {
+    if (!ridePlan.length) return null;
+    if (transferStopIdx == null) return ridePlan[0];
+    return stationIdx <= transferStopIdx ? ridePlan[0] : ridePlan[1];
+  })();
+  const activeLine: Line = activeLeg?.line ?? line;
+  const isTransferStop =
+    transferStopIdx != null && stationIdx === transferStopIdx && stage === 'riding';
 
   return (
     <div
@@ -258,26 +459,31 @@ export default function Turnstile() {
           <Boarding
             line={line}
             setLine={setLine}
+            allStations={stations}
             lineStations={lineStations}
             stationsLoaded={stationsLoaded}
-            originIdx={originIdx}
-            destIdx={destIdx}
-            setOriginIdx={setOriginIdx}
-            setDestIdx={setDestIdx}
-            ridePlan={ridePlan}
+            origin={origin}
+            dest={dest}
+            setOrigin={setOrigin}
+            setDest={setDest}
+            flatStops={flatStops}
+            transferStopIdx={transferStopIdx}
             onBoard={board}
             onCancel={() => setStage('idle')}
           />
         )}
         {(stage === 'riding' || stage === 'arrived') && (
           <SubwayCarPOV
-            line={line}
+            line={activeLine}
             ridePlan={ridePlan}
+            flatStops={flatStops}
             stationIdx={stationIdx}
             arrived={stage === 'arrived'}
             cam={cam}
             nextStationName={nextStation?.name ?? ''}
             currentStation={currentStation}
+            transferStopIdx={transferStopIdx}
+            isTransferStop={isTransferStop}
             onExit={exit}
           />
         )}
@@ -387,43 +593,100 @@ function Turnstile3D() {
 function Boarding({
   line,
   setLine,
+  allStations,
   lineStations,
   stationsLoaded,
-  originIdx,
-  destIdx,
-  setOriginIdx,
-  setDestIdx,
-  ridePlan,
+  origin,
+  dest,
+  setOrigin,
+  setDest,
+  flatStops,
+  transferStopIdx,
   onBoard,
   onCancel,
 }: {
   line: Line;
   setLine: (l: Line) => void;
+  allStations: Station[];
   lineStations: Station[];
   stationsLoaded: boolean;
-  originIdx: number | null;
-  destIdx: number | null;
-  setOriginIdx: (i: number | null) => void;
-  setDestIdx: (i: number | null) => void;
-  ridePlan: Station[];
+  origin: Pick | null;
+  dest: Pick | null;
+  setOrigin: (p: Pick | null) => void;
+  setDest: (p: Pick | null) => void;
+  flatStops: Station[];
+  transferStopIdx: number | null;
   onBoard: () => void;
   onCancel: () => void;
 }) {
+  const geo = useGeolocation();
+  // Real-time arrivals at the picked origin (skipped until origin set)
+  const arrivals = useArrivals(origin?.station.stopId, origin?.lineRiden ?? null);
+
+  // "Use my location" pins origin to the closest station to the user's
+  // GPS, defaults the line to whatever that station serves first, but
+  // doesn't choose the destination — that's still up to them.
+  useEffect(() => {
+    if (geo.state.status !== 'ok' || geo.state.outsideNyc) return;
+    const near = nearestStation(allStations, geo.state.coords);
+    if (!near) return;
+    const firstLine = (near.lines.find((l) => (ALL_LINES as readonly string[]).includes(l)) ?? near.lines[0]) as Line | undefined;
+    if (!firstLine) return;
+    setLine(firstLine);
+    setOrigin({ station: near, lineRiden: firstLine });
+    // Don't reset dest if it's already set — user might be testing the
+    // "ride from where I am to my friend's place" path.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geo.state.status]);
+
+  // Click on a station from the currently-displayed line: this records
+  // "I want to board (or get off) on THIS line at THIS stop". Switching
+  // the line bullets between picks is how you set up a transfer ride.
   const onMapPick = (stationIdx: number) => {
-    if (originIdx == null) {
-      setOriginIdx(stationIdx);
-    } else if (destIdx == null && stationIdx !== originIdx) {
-      setDestIdx(stationIdx);
+    const s = lineStations[stationIdx];
+    if (!s) return;
+    const pick: Pick = { station: s, lineRiden: line };
+    if (origin == null) {
+      setOrigin(pick);
+    } else if (dest == null && s.name !== origin.station.name) {
+      setDest(pick);
     } else {
-      // Reset and start a new origin selection
-      setOriginIdx(stationIdx);
-      setDestIdx(null);
+      setOrigin(pick);
+      setDest(null);
     }
   };
 
-  const origin = originIdx != null ? lineStations[originIdx] : null;
-  const dest = destIdx != null ? lineStations[destIdx] : null;
-  const ready = origin && dest;
+  const ready = origin && dest && flatStops.length > 0;
+  const isTransfer = transferStopIdx != null;
+  const transferStation = isTransfer ? flatStops[transferStopIdx] : null;
+
+  // Find which station in lineStations (the displayed line) matches the
+  // origin and dest, so the map can show the pin even when the picked
+  // station was set on a different line filter.
+  const originIdxOnDisplayedLine =
+    origin && origin.lineRiden === line
+      ? lineStations.findIndex((s) => s.name === origin.station.name)
+      : -1;
+  const destIdxOnDisplayedLine =
+    dest && dest.lineRiden === line
+      ? lineStations.findIndex((s) => s.name === dest.station.name)
+      : -1;
+
+  // Show "ghost" markers when origin/dest is on a DIFFERENT line — so
+  // you can see where they are on the map even while filtering to a
+  // different line. We pick by lat/lng even though they're not in
+  // lineStations for the current filter.
+  const ghosts: { station: Station; role: 'origin' | 'dest' }[] = [];
+  if (origin && origin.lineRiden !== line) ghosts.push({ station: origin.station, role: 'origin' });
+  if (dest && dest.lineRiden !== line) ghosts.push({ station: dest.station, role: 'dest' });
+
+  // Friendly prompt that tells the user what to do next
+  const hint = (() => {
+    if (origin == null) return '★ click a stop on the map to set your origin';
+    if (dest == null) return '★ now pick destination — switch lines first if you want to transfer';
+    if (isTransfer) return `★ transfer at ${transferStation?.name} · ${origin.lineRiden} → ${dest.lineRiden}`;
+    return `★ direct on the ${origin.lineRiden} · ${flatStops.length} stops`;
+  })();
 
   return (
     <div className="max-w-[1100px] mx-auto">
@@ -437,19 +700,56 @@ function Boarding({
         </button>
       </div>
       <div className="font-typewriter text-[11px] uppercase tracking-[0.22em] text-white/65 mb-5">
-        every nyc subway line · click stops on the map to set your boarding + destination
+        every nyc subway line · click stops on the map · transfer between lines if you want
       </div>
 
-      {/* line bullets */}
+      {/* "ride from where i am" — opt-in geolocation. Pin origin to the
+          closest station; user can override after by clicking the map. */}
+      <div className="mb-4 px-3 py-2 flex flex-wrap items-center gap-3 bg-[#0e0f14] border-2 border-[#FFD600]/40 font-typewriter text-[11px] uppercase tracking-[0.18em]">
+        <span className="font-bungee text-[12px] tracking-[0.04em] text-[#FFD600]">★ START FROM</span>
+        <button
+          type="button"
+          onClick={geo.trigger}
+          disabled={geo.state.status === 'locating'}
+          className="px-3 py-1 font-bungee text-[11px] uppercase tracking-[0.06em] disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+          style={{
+            background: '#FFD600',
+            color: '#000',
+            border: '2px solid #000',
+            boxShadow: '3px 3px 0 #d11a2a',
+          }}
+        >
+          {geo.state.status === 'locating' ? '⚙ locating…' : '📍 USE MY LOCATION'}
+        </button>
+        <span className="text-white/45">or click any stop on the map below</span>
+        {geo.state.status === 'denied' && (
+          <span className="text-[#ff8a3a]">location blocked · allow it in your browser, or just click a stop</span>
+        )}
+        {geo.state.status === 'error' && (
+          <span className="text-[#ff8a3a]">{geo.state.message}</span>
+        )}
+        {geo.state.status === 'ok' && geo.state.outsideNyc && (
+          <span className="text-[#ff8a3a]">you're outside nyc · click a stop instead</span>
+        )}
+        {geo.state.status === 'ok' && !geo.state.outsideNyc && origin && (
+          <span className="text-[#6CBE45]">pinned · {origin.station.name}</span>
+        )}
+      </div>
+
+      {/* line bullets — switching lines does NOT clear picks anymore, so
+          you can pick origin on one line, switch, then pick dest on
+          another. The system finds a transfer station automatically. */}
       <div className="flex flex-wrap gap-1.5 mb-5">
         {ALL_LINES.map((l) => {
           const active = line === l;
+          const isOriginLine = origin?.lineRiden === l;
+          const isDestLine = dest?.lineRiden === l;
           return (
             <button
               key={l}
               type="button"
               onClick={() => setLine(l)}
-              className="font-bungee text-[18px] sm:text-[22px] leading-none w-11 h-11 sm:w-12 sm:h-12 grid place-items-center transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+              className="relative font-bungee text-[18px] sm:text-[22px] leading-none w-11 h-11 sm:w-12 sm:h-12 grid place-items-center transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
               style={{
                 background: active ? LINE_COLOR[l] : '#0a0b10',
                 color: active ? lineTextColor(l) : LINE_COLOR[l],
@@ -461,6 +761,17 @@ function Boarding({
               aria-label={`${l} train`}
             >
               {l}
+              {(isOriginLine || isDestLine) && (
+                <span
+                  className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+                  style={{
+                    background: isOriginLine ? '#6CBE45' : '#FF5582',
+                    border: '2px solid #000',
+                  }}
+                  aria-hidden
+                  title={isOriginLine ? 'origin line' : 'destination line'}
+                />
+              )}
             </button>
           );
         })}
@@ -479,6 +790,12 @@ function Boarding({
           <span className="block w-3 h-3 rounded-full" style={{ background: '#FF5582', border: '2px solid #fff' }} />
           <span>destination</span>
         </span>
+        {isTransfer && (
+          <span className="inline-flex items-center gap-1">
+            <span className="block w-3 h-3 rounded-full" style={{ background: '#FFD600', border: '2px solid #000' }} />
+            <span className="text-[#FFD600]">transfer</span>
+          </span>
+        )}
         <span className="inline-flex items-center gap-1">
           <span className="block w-2 h-2 rounded-full" style={{ background: LINE_COLOR[line] }} />
           <span>{line} line stops</span>
@@ -486,7 +803,7 @@ function Boarding({
         {(origin || dest) && (
           <button
             type="button"
-            onClick={() => { setOriginIdx(null); setDestIdx(null); }}
+            onClick={() => { setOrigin(null); setDest(null); }}
             className="ml-auto px-2 py-0.5 border border-white/30 text-white/75 hover:border-[#FFD600] hover:text-[#FFD600] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
           >
             reset
@@ -498,24 +815,80 @@ function Boarding({
         line={line}
         lineStations={lineStations}
         stationsLoaded={stationsLoaded}
-        originIdx={originIdx}
-        destIdx={destIdx}
+        originIdx={originIdxOnDisplayedLine >= 0 ? originIdxOnDisplayedLine : null}
+        destIdx={destIdxOnDisplayedLine >= 0 ? destIdxOnDisplayedLine : null}
+        ghosts={ghosts}
+        transferStation={transferStation}
         onPick={onMapPick}
       />
 
+      {/* hint bar */}
+      <div
+        className="mt-3 px-3 py-1.5 font-typewriter text-[11px] uppercase tracking-[0.18em]"
+        style={{
+          background: '#0e0f14',
+          border: `1px solid ${ready ? '#FFD600' : 'rgba(255,255,255,0.18)'}`,
+          color: ready ? '#FFD600' : 'rgba(255,255,255,0.75)',
+        }}
+        role="status"
+        aria-live="polite"
+      >
+        {hint}
+      </div>
+
       {/* selection summary */}
       <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <SelectedStop label="ORIGIN" station={origin} dotColor="#6CBE45" line={line} />
-        <SelectedStop label="DESTINATION" station={dest} dotColor="#FF5582" line={line} />
+        <SelectedStop
+          label="ORIGIN"
+          station={origin?.station ?? null}
+          dotColor="#6CBE45"
+          line={(origin?.lineRiden ?? line) as Line}
+        />
+        <SelectedStop
+          label="DESTINATION"
+          station={dest?.station ?? null}
+          dotColor="#FF5582"
+          line={(dest?.lineRiden ?? line) as Line}
+        />
       </div>
+
+      {/* live arrivals at the picked origin · GTFS-RT, refreshed every 30s */}
+      {origin && (
+        <ArrivalsPanel arrivals={arrivals} origin={origin} />
+      )}
+
+      {/* transfer card — only when origin & dest are on different lines */}
+      {ready && isTransfer && transferStation && (
+        <div
+          className="mt-3 px-3 py-2 flex items-center gap-3 border-2 font-typewriter text-[11px] uppercase tracking-[0.18em]"
+          style={{ background: '#0e0f14', borderColor: '#FFD600', color: '#FFD600' }}
+        >
+          <span className="font-bungee text-[14px]">★ TRANSFER</span>
+          <span
+            className="subway-bullet text-[12px]"
+            style={{ background: LINE_COLOR[origin.lineRiden], color: lineTextColor(origin.lineRiden) }}
+          >
+            {origin.lineRiden}
+          </span>
+          <span className="text-white/65">→</span>
+          <span
+            className="subway-bullet text-[12px]"
+            style={{ background: LINE_COLOR[dest.lineRiden], color: lineTextColor(dest.lineRiden) }}
+          >
+            {dest.lineRiden}
+          </span>
+          <span className="text-white/85 truncate">at {transferStation.name}</span>
+        </div>
+      )}
 
       {ready && (
         <>
           <div className="mt-5 mb-2">
-            <RollSign line={line} destination={dest!.name} />
+            <RollSign line={dest.lineRiden} destination={dest.station.name} />
           </div>
           <div className="font-typewriter text-[10px] uppercase tracking-[0.18em] text-white/55 mb-4">
-            ride: {ridePlan.map((s) => s.name).join(' → ')} · {ridePlan.length} stop{ridePlan.length === 1 ? '' : 's'}
+            ride: {flatStops.map((s) => s.name).join(' → ')} · {flatStops.length} stop{flatStops.length === 1 ? '' : 's'}
+            {isTransfer ? ` · 1 transfer` : ''}
           </div>
         </>
       )}
@@ -526,14 +899,90 @@ function Boarding({
         disabled={!ready}
         className="px-5 py-2.5 font-bungee text-[18px] uppercase tracking-[0.06em] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
         style={{
-          background: LINE_COLOR[line],
-          color: lineTextColor(line),
+          background: origin ? LINE_COLOR[origin.lineRiden] : LINE_COLOR[line],
+          color: origin ? lineTextColor(origin.lineRiden) : lineTextColor(line),
           boxShadow: '5px 5px 0 #000',
           border: '3px solid #000',
         }}
       >
-        ★ BOARD THE {line} ★
+        ★ BOARD THE {origin?.lineRiden ?? line} ★
       </button>
+    </div>
+  );
+}
+
+function ArrivalsPanel({ arrivals, origin }: { arrivals: Arrivals | null; origin: Pick }) {
+  const has = !!arrivals && (arrivals.north.length > 0 || arrivals.south.length > 0);
+  return (
+    <div
+      className="mt-3 px-3 py-2 border-2 font-typewriter text-[11px] uppercase tracking-[0.18em]"
+      style={{
+        background: '#0e0f14',
+        borderColor: arrivals?.error ? '#ff8a3a55' : '#FFD60055',
+        color: '#FFD600',
+      }}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="font-bungee text-[12px] tracking-[0.04em]">★ NEXT TRAIN</span>
+        <span
+          className="subway-bullet text-[12px]"
+          style={{ background: LINE_COLOR[origin.lineRiden], color: lineTextColor(origin.lineRiden) }}
+        >
+          {origin.lineRiden}
+        </span>
+        <span className="text-white/65">{origin.station.name}</span>
+        {!origin.station.stopId && (
+          <span className="ml-auto text-white/45">no real-time data for this stop</span>
+        )}
+        {arrivals?.error && (
+          <span className="ml-auto text-[#ff8a3a]">feed: {arrivals.error}</span>
+        )}
+      </div>
+      {origin.station.stopId && !arrivals && (
+        <div className="mt-1 text-white/55">⚙ checking the mta feed…</div>
+      )}
+      {arrivals && origin.station.stopId && !arrivals.error && (
+        <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <ArrivalsLine label="↑ uptown / north" arrivals={arrivals.north} fallback={!has} />
+          <ArrivalsLine label="↓ downtown / south" arrivals={arrivals.south} fallback={!has} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArrivalsLine({
+  label,
+  arrivals,
+  fallback,
+}: {
+  label: string;
+  arrivals: Arrival[];
+  fallback: boolean;
+}) {
+  return (
+    <div className="bg-black/45 px-2 py-1">
+      <div className="text-white/55 text-[9px] tracking-[0.22em]">{label}</div>
+      {arrivals.length === 0 ? (
+        <div className="text-white/45 mt-0.5">{fallback ? 'no upcoming arrivals' : '—'}</div>
+      ) : (
+        <div className="flex items-baseline flex-wrap gap-2 mt-0.5">
+          {arrivals.map((a, i) => (
+            <span key={i} className="flex items-baseline gap-1">
+              <span
+                className="subway-bullet text-[10px]"
+                style={{ background: LINE_COLOR[a.route] ?? '#1a1a1a', color: lineTextColor(a.route) }}
+              >
+                {a.route}
+              </span>
+              <span className="font-bungee text-[14px] text-[#FFD600] tabular">{a.minutes}</span>
+              <span className="text-white/55 text-[9px]">min</span>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -586,6 +1035,8 @@ function SubwayLineMap({
   stationsLoaded,
   originIdx,
   destIdx,
+  ghosts,
+  transferStation,
   onPick,
 }: {
   line: Line;
@@ -593,6 +1044,8 @@ function SubwayLineMap({
   stationsLoaded: boolean;
   originIdx: number | null;
   destIdx: number | null;
+  ghosts: { station: Station; role: 'origin' | 'dest' }[];
+  transferStation: Station | null;
   onPick: (i: number) => void;
 }) {
   const mapRef = useRef<MapRef | null>(null);
@@ -654,7 +1107,7 @@ function SubwayLineMap({
   return (
     <div
       ref={containerRef}
-      className="relative bg-[#0a0a14] border-2 border-white/15 overflow-hidden h-[420px] sm:h-[480px] lg:h-[540px]"
+      className="relative bg-[#e8e2d0] border-2 border-white/15 overflow-hidden h-[420px] sm:h-[480px] lg:h-[540px]"
     >
       {!stationsLoaded ? (
         <div className="absolute inset-0 grid place-items-center font-typewriter text-[11px] uppercase tracking-[0.22em] text-white/55">
@@ -723,6 +1176,56 @@ function SubwayLineMap({
               </Marker>
             );
           })}
+
+          {/* Ghost pins: origin/dest are on a DIFFERENT line than the
+              currently filtered one. Render them anyway so the map keeps
+              full picture during transfers. */}
+          {ghosts.map((g, i) => (
+            <Marker
+              key={`ghost-${g.role}-${i}`}
+              longitude={g.station.lng}
+              latitude={g.station.lat}
+              anchor="center"
+            >
+              <span
+                className="block"
+                title={`${g.station.name} (other line)`}
+                aria-hidden
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  background: g.role === 'origin' ? '#6CBE45' : '#FF5582',
+                  border: '3px dashed #fff',
+                  opacity: 0.85,
+                  boxShadow: '0 0 0 2px rgba(0,0,0,0.6)',
+                }}
+              />
+            </Marker>
+          ))}
+
+          {/* Transfer pin: the chosen interchange between the two lines */}
+          {transferStation && (
+            <Marker
+              longitude={transferStation.lng}
+              latitude={transferStation.lat}
+              anchor="center"
+            >
+              <span
+                className="block"
+                title={`Transfer at ${transferStation.name}`}
+                aria-hidden
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: '#FFD600',
+                  border: '3px solid #000',
+                  boxShadow: '0 0 0 3px rgba(0,0,0,0.6), 0 0 14px rgba(255,214,0,0.6)',
+                }}
+              />
+            </Marker>
+          )}
         </MapLibre>
       )}
       <div
@@ -777,20 +1280,26 @@ function MtaLineStatus({ line }: { line: Line }) {
 function SubwayCarPOV({
   line,
   ridePlan,
+  flatStops,
   stationIdx,
   arrived,
   cam,
   nextStationName,
   currentStation,
+  transferStopIdx,
+  isTransferStop,
   onExit,
 }: {
   line: Line;
-  ridePlan: Station[];
+  ridePlan: Leg[];
+  flatStops: Station[];
   stationIdx: number;
   arrived: boolean;
   cam: Camera | null;
   nextStationName: string;
   currentStation: Station | undefined;
+  transferStopIdx: number | null;
+  isTransferStop: boolean;
   onExit: () => void;
 }) {
   const [tick, setTick] = useState(() => Date.now());
@@ -799,8 +1308,9 @@ function SubwayCarPOV({
     return () => clearInterval(i);
   }, []);
 
-  const isLast = stationIdx >= ridePlan.length - 1;
-  const finalStation = ridePlan[ridePlan.length - 1];
+  const isLast = stationIdx >= flatStops.length - 1;
+  const finalStation = flatStops[flatStops.length - 1];
+  const transferLine = ridePlan.length > 1 ? ridePlan[1].line : null;
 
   return (
     <div className="max-w-[1200px] mx-auto">
@@ -810,10 +1320,40 @@ function SubwayCarPOV({
       {/* progress tracker — segmented bar with stop names */}
       <ProgressTracker
         line={line}
-        ridePlan={ridePlan}
+        flatStops={flatStops}
         stationIdx={stationIdx}
         arrived={arrived}
+        transferStopIdx={transferStopIdx}
+        ridePlan={ridePlan}
       />
+
+      {/* mid-ride transfer banner — flashes when we arrive at the
+          interchange so the rider knows the line just changed */}
+      {isTransferStop && transferLine && (
+        <div
+          className="mb-3 px-3 py-2 flex items-center gap-3 border-2 font-bungee text-[14px] uppercase tracking-[0.06em]"
+          style={{
+            background: '#FFD600',
+            borderColor: '#000',
+            color: '#000',
+            boxShadow: '4px 4px 0 #d11a2a',
+            animation: 'transfer-flash 1.6s ease-in-out infinite alternate',
+          }}
+          role="status"
+          aria-live="assertive"
+        >
+          <span>★ TRANSFER NOW ★</span>
+          <span
+            className="subway-bullet text-[14px]"
+            style={{ background: LINE_COLOR[transferLine], color: lineTextColor(transferLine) }}
+          >
+            {transferLine}
+          </span>
+          <span className="text-black/75 font-typewriter text-[10px] tracking-[0.18em]">
+            cross the platform · ride continues on the {transferLine}
+          </span>
+        </div>
+      )}
 
       {/* the car interior — side view */}
       <SideViewCar
@@ -846,7 +1386,7 @@ function SubwayCarPOV({
         ) : (
           <>
             <span className="font-typewriter text-[11px] uppercase tracking-[0.22em] text-[#FFD600]" aria-live="polite">
-              ⚙ in motion · stop {stationIdx + 1} of {ridePlan.length}
+              ⚙ in motion · stop {stationIdx + 1} of {flatStops.length}
             </span>
             <span className="font-typewriter text-[10px] uppercase tracking-[0.22em] text-white/55 ml-auto">
               please stand clear of the closing doors
@@ -858,77 +1398,109 @@ function SubwayCarPOV({
   );
 }
 
-/* The horizontal stop-by-stop progress tracker. Big stations, current
-   one bright + glowing, train icon parked on the current dot. */
+/* The horizontal stop-by-stop progress tracker. Each dot is colored by
+   the line of the leg it belongs to, so a transfer route shows a clean
+   color change at the interchange. The transfer stop wears a yellow
+   ring around the dot to call it out. */
 function ProgressTracker({
   line,
-  ridePlan,
+  flatStops,
   stationIdx,
   arrived,
+  transferStopIdx,
+  ridePlan,
 }: {
   line: Line;
-  ridePlan: Station[];
+  flatStops: Station[];
   stationIdx: number;
   arrived: boolean;
+  transferStopIdx: number | null;
+  ridePlan: Leg[];
 }) {
-  if (ridePlan.length === 0) return null;
-  const total = ridePlan.length;
+  if (flatStops.length === 0) return null;
+  const total = flatStops.length;
   const progress = total > 1 ? stationIdx / (total - 1) : 1;
+
+  // Per-stop line: stops 0..transferStopIdx belong to leg 0, the rest
+  // belong to leg 1. (Single-leg routes just use ridePlan[0].line.)
+  const lineForStop = (idx: number): Line => {
+    if (ridePlan.length < 2 || transferStopIdx == null) return ridePlan[0]?.line ?? line;
+    return idx < transferStopIdx ? ridePlan[0].line : ridePlan[1].line;
+  };
+
   return (
     <div className="mt-3 mb-3 px-3 py-3 bg-black border-2 border-[#FFD600]/45" style={{ boxShadow: '4px 4px 0 #d11a2a' }}>
       <div className="flex items-baseline justify-between mb-2">
         <span className="font-bungee text-[12px] uppercase tracking-[0.06em] text-[#FFD600]">
           ★ Progress · stop {Math.min(stationIdx + 1, total)} / {total}
+          {transferStopIdx != null && stationIdx <= transferStopIdx && (
+            <span className="ml-2 text-white/55">leg 1 · transfer ahead</span>
+          )}
+          {transferStopIdx != null && stationIdx > transferStopIdx && (
+            <span className="ml-2 text-white/55">leg 2 · post-transfer</span>
+          )}
         </span>
         <span className="font-typewriter text-[9px] uppercase tracking-[0.22em] text-white/65">
-          {arrived ? 'arrived' : `next: ${ridePlan[Math.min(stationIdx + 1, total - 1)]?.name ?? '—'}`}
+          {arrived ? 'arrived' : `next: ${flatStops[Math.min(stationIdx + 1, total - 1)]?.name ?? '—'}`}
         </span>
       </div>
       <div className="relative pt-2 pb-7">
         {/* base track */}
         <div className="absolute left-2 right-2 top-[14px] h-1.5" style={{ background: 'rgba(255,255,255,0.12)' }} />
-        {/* travelled track */}
+        {/* travelled track — uses the active leg's line color */}
         <div
           className="absolute left-2 top-[14px] h-1.5 transition-[width] duration-700 ease-out"
           style={{
-            background: LINE_COLOR[line],
+            background: LINE_COLOR[lineForStop(stationIdx)],
             width: `calc(${progress * 100}% * (1 - 16px / 100%))`,
-            boxShadow: `0 0 10px ${LINE_COLOR[line]}88`,
+            boxShadow: `0 0 10px ${LINE_COLOR[lineForStop(stationIdx)]}88`,
           }}
         />
         {/* dots + names */}
         <div className="relative flex items-center justify-between px-2">
-          {ridePlan.map((s, i) => {
+          {flatStops.map((s, i) => {
             const passed = i < stationIdx || (i === stationIdx && arrived);
             const here = i === stationIdx && !arrived;
+            const isTransfer = i === transferStopIdx;
+            const dotLine = lineForStop(i);
             return (
               <div key={`${s.name}-${i}`} className="flex flex-col items-center w-0">
                 <span
                   className="block rounded-full"
                   style={{
-                    width: here ? 16 : 12,
-                    height: here ? 16 : 12,
-                    background: passed || here ? LINE_COLOR[line] : '#1a1a1a',
-                    border: `2px solid ${passed || here ? '#fff' : LINE_COLOR[line]}`,
-                    boxShadow: here ? `0 0 14px ${LINE_COLOR[line]}, 0 0 0 4px rgba(255,255,255,0.18)` : 'none',
+                    width: here || isTransfer ? 16 : 12,
+                    height: here || isTransfer ? 16 : 12,
+                    background: passed || here ? LINE_COLOR[dotLine] : '#1a1a1a',
+                    border: `2px solid ${isTransfer ? '#FFD600' : passed || here ? '#fff' : LINE_COLOR[dotLine]}`,
+                    boxShadow: isTransfer
+                      ? `0 0 0 3px #FFD60088, 0 0 14px #FFD600`
+                      : here
+                      ? `0 0 14px ${LINE_COLOR[dotLine]}, 0 0 0 4px rgba(255,255,255,0.18)`
+                      : 'none',
                     transition: 'all 0.4s ease',
                   }}
                 />
                 <div
                   className="absolute top-[28px] text-[8.5px] font-typewriter uppercase tracking-[0.1em] whitespace-nowrap"
                   style={{
-                    color: here ? '#fff' : passed ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)',
+                    color: isTransfer
+                      ? '#FFD600'
+                      : here
+                      ? '#fff'
+                      : passed
+                      ? 'rgba(255,255,255,0.85)'
+                      : 'rgba(255,255,255,0.4)',
                     transform: 'rotate(-22deg)',
                     transformOrigin: 'top left',
                   }}
                 >
-                  {s.name}
+                  {isTransfer ? `★ ${s.name}` : s.name}
                 </div>
               </div>
             );
           })}
         </div>
-        {/* the train icon, parked on the current stop */}
+        {/* the train icon, parked on the current stop — flips color at the transfer */}
         <div
           className="absolute -top-1 transition-[left] duration-700 ease-out"
           style={{ left: `calc(8px + ${progress * 100}% - 12px)` }}
@@ -937,13 +1509,13 @@ function ProgressTracker({
           <span
             className="block w-6 h-6 rounded grid place-items-center font-bungee text-[10px] leading-none"
             style={{
-              background: LINE_COLOR[line],
-              color: lineTextColor(line),
+              background: LINE_COLOR[lineForStop(stationIdx)],
+              color: lineTextColor(lineForStop(stationIdx)),
               border: '2px solid #fff',
-              boxShadow: `0 0 12px ${LINE_COLOR[line]}cc`,
+              boxShadow: `0 0 12px ${LINE_COLOR[lineForStop(stationIdx)]}cc`,
             }}
           >
-            {line}
+            {lineForStop(stationIdx)}
           </span>
         </div>
       </div>
@@ -1440,5 +2012,9 @@ const TRAIN_KEYFRAMES = `
 @keyframes motion-streaks {
   from { background-position: 0 30%, 0 55%, 0 80%; }
   to   { background-position: -300px 30%, -340px 55%, -260px 80%; }
+}
+@keyframes transfer-flash {
+  from { box-shadow: 4px 4px 0 #d11a2a, 0 0 0 0 rgba(255,214,0,0); }
+  to   { box-shadow: 4px 4px 0 #d11a2a, 0 0 18px 2px rgba(255,214,0,0.7); }
 }
 `;

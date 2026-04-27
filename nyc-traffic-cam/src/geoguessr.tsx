@@ -8,21 +8,23 @@ import {
 } from 'react-map-gl/maplibre';
 import type { StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import confetti from 'canvas-confetti';
+import { apiUrl } from './api';
 
-/* Self-contained MapLibre style backed by CartoDB's Dark Matter raster
-   tiles. They look way better than raw OSM for a dark site — clean
-   typography, muted streets, real water polygons. Free tier, no key,
-   CORS-friendly. */
+/* CartoDB Voyager — cream-paper base, soft blue water, readable street
+   labels. Way friendlier than the near-black "dark_all" raster, which
+   was hard to read against the dark page chrome. Voyager keeps the
+   nighttime-arcade vibe while passing accessibility for label contrast. */
 const OSM_STYLE: StyleSpecification = {
   version: 8,
   sources: {
     carto: {
       type: 'raster',
       tiles: [
-        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
       ],
       tileSize: 256,
       attribution: '© OpenStreetMap contributors © CARTO',
@@ -30,14 +32,14 @@ const OSM_STYLE: StyleSpecification = {
     },
   },
   layers: [
-    { id: 'bg', type: 'background', paint: { 'background-color': '#0b0d12' } },
+    { id: 'bg', type: 'background', paint: { 'background-color': '#e8e2d0' } },
     {
       id: 'carto',
       type: 'raster',
       source: 'carto',
       paint: {
-        'raster-saturation': 0.05,
-        'raster-contrast': 0.05,
+        'raster-saturation': -0.05,
+        'raster-contrast': 0.08,
       },
     },
   ],
@@ -91,9 +93,47 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
   return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+/* Distance bands — borrowed from how a New Yorker actually thinks about
+   space. "Same block" is ~80 m, "same neighborhood" is ~1 km, "same
+   borough" is ~6 km, beyond that you're in the wrong borough or worse.
+   Each band has a min score floor so the user always feels rewarded
+   when they hit the band, plus a smooth falloff inside the band. */
+type Band = {
+  id: string;
+  label: string;
+  blurb: string;
+  color: string;
+  upTo: number;     // meters — inclusive upper bound
+  floor: number;    // min score awarded at upTo
+  ceiling: number;  // max score awarded at the start of the band
+  emoji: string;
+};
+
+const SCORE_BANDS: Band[] = [
+  { id: 'bullseye', label: 'BULLSEYE',         blurb: 'on the dot · you\'ve actually been there', color: '#FFD600', upTo: 50,    floor: 95, ceiling: 100, emoji: '🎯' },
+  { id: 'block',    label: 'SAME BLOCK',       blurb: 'one corner over · u smell the halal cart', color: '#B5F500', upTo: 200,   floor: 80, ceiling: 95,  emoji: '🚏' },
+  { id: 'nbhd',     label: 'SAME NEIGHBORHOOD', blurb: 'right zip · wrong avenue',                 color: '#6CBE45', upTo: 1000,  floor: 60, ceiling: 80,  emoji: '🏘️' },
+  { id: 'district', label: 'SAME DISTRICT',     blurb: 'a couple stops off',                       color: '#0039A6', upTo: 3000,  floor: 35, ceiling: 60,  emoji: '🚇' },
+  { id: 'borough',  label: 'SAME BOROUGH',      blurb: 'roughly · take the bus',                   color: '#FF6319', upTo: 8000,  floor: 15, ceiling: 35,  emoji: '🗽' },
+  { id: 'wrong',    label: 'WRONG BOROUGH',     blurb: 'that\'s a whole different vibe',           color: '#d11a2a', upTo: 25_000, floor: 1,  ceiling: 15,  emoji: '🌉' },
+  { id: 'lost',     label: 'JERSEY?',           blurb: 'are u even on the map?',                   color: '#5a2a55', upTo: Infinity, floor: 0, ceiling: 1, emoji: '😬' },
+];
+
+function bandFor(distanceMeters: number): Band {
+  for (const b of SCORE_BANDS) if (distanceMeters <= b.upTo) return b;
+  return SCORE_BANDS[SCORE_BANDS.length - 1];
+}
+
 function scoreFor(distanceMeters: number): number {
-  // Smooth exponential decay: ~100 at 0m, ~71 at 500m, ~37 at 2km, ~14 at 5km.
-  return Math.max(0, Math.round(100 * Math.exp(-distanceMeters / 2000)));
+  // Find the band, then linearly interpolate within it from the
+  // band's ceiling at the lower edge down to its floor at upTo.
+  const idx = SCORE_BANDS.findIndex((b) => distanceMeters <= b.upTo);
+  if (idx < 0) return 0;
+  const band = SCORE_BANDS[idx];
+  const lower = idx === 0 ? 0 : SCORE_BANDS[idx - 1].upTo;
+  if (!Number.isFinite(band.upTo)) return band.floor;
+  const t = Math.min(1, Math.max(0, (distanceMeters - lower) / (band.upTo - lower)));
+  return Math.round(band.ceiling - (band.ceiling - band.floor) * t);
 }
 
 function fmtDist(m: number): string {
@@ -101,22 +141,59 @@ function fmtDist(m: number): string {
   return `${(m / 1000).toFixed(m < 10000 ? 2 : 1)} km`;
 }
 
+function fireConfetti(intensity: 'big' | 'medium' = 'medium') {
+  const opts = {
+    particleCount: intensity === 'big' ? 160 : 70,
+    spread: 75,
+    startVelocity: intensity === 'big' ? 55 : 40,
+    origin: { y: 0.6 },
+    colors: ['#FFD600', '#FF6319', '#d11a2a', '#0039A6', '#6CBE45'],
+  };
+  try {
+    confetti(opts);
+    if (intensity === 'big') {
+      setTimeout(() => confetti({ ...opts, angle: 60, origin: { x: 0, y: 0.7 } }), 220);
+      setTimeout(() => confetti({ ...opts, angle: 120, origin: { x: 1, y: 0.7 } }), 260);
+    }
+  } catch { /* noop */ }
+}
+
+/* The shape of a fetched challenge from the server — populated only
+   when the URL has `?h=<hash>`, otherwise null and we fall back to the
+   deterministic seed picker. */
+type FetchedChallenge = {
+  hash: string;
+  cameras: string[];     // camera UUIDs the sharer played
+  score: number | null;  // sharer's score (replaces the legacy ?score= param)
+  grade: string | null;
+  expires_at: number;
+};
+
 export default function GeoGuessr() {
   // URL state — seed for deterministic picks; optional friend score for the challenge banner.
+  // If `?h=<hash>` is present we IGNORE seed and ride the explicit
+  // 5-camera list pinned on the server, so the challenge survives
+  // upstream changes to the camera pool (the original failure mode of
+  // pure-deterministic seeds).
   const initial = useMemo(() => {
-    if (typeof window === 'undefined') return { seed: '', friendScore: null as number | null };
+    if (typeof window === 'undefined') {
+      return { seed: '', friendScore: null as number | null, hash: null as string | null };
+    }
     const url = new URL(window.location.href);
     const seedParam = url.searchParams.get('seed');
     const scoreParam = url.searchParams.get('score');
+    const hashParam = url.searchParams.get('h');
     return {
       seed: seedParam || randomSeed(),
       friendScore: scoreParam ? parseInt(scoreParam, 10) || null : null,
+      hash: hashParam,
     };
   }, []);
   const [seed] = useState(initial.seed);
-  const friendScore = initial.friendScore;
 
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [challenge, setChallenge] = useState<FetchedChallenge | null>(null);
+  const [challengeError, setChallengeError] = useState<string | null>(null);
   const [roundIdx, setRoundIdx] = useState(0);
   const [rounds, setRounds] = useState<RoundState[]>(() =>
     Array.from({ length: ROUNDS }, () => ({ guess: null, distance: null, score: null })),
@@ -124,11 +201,40 @@ export default function GeoGuessr() {
   const [done, setDone] = useState(false);
   const [tick, setTick] = useState(() => Date.now());
 
+  // Friend score: prefer the one pinned in the challenge row over the
+  // legacy ?score= URL param.
+  const friendScore = challenge?.score ?? initial.friendScore;
+
   useEffect(() => {
     fetchCameras()
       .then((cs) => setCameras(cs.filter((c) => c.lat && c.lng)))
       .catch(() => {});
   }, []);
+
+  // If the URL points at a challenge hash, fetch its pinned 5 cameras.
+  useEffect(() => {
+    if (!initial.hash) return;
+    let stop = false;
+    (async () => {
+      try {
+        const r = await fetch(apiUrl(`/api/challenges/${initial.hash}`));
+        if (!r.ok) {
+          if (stop) return;
+          setChallengeError(
+            r.status === 410 || r.status === 404
+              ? 'this challenge expired (24h limit) — playing a fresh seed'
+              : `couldn't load challenge (${r.status}) — playing a fresh seed`,
+          );
+          return;
+        }
+        const j = (await r.json()) as FetchedChallenge;
+        if (!stop) setChallenge(j);
+      } catch {
+        if (!stop) setChallengeError('couldn\'t reach challenge server — playing a fresh seed');
+      }
+    })();
+    return () => { stop = true; };
+  }, [initial.hash]);
 
   // Refresh the cam image every 2s while guessing
   useEffect(() => {
@@ -136,9 +242,21 @@ export default function GeoGuessr() {
     return () => clearInterval(i);
   }, []);
 
-  // Deterministic pick of 5 cameras from the seed
+  // The 5 cameras for this run. If a challenge was loaded, use its
+  // pinned UUIDs verbatim (so two players see the same cams even if
+  // the upstream pool changed). Otherwise fall back to the
+  // deterministic seed picker.
   const roundCameras: Camera[] = useMemo(() => {
     if (!cameras.length) return [];
+    if (challenge) {
+      const byId = new Map(cameras.map((c) => [c.id, c]));
+      const out: Camera[] = [];
+      for (const id of challenge.cameras) {
+        const c = byId.get(id);
+        if (c) out.push(c);
+      }
+      return out.slice(0, ROUNDS);
+    }
     const used = new Set<string>();
     const out: Camera[] = [];
     for (let i = 0; out.length < ROUNDS && i < ROUNDS * 4; i++) {
@@ -148,7 +266,7 @@ export default function GeoGuessr() {
       out.push(c);
     }
     return out;
-  }, [cameras, seed]);
+  }, [cameras, seed, challenge]);
 
   const cam = roundCameras[roundIdx];
   const round = rounds[roundIdx];
@@ -173,6 +291,9 @@ export default function GeoGuessr() {
       next[roundIdx] = { ...next[roundIdx], distance: d, score };
       return next;
     });
+    // Reward great guesses with confetti — bullseye is the big drop.
+    if (score >= 95) fireConfetti('big');
+    else if (score >= 80) fireConfetti('medium');
   };
 
   const nextRound = () => {
@@ -209,13 +330,13 @@ export default function GeoGuessr() {
       <QuarterStash />
       <RollingQuarter />
 
-      <main className="flex-1 px-3 py-5 z-10 max-w-[1200px] mx-auto w-full">
+      <main className="flex-1 px-3 py-5 z-10 max-w-[1400px] mx-auto w-full">
         <div className="flex items-baseline justify-between mb-1">
           <div className="font-bungee text-[36px] sm:text-[48px] leading-[0.95] uppercase">
             ★ Cam <span className="text-[#FFD600]">GeoGuessr</span>
           </div>
           <div className="font-typewriter text-[10px] uppercase tracking-[0.22em] text-white/55 hidden sm:block">
-            seed · {seed}
+            {challenge ? <>challenge · <span className="text-[#FFD600]">{challenge.hash}</span> · 24h pin</> : <>seed · {seed}</>}
           </div>
         </div>
         <div className="font-typewriter text-[11px] uppercase tracking-[0.22em] text-white/65 mb-4">
@@ -224,7 +345,13 @@ export default function GeoGuessr() {
 
         {friendScore != null && !done && (
           <div className="mb-4 px-3 py-2 bg-[#FFD600]/10 border-2 border-[#FFD600] font-typewriter text-[11px] uppercase tracking-[0.18em] text-[#FFD600]">
-            ★ Challenge incoming · a friend scored {friendScore}/{ROUNDS * 100} on this seed · beat them
+            ★ Challenge incoming · a friend scored {friendScore}/{ROUNDS * 100}
+            {challenge?.grade ? ` (${challenge.grade.toLowerCase()})` : ''} · beat them
+          </div>
+        )}
+        {challengeError && !done && (
+          <div className="mb-4 px-3 py-2 bg-[#ff8a3a]/10 border-2 border-[#ff8a3a] font-typewriter text-[11px] uppercase tracking-[0.18em] text-[#ff8a3a]">
+            ★ {challengeError}
           </div>
         )}
 
@@ -248,6 +375,7 @@ export default function GeoGuessr() {
             seed={seed}
             friendScore={friendScore}
             totalScore={totalScore}
+            challenge={challenge}
             onReplay={replay}
           />
         )}
@@ -295,9 +423,10 @@ function RoundView({
         <RoundDots rounds={rounds} currentIdx={roundIdx} />
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-2">
-        {/* camera image */}
-        <div className="relative bg-black border-2 border-[#FFD600]/40" style={{ aspectRatio: '16 / 9', minHeight: 280 }}>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        {/* camera image — gets more screen real estate now; the cam is
+            the actual puzzle, the map is just the answer surface */}
+        <div className="relative bg-black border-2 border-[#FFD600]/40" style={{ aspectRatio: '16 / 9', minHeight: 380 }}>
           {cam ? (
             <img
               key={cam.id}
@@ -322,9 +451,10 @@ function RoundView({
           )}
         </div>
 
-        {/* map */}
+        {/* map — same height as the cam pane on lg so the two read as a
+            balanced pair rather than the map dominating the cam */}
         <div
-          className="relative border-2 border-[#FFD600]/40 bg-[#0a0a14] overflow-hidden h-[360px] sm:h-[420px] lg:h-[460px]"
+          className="relative border-2 border-[#FFD600]/40 bg-[#e8e2d0] overflow-hidden h-[360px] sm:h-[420px] lg:h-[480px]"
         >
           <GuessMap cam={cam} guess={round?.guess ?? null} revealed={revealed} onGuess={onGuess} />
           <div className="absolute top-2 left-2 z-10 px-2 py-0.5 bg-black/85 border border-[#FFD600] text-[#FFD600] font-bungee text-[11px] uppercase tracking-[0.16em] pointer-events-none">
@@ -355,11 +485,34 @@ function RoundView({
           </button>
         )}
         {revealed && round.distance != null && (
-          <div className="font-typewriter text-[12px] uppercase tracking-[0.18em]">
-            <span className="text-white/65">distance · </span>
-            <span className="text-[#FFD600] tabular">{fmtDist(round.distance)}</span>
-            <span className="text-white/65 ml-3">round score · </span>
-            <span className="text-[#FFD600] tabular text-[14px]">+{round.score}</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            {(() => {
+              const b = bandFor(round.distance);
+              return (
+                <span
+                  className="px-2 py-1 font-bungee text-[14px] uppercase tracking-[0.04em]"
+                  style={{
+                    background: b.color,
+                    color: b.color === '#FFD600' || b.color === '#B5F500' ? '#000' : '#fff',
+                    boxShadow: '3px 3px 0 #000',
+                    border: '2px solid #000',
+                  }}
+                >
+                  <span className="mr-1.5" aria-hidden>{b.emoji}</span>
+                  {b.label}
+                </span>
+              );
+            })()}
+            <div className="font-typewriter text-[11px] uppercase tracking-[0.18em] text-white/85">
+              {bandFor(round.distance).blurb}
+            </div>
+            <div className="font-typewriter text-[12px] uppercase tracking-[0.18em] ml-auto">
+              <span className="text-white/65">off · </span>
+              <span className="text-[#FFD600] tabular">{fmtDist(round.distance)}</span>
+              <span className="text-white/65 ml-3">+ </span>
+              <span className="text-[#FFD600] tabular text-[16px]">{round.score}</span>
+              <span className="text-white/45"> / 100</span>
+            </div>
           </div>
         )}
         {!revealed && !round?.guess && (
@@ -495,10 +648,10 @@ function GuessMap({
             id="guess-line-layer"
             type="line"
             paint={{
-              'line-color': '#FFD600',
-              'line-width': 2.4,
+              'line-color': '#d11a2a',
+              'line-width': 3,
               'line-dasharray': [2, 2],
-              'line-opacity': 0.85,
+              'line-opacity': 0.92,
             }}
           />
         </Source>
@@ -533,6 +686,7 @@ function Summary({
   seed,
   friendScore,
   totalScore,
+  challenge,
   onReplay,
 }: {
   rounds: RoundState[];
@@ -540,9 +694,17 @@ function Summary({
   seed: string;
   friendScore: number | null;
   totalScore: number;
+  challenge: FetchedChallenge | null;
   onReplay: () => void;
 }) {
   const [copied, setCopied] = useState<'url' | 'text' | null>(null);
+  // Challenge hash for the brag link. If we already loaded a challenge
+  // (the player came in via someone else's link), reuse that hash so
+  // chains of friends play the SAME 5 cams. Otherwise we POST our 5
+  // cam IDs to the server on first share and cache the hash.
+  const [shareHash, setShareHash] = useState<string | null>(challenge?.hash ?? null);
+  const [shareMinting, setShareMinting] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
   const max = ROUNDS * 100;
 
   const grade = (() => {
@@ -554,32 +716,111 @@ function Summary({
     return { label: 'JUST GOT OFF THE BUS', color: '#FF5582' };
   })();
 
+  // Big finale confetti — fires once when the summary mounts if the
+  // user did well enough.
+  useEffect(() => {
+    const pct = totalScore / max;
+    if (pct >= 0.65) fireConfetti('big');
+    else if (pct >= 0.4) fireConfetti('medium');
+  }, [totalScore, max]);
+
+  // Mint a fresh challenge on the server: POST our 5 cam UUIDs, get a
+  // 6-char hash back. We do this lazily — only when the user first
+  // tries to share — so casual players never touch the backend.
+  const ensureHash = async (): Promise<string | null> => {
+    if (shareHash) return shareHash;
+    if (shareMinting) return null;
+    setShareMinting(true);
+    setShareError(null);
+    try {
+      const r = await fetch(apiUrl('/api/challenges'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cameras: roundCameras.map((c) => c.id),
+          score: totalScore,
+          grade: grade.label,
+        }),
+      });
+      if (!r.ok) {
+        const detail = (await r.json().catch(() => null))?.detail ?? `${r.status}`;
+        throw new Error(detail);
+      }
+      const j = (await r.json()) as { hash: string };
+      setShareHash(j.hash);
+      return j.hash;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'unknown';
+      setShareError(`couldn't mint share link · ${msg} · falling back to seed`);
+      return null;
+    } finally {
+      setShareMinting(false);
+    }
+  };
+
+  // The "live" URL that ALWAYS works as a share — uses the hash if
+  // we've minted one, otherwise the legacy seed-based link.
   const shareUrl = (() => {
     if (typeof window === 'undefined') return '';
     const u = new URL(window.location.href);
-    u.searchParams.set('seed', seed);
-    u.searchParams.set('score', String(totalScore));
+    u.searchParams.delete('h');
+    u.searchParams.delete('seed');
+    u.searchParams.delete('score');
+    if (shareHash) {
+      u.searchParams.set('h', shareHash);
+    } else {
+      u.searchParams.set('seed', seed);
+      u.searchParams.set('score', String(totalScore));
+    }
     return u.toString();
   })();
 
-  const shareText =
-    `★ NYC CAM GEOGUESSR\nI scored ${totalScore}/${max} — ${grade.label}.\nPlay the same 5 cameras: ${shareUrl}`;
-
   const copy = async (kind: 'url' | 'text') => {
+    // Mint hash on first copy attempt
+    const h = await ensureHash();
+    const u = (() => {
+      if (typeof window === 'undefined') return shareUrl;
+      const url = new URL(window.location.href);
+      url.searchParams.delete('h');
+      url.searchParams.delete('seed');
+      url.searchParams.delete('score');
+      if (h) url.searchParams.set('h', h);
+      else {
+        url.searchParams.set('seed', seed);
+        url.searchParams.set('score', String(totalScore));
+      }
+      return url.toString();
+    })();
+    const txt =
+      `★ NYC CAM GEOGUESSR\nI scored ${totalScore}/${max} — ${grade.label}.\nPlay the same 5 cameras: ${u}`;
     try {
-      await navigator.clipboard.writeText(kind === 'url' ? shareUrl : shareText);
+      await navigator.clipboard.writeText(kind === 'url' ? u : txt);
       setCopied(kind);
       setTimeout(() => setCopied(null), 1800);
     } catch { /* noop */ }
   };
 
   const tryNativeShare = async () => {
+    const h = await ensureHash();
+    const u = (() => {
+      if (typeof window === 'undefined') return shareUrl;
+      const url = new URL(window.location.href);
+      url.searchParams.delete('h');
+      url.searchParams.delete('seed');
+      url.searchParams.delete('score');
+      if (h) url.searchParams.set('h', h);
+      else {
+        url.searchParams.set('seed', seed);
+        url.searchParams.set('score', String(totalScore));
+      }
+      return url.toString();
+    })();
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
       try {
         await (navigator as Navigator & { share: (d: { title: string; text: string; url: string }) => Promise<void> }).share({
           title: 'NYC Cam GeoGuessr',
           text: `I scored ${totalScore}/${max} — ${grade.label}. Beat me:`,
-          url: shareUrl,
+          url: u,
         });
         return;
       } catch { /* user cancelled or unsupported */ }
@@ -606,12 +847,17 @@ function Summary({
         )}
       </div>
 
-      {/* round breakdown */}
+      {/* round breakdown — each card colored by the band the player landed in */}
       <div className="grid gap-2 sm:grid-cols-5 mb-6">
         {rounds.map((r, i) => {
           const cam = roundCameras[i];
+          const band = r.distance != null ? bandFor(r.distance) : null;
           return (
-            <div key={i} className="bg-black/55 border border-[#FFD600]/40 px-2 py-2">
+            <div
+              key={i}
+              className="bg-black/55 px-2 py-2"
+              style={{ border: `1px solid ${band ? band.color + '88' : 'rgba(255,214,0,0.35)'}` }}
+            >
               <div className="flex items-baseline justify-between">
                 <span className="font-bungee text-[12px] uppercase text-[#FFD600]">R{i + 1}</span>
                 <span className="font-tabloid text-[18px] tabular text-white">+{r.score ?? 0}</span>
@@ -619,6 +865,11 @@ function Summary({
               <div className="font-typewriter text-[9px] uppercase tracking-[0.16em] text-white/65 line-clamp-2 mt-1">
                 {cam?.name ?? '—'}
               </div>
+              {band && (
+                <div className="font-bungee text-[9px] uppercase tracking-[0.06em] mt-1" style={{ color: band.color }}>
+                  {band.emoji} {band.label}
+                </div>
+              )}
               {r.distance != null && (
                 <div className="font-typewriter text-[9px] uppercase tracking-[0.16em] text-white/45 mt-0.5 tabular">
                   off by {fmtDist(r.distance)}
@@ -674,8 +925,20 @@ function Summary({
           className="w-full bg-[#0a0a14] border border-white/15 px-2 py-1.5 font-mono text-[11px] text-white/85"
         />
         <div className="font-typewriter text-[9px] uppercase tracking-[0.22em] text-white/45 mt-2">
-          seed · {seed} · cameras are deterministic per seed · scores ride along the link
+          {shareHash
+            ? <>challenge · <span className="text-[#FFD600]">{shareHash}</span> · same 5 cameras pinned for 24h · scores ride along</>
+            : <>seed · {seed} · pinning a real challenge link the moment you copy or share</>}
         </div>
+        {shareMinting && (
+          <div className="font-typewriter text-[9px] uppercase tracking-[0.22em] text-white/65 mt-1">
+            ⚙ minting share link…
+          </div>
+        )}
+        {shareError && (
+          <div className="font-typewriter text-[9px] uppercase tracking-[0.22em] text-[#ff8a3a] mt-1">
+            ★ {shareError}
+          </div>
+        )}
       </div>
     </div>
   );

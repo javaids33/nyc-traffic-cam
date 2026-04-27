@@ -14,6 +14,7 @@ export type Station = {
 };
 
 export const STATIONS: Station[] = [
+  // ── nyc city radio
   { id: 'wnyc-fm',  call: 'WNYC',  freq: '93.9 FM',     vibe: 'public radio · news · talk',          url: 'https://fm939.wnyc.org/wnycfm' },
   { id: 'wnyc-am',  call: 'WNYC',  freq: '820 AM',      vibe: 'spoken word · interviews',            url: 'https://am820.wnyc.org/wnycam' },
   { id: 'wbgo',     call: 'WBGO',  freq: '88.3 FM',     vibe: 'jazz · 24/7',                          url: 'https://wbgo.streamguys1.com/wbgo128' },
@@ -27,6 +28,21 @@ export const STATIONS: Station[] = [
   { id: 'nts1',     call: 'NTS',   freq: 'CH. 1',       vibe: 'global · curated · london ↔ ny',       url: 'https://stream-relay-geo.ntslive.net/stream' },
   { id: 'nts2',     call: 'NTS',   freq: 'CH. 2',       vibe: 'global · curated · b-side',            url: 'https://stream-relay-geo.ntslive.net/stream2' },
   { id: 'kexp',     call: 'KEXP',  freq: '90.3 SEA',    vibe: 'seattle · indie · sister station',     url: 'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
+  // ── lofi & late-night corners (SomaFM, Lo-Fi Girl, jazz cafés)
+  // SomaFM is a free, listener-supported public stream service — these
+  // CHs lean lounge / chill / late-cab-ride. NYC night vibes.
+  { id: 'soma-grovesalad', call: 'SOMA', freq: 'GRV SLD',  vibe: 'groove salad · downtempo electronica', url: 'https://ice2.somafm.com/groovesalad-128-mp3' },
+  { id: 'soma-defcon',     call: 'SOMA', freq: 'DEF CON',  vibe: 'defcon radio · late-night IDM beats',  url: 'https://ice2.somafm.com/defcon-128-mp3' },
+  { id: 'soma-dronezone',  call: 'SOMA', freq: 'DRONE',    vibe: 'drone zone · ambient · 4am taxi',     url: 'https://ice2.somafm.com/dronezone-128-mp3' },
+  { id: 'soma-spacestation',call:'SOMA', freq: 'SPACE',    vibe: 'space station · spaced-out chill',     url: 'https://ice2.somafm.com/spacestation-128-mp3' },
+  { id: 'soma-secretagent',call: 'SOMA', freq: 'SECRET',   vibe: 'secret agent · spy-jazz lounge',       url: 'https://ice2.somafm.com/secretagent-128-mp3' },
+  { id: 'soma-fluid',      call: 'SOMA', freq: 'FLUID',    vibe: 'fluid · liquid drum & bass',           url: 'https://ice2.somafm.com/fluid-128-mp3' },
+  { id: 'soma-chillits',   call: 'SOMA', freq: 'CHILL.IT', vibe: 'illinois street lounge · easy listen', url: 'https://ice2.somafm.com/illstreet-128-mp3' },
+  { id: 'soma-deepspace',  call: 'SOMA', freq: 'DEEP-1',   vibe: 'deep space one · ambient lofi',        url: 'https://ice2.somafm.com/deepspaceone-128-mp3' },
+  { id: 'lofi-girl',       call: 'LOFI', freq: 'GIRL.FM',  vibe: 'lo-fi beats to study/relax to',        url: 'https://play.streamafrica.net/lofiradio' },
+  { id: 'jazz24',          call: 'JZ24', freq: '24/7',     vibe: 'jazz24 · cool jazz at any hour',       url: 'https://live.streamguys1.com/jazz24-mp3' },
+  { id: 'radioparadise-mellow', call: 'RP',  freq: 'MELLOW', vibe: 'radio paradise mellow · late drive', url: 'https://stream.radioparadise.com/mellow-128' },
+  { id: 'kxlu',            call: 'KXLU', freq: '88.9 LA',  vibe: 'la college radio · jazz hours',        url: 'https://kxlu.streamguys1.com/kxlu-hi' },
 ];
 
 export type AmbienceMode = 'ac' | 'subway' | 'street';
@@ -135,7 +151,19 @@ export function audioTuneRadio(s: Station) {
   const a = ensureAudioEl();
   a.src = s.url;
   a.volume = state.vol;
-  a.play().catch(() => patch({ error: 'autoplay blocked — tap the station again', playing: false }));
+  a.play().catch((err: unknown) => {
+    // Browsers reject play() with NotAllowedError when audio hasn't been
+    // user-gesture-unlocked yet. The previous "tap again" message only
+    // confused people, so we swallow it silently — the next click that
+    // tunes a station IS a user gesture and will succeed. We keep the
+    // surfaced error for real failures (bad URL, network).
+    const name = (err as { name?: string } | null)?.name ?? '';
+    if (name === 'NotAllowedError' || name === 'AbortError') {
+      patch({ playing: false });
+      return;
+    }
+    patch({ error: 'signal lost — try another station', playing: false });
+  });
 }
 
 export function audioStartAmbience(mode: AmbienceMode) {
@@ -227,7 +255,14 @@ export function audioToggle() {
   if (!s) return;
   if (s.kind === 'radio' && audioEl) {
     if (state.playing) audioEl.pause();
-    else audioEl.play().catch(() => patch({ error: 'autoplay blocked', playing: false }));
+    else audioEl.play().catch((err: unknown) => {
+      const name = (err as { name?: string } | null)?.name ?? '';
+      if (name === 'NotAllowedError' || name === 'AbortError') {
+        patch({ playing: false });
+        return;
+      }
+      patch({ error: 'signal lost — try another station', playing: false });
+    });
   } else if (s.kind === 'ambience') {
     // Ambience is a one-shot scheduled tree; "toggle" off means full stop
     if (state.playing) audioStop();

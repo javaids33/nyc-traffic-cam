@@ -8,7 +8,7 @@ import {
   StreetFauna,
   type TVCaption,
 } from './bodega-tv';
-import { QuarterStash, RollingQuarter } from './quarter';
+import { QuarterStash, RollingQuarter, QuarterIcon, useQuarters, HiddenCoin } from './quarter';
 import { AudioPanel } from './audio-panel';
 import { recordAlert, recordTune, loreLine } from './cam-lore';
 
@@ -258,7 +258,7 @@ export default function Lounge() {
       <RollingQuarter />
       <AudioPanel />
 
-      <main className="flex-1 relative flex items-start justify-center px-2 sm:px-6 pt-3 pb-6 overflow-y-auto">
+      <main className="flex-1 relative flex items-start justify-center px-2 sm:px-6 pt-6 sm:pt-8 pb-6 overflow-y-auto">
         <SkylineBg />
         <CornerBrasstack />
 
@@ -283,9 +283,13 @@ export default function Lounge() {
           />
 
           <div className="min-w-0">
-            {/* borough filter — local TV station chooser */}
-            <div className="mb-2 flex flex-wrap items-center gap-1 px-1 font-typewriter text-[10px] uppercase tracking-[0.18em]">
-              <span className="text-white/45 mr-1 hidden sm:inline">tune by borough:</span>
+            {/* borough filter — its own sub-header bar so it doesn't get
+                visually swallowed by the awning's toothy bottom edge */}
+            <div
+              className="mb-3 px-2 py-1.5 flex flex-wrap items-center gap-1 font-typewriter text-[10px] uppercase tracking-[0.18em] bg-black/55 border border-[#FFD600]/40"
+              style={{ boxShadow: '2px 2px 0 #d11a2a' }}
+            >
+              <span className="text-[#FFD600] mr-1.5 font-bungee text-[11px] tracking-[0.06em] hidden sm:inline">★ TUNE BY BOROUGH</span>
               {BOROUGH_TABS.map((b) => {
                 const active = borough === b.id;
                 return (
@@ -301,7 +305,7 @@ export default function Lounge() {
                     className={`px-2 py-0.5 border transition-colors ${
                       active
                         ? 'bg-[#FFD600] text-black border-[#FFD600]'
-                        : 'border-white/20 text-white/65 hover:border-[#FFD600] hover:text-[#FFD600]'
+                        : 'border-white/20 text-white/75 hover:border-[#FFD600] hover:text-[#FFD600]'
                     }`}
                     title={b.label}
                   >
@@ -365,6 +369,55 @@ export default function Lounge() {
       <StreetFauna ratMode={ratMode} />
       <FreshFlowers />
       <ScratchOffs />
+
+      {/* Easter-egg quarter spots planted on existing decorative props.
+          Each respawns ~6 min after pickup. Encouraged exploration. */}
+      <HiddenCoin
+        spotId="lounge-hydrant"
+        size={18}
+        hint="under the fire hydrant — +1¢"
+        style={{ left: 14, bottom: 96 }}
+      />
+      <HiddenCoin
+        spotId="lounge-cat"
+        size={20}
+        hint="behind the bodega cat — +2¢"
+        payout={2}
+        style={{ right: 22, bottom: 60 }}
+      />
+      <HiddenCoin
+        spotId="lounge-cup"
+        size={18}
+        hint="next to the anthora cup — +1¢"
+        style={{ right: 130, bottom: 138 }}
+      />
+      <HiddenCoin
+        spotId="lounge-newsstand"
+        size={18}
+        hint="kicked under the newsstand — +1¢"
+        style={{ left: 'calc(50% - 230px)', top: 130 }}
+      />
+      <HiddenCoin
+        spotId="lounge-rat"
+        size={16}
+        hint="the rat dropped one — +3¢"
+        payout={3}
+        respawnMs={9 * 60 * 1000}
+        style={{ left: 80, bottom: 44 }}
+      />
+      <HiddenCoin
+        spotId="lounge-skyline"
+        size={16}
+        hint="caught between buildings — +1¢"
+        style={{ right: 'calc(50% - 280px)', bottom: 240 }}
+      />
+      <HiddenCoin
+        spotId="lounge-awning"
+        size={16}
+        hint="lodged in the awning bulbs — +2¢"
+        payout={2}
+        style={{ left: '50%', top: 12 }}
+      />
 
       {ratMode && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-[#FFD600] text-black px-3 py-1 font-bungee text-[12px] uppercase tracking-[0.2em]" style={{ boxShadow: '3px 3px 0 #d11a2a' }}>
@@ -489,12 +542,19 @@ function FreshFlowers() {
 }
 
 /* Lottery scratch-off rack — taped-up "WIN $$$" placard. Sits in the
-   awning corner area on wider screens; a quiet bodega counter prop. */
+   awning corner area on wider screens. Now a real link: clicking it
+   takes you to /scratch where you can spend $1 in collected quarters
+   on an actual playable scratch-off. */
 function ScratchOffs() {
   return (
-    <div className="pointer-events-none fixed right-2 top-[150px] z-10 hidden 2xl:block" aria-hidden>
+    <a
+      href="/scratch"
+      className="fixed right-2 top-[150px] z-10 hidden 2xl:block focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+      title="Scratch-off — collect $1 to play"
+      aria-label="Scratch-off — collect $1 in coins to play"
+    >
       <div
-        className="bg-[#0a0a0a] border-2 border-[#FFD600] px-2 py-2"
+        className="bg-[#0a0a0a] border-2 border-[#FFD600] px-2 py-2 hover:scale-[1.04] transition-transform"
         style={{
           boxShadow: '3px 3px 0 #d11a2a, 0 0 14px rgba(255,214,0,0.22)',
           transform: 'rotate(2deg)',
@@ -521,10 +581,10 @@ function ScratchOffs() {
           ))}
         </div>
         <div className="font-typewriter text-[7px] uppercase tracking-[0.22em] text-[#FFD600]/65 text-center mt-1.5">
-          mega · take 5 · pick 3
+          play · $1 · 4 quarters
         </div>
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -671,18 +731,52 @@ const NYC_FOOD = [
   'cash only after midnight, atm’s in the back, broken',
 ];
 
+/* The classic NYC MTA bull's-eye — black disc, blue ring, white "MTA"
+   wordmark. Used as the badge for the Turnstile mode tile so it reads
+   instantly as "subway thing", not "the F train". */
+function MtaLogo({ size = 28 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 40 40" width={size} height={size} aria-label="MTA">
+      <circle cx="20" cy="20" r="19" fill="#000" />
+      <circle cx="20" cy="20" r="16.5" fill="none" stroke="#0039A6" strokeWidth="3" />
+      <text
+        x="20"
+        y="25"
+        textAnchor="middle"
+        fontSize="13"
+        fontWeight="900"
+        fontFamily="Helvetica, Arial, sans-serif"
+        fill="#fff"
+        letterSpacing="0.5"
+      >
+        MTA
+      </text>
+    </svg>
+  );
+}
+
 /* "More at the deli" rack — surfaces the other modes prominently right
    under the TV so first-time visitors actually find them. Each card is
    a chunky linkable tile with iconography that tells you what mode it
    is at a glance. */
-const MODES = [
+type Mode = {
+  href: string;
+  badge: string | 'MTA';
+  badgeBg: string;
+  title: string;
+  sub: string;
+  accent: string;
+  cta?: string;
+};
+const MODES: Mode[] = [
   {
     href: '/turnstile',
-    badge: 'F',
-    badgeBg: '#FF6319',
+    badge: 'MTA',
+    badgeBg: '#000',
     title: 'Hop the Turnstile',
-    sub: 'ride blind through 5 stops · door window = nyc cam',
+    sub: 'pick any line · transfer mid-ride · door window = nyc cam',
     accent: '#FF6319',
+    cta: '▸ PUSH',
   },
   {
     href: '/geoguessr',
@@ -693,20 +787,21 @@ const MODES = [
     accent: '#FFD600',
   },
   {
+    href: '/scratch',
+    badge: '$',
+    badgeBg: '#d11a2a',
+    title: 'Scratch-Off',
+    sub: 'collect $1 in coins · scratch for cash · refund quarters',
+    accent: '#d11a2a',
+    cta: '★ NEW',
+  },
+  {
     href: '/game',
     badge: '25¢',
     badgeBg: '#B5F500',
     title: "Jimmy's Arcade",
     sub: 'type nyc slang · 3 difficulties · grab quarters from the lounge',
     accent: '#B5F500',
-  },
-  {
-    href: '/about',
-    badge: '?',
-    badgeBg: '#0039A6',
-    title: 'About + Credits',
-    sub: 'how this thing works · what is real · what is bit',
-    accent: '#0039A6',
   },
 ];
 
@@ -730,16 +825,20 @@ function ModesRack() {
           <a
             key={m.href}
             href={m.href}
-            className="group relative bg-[#0a0a14] border-2 border-white/15 hover:border-[color:var(--accent)] hover:bg-black px-2.5 py-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+            className="group relative bg-[#0a0a14] border-2 border-white/15 hover:border-[color:var(--accent)] hover:bg-black px-2.5 pt-2 pb-7 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
             style={{ ['--accent' as string]: m.accent }}
           >
-            <div className="flex items-center gap-2">
-              <span
-                className="grid place-items-center w-7 h-7 rounded-full font-bungee text-[12px] leading-none shrink-0"
-                style={{ background: m.badgeBg, color: m.badgeBg === '#FFD600' || m.badgeBg === '#B5F500' ? '#000' : '#fff' }}
-              >
-                {m.badge}
-              </span>
+            <div className="flex items-start gap-2 pr-10">
+              {m.badge === 'MTA' ? (
+                <MtaLogo size={28} />
+              ) : (
+                <span
+                  className="grid place-items-center w-7 h-7 rounded-full font-bungee text-[12px] leading-none shrink-0"
+                  style={{ background: m.badgeBg, color: m.badgeBg === '#FFD600' || m.badgeBg === '#B5F500' ? '#000' : '#fff' }}
+                >
+                  {m.badge}
+                </span>
+              )}
               <span
                 className="font-bungee text-[13px] sm:text-[14px] uppercase leading-tight tracking-[0.02em] group-hover:text-[color:var(--accent)] transition-colors"
                 style={{ color: '#fff' }}
@@ -750,6 +849,18 @@ function ModesRack() {
             <div className="font-typewriter text-[9px] uppercase tracking-[0.16em] text-white/65 mt-1.5 line-clamp-2">
               {m.sub}
             </div>
+            {m.cta ? (
+              <span
+                className="absolute top-2 right-2 font-bungee text-[9px] tracking-[0.18em] uppercase px-1.5 py-0.5"
+                style={{
+                  background: m.accent,
+                  color: m.accent === '#FFD600' || m.accent === '#B5F500' ? '#000' : '#fff',
+                  boxShadow: '2px 2px 0 #000',
+                }}
+              >
+                {m.cta}
+              </span>
+            ) : null}
             <span className="absolute bottom-1 right-2 font-typewriter text-[9px] tracking-[0.22em] uppercase text-white/35 group-hover:text-[color:var(--accent)] transition-colors">
               go →
             </span>
@@ -801,8 +912,9 @@ function ChannelGuide({
     .slice(0, 6);
   const stamp = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   return (
+    <div className="hidden lg:flex flex-col gap-3 self-start">
     <aside
-      className="hidden lg:block self-stretch text-[#1a1410] font-typewriter relative"
+      className="text-[#1a1410] font-typewriter relative"
       style={{
         background: 'repeating-linear-gradient(180deg, #f3e9c0 0px, #f3e9c0 22px, #ecdfa9 22px, #ecdfa9 23px)',
         boxShadow: '4px 6px 0 rgba(0,0,0,0.55), inset 0 0 0 1px rgba(0,0,0,0.18)',
@@ -853,6 +965,90 @@ function ChannelGuide({
 
       <div className="mt-4 pt-3 border-t border-dashed border-black/30 text-[10px] uppercase tracking-[0.18em] text-[#1a1410]/65">
         <a href="/about" className="hover:text-[#d11a2a]">how this works →</a>
+      </div>
+    </aside>
+
+    {/* Below the TV Guide: a compact "POCKET CHANGE" board so the empty
+        left rail isn't just dead space. Quick view of the user's
+        quarter stash plus a tap-to-find easter-egg coin pile. */}
+    <PocketChange />
+    </div>
+  );
+}
+
+/* Small left-rail prop: a sticky-tape "tip jar" / quarter stash card.
+   It's also a clickable easter-egg — clicking the cup gives back a
+   quarter once every ~90s, so casual exploration is rewarded. */
+function PocketChange() {
+  const { count, add } = useQuarters();
+  // Per-tab cooldown so the click isn't spammable. localStorage keeps it
+  // from resetting on every render and respects multiple tabs.
+  const [cooldown, setCooldown] = useState<number>(0);
+  useEffect(() => {
+    const i = setInterval(() => {
+      const last = parseInt(localStorage.getItem('nyc-pocket-tap') || '0', 10) || 0;
+      const remain = Math.max(0, 90_000 - (Date.now() - last));
+      setCooldown(remain);
+    }, 1000);
+    return () => clearInterval(i);
+  }, []);
+  const ready = cooldown <= 0;
+  const tap = () => {
+    if (!ready) return;
+    add(1);
+    localStorage.setItem('nyc-pocket-tap', String(Date.now()));
+    setCooldown(90_000);
+  };
+  return (
+    <aside
+      className="text-white font-typewriter px-3 py-3 relative"
+      style={{
+        background: '#0e0f14',
+        border: '2px solid #FFD600',
+        boxShadow: '4px 4px 0 #d11a2a',
+        transform: 'rotate(0.6deg)',
+      }}
+      aria-label="Pocket change · quarter stash and quick links"
+    >
+      <div className="flex items-baseline justify-between mb-1.5">
+        <span className="font-bungee text-[14px] uppercase tracking-[0.04em] text-[#FFD600]">★ Pocket Change</span>
+        <span className="text-[9px] uppercase tracking-[0.22em] text-white/45">cash only</span>
+      </div>
+      <div className="flex items-center gap-2 mb-2">
+        <QuarterIcon size={28} />
+        <div>
+          <div className="font-tabloid text-[28px] tabular leading-none text-white">×{count}</div>
+          <div className="text-[9px] uppercase tracking-[0.22em] text-white/55">quarters · ${(count * 0.25).toFixed(2)}</div>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={tap}
+        disabled={!ready}
+        className="w-full px-2 py-1.5 font-bungee text-[11px] uppercase tracking-[0.06em] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+        style={{
+          background: ready ? '#FFD600' : '#2a2a2e',
+          color: ready ? '#000' : 'rgba(255,255,255,0.5)',
+          border: '2px solid #000',
+          boxShadow: ready ? '3px 3px 0 #d11a2a' : 'none',
+        }}
+        title="tap the jar — easter egg, gives a quarter every ~90s"
+      >
+        {ready ? '★ TAP THE JAR · +1 ¢' : `cooldown · ${Math.ceil(cooldown / 1000)}s`}
+      </button>
+      <div className="mt-3 pt-2 border-t border-dashed border-white/15 grid gap-1">
+        <a href="/scratch" className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-white/85 hover:text-[#FFD600]">
+          <span>★ scratch-off</span><span className="text-white/35">$1 →</span>
+        </a>
+        <a href="/turnstile" className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-white/85 hover:text-[#FFD600]">
+          <span>★ hop the turnstile</span><span className="text-white/35">25¢ →</span>
+        </a>
+        <a href="/game" className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-white/85 hover:text-[#FFD600]">
+          <span>★ jimmy's arcade</span><span className="text-white/35">25¢ →</span>
+        </a>
+      </div>
+      <div className="mt-2 text-[8.5px] uppercase tracking-[0.22em] text-white/45 leading-snug">
+        ★ rolling quarters drift across the bottom · check the rat, the cat, the cup, the hydrant
       </div>
     </aside>
   );

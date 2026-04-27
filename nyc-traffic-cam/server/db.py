@@ -52,7 +52,22 @@ CREATE TABLE IF NOT EXISTS poll_log (
   alerts_opened INTEGER NOT NULL,
   alerts_resolved INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS geoguessr_challenges (
+  hash TEXT PRIMARY KEY,
+  cameras_json TEXT NOT NULL,
+  score INTEGER,
+  grade TEXT,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_chal_created ON geoguessr_challenges(created_at);
 """
+
+# Hard cap on stored challenges. With 24h TTL + per-IP rate limit this is
+# very conservative — the cap is just belt-and-suspenders so a buggy
+# client or mass spam can't blow up memory or disk.
+CHALLENGE_TABLE_CAP = 10_000
+CHALLENGE_TTL_SECONDS = 24 * 3600
 
 
 async def connect() -> aiosqlite.Connection:
@@ -160,6 +175,85 @@ async def get_alert_image(conn: aiosqlite.Connection, alert_id: int) -> bytes | 
     if not row or row["image_jpeg"] is None:
         return None
     return bytes(row["image_jpeg"])
+
+
+async def insert_challenge(
+    conn: aiosqlite.Connection,
+    *,
+    hash_: str,
+    cameras: list[str],
+    score: int | None,
+    grade: str | None,
+) -> None:
+    """Store a geoguessr challenge. Caller picks the hash (random) and is
+    responsible for retrying on the small chance of a collision."""
+    now = int(time.time())
+    await conn.execute(
+        """
+        INSERT INTO geoguessr_challenges (hash, cameras_json, score, grade, created_at)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+        (hash_, json.dumps(cameras), score, grade, now),
+    )
+    await conn.commit()
+
+
+async def get_challenge(conn: aiosqlite.Connection, hash_: str) -> dict[str, Any] | None:
+    cursor = await conn.execute(
+        "SELECT hash, cameras_json, score, grade, created_at "
+        "FROM geoguessr_challenges WHERE hash = ?",
+        (hash_,),
+    )
+    row = await cursor.fetchone()
+    await cursor.close()
+    if not row:
+        return None
+    return {
+        "hash": row["hash"],
+        "cameras": json.loads(row["cameras_json"]),
+        "score": row["score"],
+        "grade": row["grade"],
+        "created_at": row["created_at"],
+        "expires_at": row["created_at"] + CHALLENGE_TTL_SECONDS,
+    }
+
+
+async def sweep_challenges(conn: aiosqlite.Connection) -> int:
+    """Delete challenges past TTL and trim to the table cap. Returns the
+    number of rows deleted. Cheap to call on every write."""
+    now = int(time.time())
+    cutoff = now - CHALLENGE_TTL_SECONDS
+    cursor = await conn.execute(
+        "DELETE FROM geoguessr_challenges WHERE created_at < ?", (cutoff,)
+    )
+    expired = cursor.rowcount or 0
+    await cursor.close()
+
+    # Trim to cap by deleting oldest rows. SQLite has no direct "delete
+    # all but newest N", so we use a subquery.
+    cursor = await conn.execute("SELECT COUNT(*) AS n FROM geoguessr_challenges")
+    row = await cursor.fetchone()
+    await cursor.close()
+    total = row["n"] if row else 0
+    over = max(0, total - CHALLENGE_TABLE_CAP)
+    trimmed = 0
+    if over > 0:
+        cursor = await conn.execute(
+            """
+            DELETE FROM geoguessr_challenges
+            WHERE hash IN (
+              SELECT hash FROM geoguessr_challenges
+              ORDER BY created_at ASC LIMIT ?
+            )
+            """,
+            (over,),
+        )
+        trimmed = cursor.rowcount or 0
+        await cursor.close()
+
+    if expired or trimmed:
+        await conn.commit()
+    return expired + trimmed
 
 
 def _decode_alert(row: dict[str, Any]) -> dict[str, Any]:
