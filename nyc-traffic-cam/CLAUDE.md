@@ -57,6 +57,25 @@ Backend (run from repo root, requires `server/.venv` or root `.venv`):
 .venv/bin/python -m pytest server/tests   # if/when tests exist
 ```
 
+One-time data jobs (run from repo root):
+
+```
+.venv/bin/python -m server.sync_cameras                 # refresh src/cameras.json from NYCTMC GraphQL
+.venv/bin/python -m server.check_cameras --concurrency 24
+                                                        # probe every cam, write data/cam_health.json + src/cam-health.json
+.venv/bin/python -m server.poi_classify_local --resume  # classify cams via LOCAL Ollama vision model
+                                                        # → writes src/cam-pois.json (lights up /poi page)
+                                                        # default model: llama3.2-vision (needs Ollama ≥ 0.5.13)
+                                                        # fallback: --model llava:7b on older Ollama
+.venv/bin/python -m server.poi_classify --resume        # same job, but cloud Anthropic API (needs ANTHROPIC_API_KEY)
+```
+
+Local POI classification — preferred over the cloud path. Requires Ollama
+running locally with a vision model pulled (`ollama pull llama3.2-vision`
+or `ollama pull llava:7b`). The script runs ~3-8s per cam on M-series
+Macs with no API cost. Outputs are byte-identical schema to the cloud
+version, so the frontend can't tell the difference.
+
 The frontend's `src/api.ts` auto-routes `/api` calls to:
 - `""` (Vite dev proxy) when `window.location.hostname` is localhost
 - `https://nyc-cam-monitor.fly.dev` otherwise — pinned so the deployed Pages site never breaks even if `VITE_BACKEND_URL` isn't piped through. Override with `VITE_BACKEND_URL` at build time.
