@@ -46,7 +46,7 @@ const OSM_STYLE: StyleSpecification = {
 };
 import { BodegaAwning, StreetFauna } from './bodega-tv';
 import { QuarterStash, RollingQuarter } from './quarter';
-import { fetchCameras } from './api';
+import { fetchCameras, isCameraFrozen } from './api';
 import type { Camera } from './types';
 
 /* ──────────────────────────────────────────────────────────────────────
@@ -207,7 +207,11 @@ export default function GeoGuessr() {
 
   useEffect(() => {
     fetchCameras()
-      .then((cs) => setCameras(cs.filter((c) => c.lat && c.lng)))
+      // Filter out cameras with no coords AND any cam our health-check
+      // last marked as frozen — a still frame is unguessable and frustrates
+      // players. The challenge-pinned path bypasses this so old shares
+      // still resolve their original cams.
+      .then((cs) => setCameras(cs.filter((c) => c.lat && c.lng && !isCameraFrozen(c.id))))
       .catch(() => {});
   }, []);
 

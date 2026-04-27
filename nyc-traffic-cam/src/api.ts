@@ -1,5 +1,6 @@
 import type { Camera } from './types';
 import baked from './cameras.json';
+import bakedHealth from './cam-health.json';
 
 /* Pick the API base.
    - If VITE_BACKEND_URL was provided at build time, always honor it.
@@ -62,4 +63,37 @@ export async function fetchCameras(): Promise<Camera[]> {
    "list as of YYYY-MM-DD" attribution. */
 export function camerasGeneratedAt(): Date {
   return new Date(BAKED.generated_at * 1000);
+}
+
+/* Slim camera-health output produced by `python -m server.check_cameras`.
+   Just the verdict summary + a list of feed UUIDs we caught returning
+   the same bytes on two consecutive probes (i.e. stuck on one frame).
+   The lounge / turnstile / geoguessr can use these to avoid surfacing
+   dead feeds — they're online but not moving. */
+type BakedHealth = {
+  generated_at: number;
+  summary: Record<string, number>;
+  frozen: string[];
+};
+const HEALTH = bakedHealth as BakedHealth;
+const FROZEN = new Set(HEALTH.frozen);
+
+/** True if the camera id was last observed stuck on one frame. */
+export function isCameraFrozen(id: string): boolean {
+  return FROZEN.has(id);
+}
+
+/** Healthy = the cam advanced frames between two probes. Use this when
+ *  picking random cams for a game / slideshow — frozen feeds make for
+ *  bad gameplay. */
+export function healthyCameras(cams: Camera[]): Camera[] {
+  return cams.filter((c) => !FROZEN.has(c.id));
+}
+
+export function cameraHealthSummary(): { generated_at: Date; summary: Record<string, number>; frozen_count: number } {
+  return {
+    generated_at: new Date(HEALTH.generated_at * 1000),
+    summary: HEALTH.summary,
+    frozen_count: HEALTH.frozen.length,
+  };
 }

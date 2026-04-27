@@ -11,6 +11,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { BodegaAwning, StreetFauna } from './bodega-tv';
 import { QuarterStash, RollingQuarter, QuarterIcon, useQuarters } from './quarter';
 import { apiUrl, fetchCameras } from './api';
+import { AudioPanel } from './audio-panel';
 import type { Camera } from './types';
 
 /* ──────────────────────────────────────────────────────────────────────
@@ -404,8 +405,6 @@ export default function Turnstile() {
     return () => clearTimeout(t);
   }, [stage, stationIdx, flatStops.length]);
 
-  useTrainRumble(stage === 'riding');
-
   const swipe = () => {
     if (!spend(1)) return;
     setStage('boarding');
@@ -434,6 +433,23 @@ export default function Turnstile() {
   const activeLine: Line = activeLeg?.line ?? line;
   const isTransferStop =
     transferStopIdx != null && stationIdx === transferStopIdx && stage === 'riding';
+
+  // Audio + announcements hook. Layers brown-noise rumble, irregular
+  // track clacks, occasional wheel squeal, brake whine on approach,
+  // NYC two-tone door chime, and SpeechSynthesis announcements
+  // ("the next stop is …"). Driven entirely by ride state.
+  useTrainAudio({
+    riding: stage === 'riding',
+    arrived: stage === 'arrived',
+    stationIdx,
+    currentStationName: currentStation?.name ?? '',
+    nextStationName: nextStation?.name ?? '',
+    isTransferStop,
+    transferLine: ridePlan.length > 1 ? ridePlan[1].line : null,
+    isLast: stationIdx >= flatStops.length - 1,
+    finalStationName: flatStops[flatStops.length - 1]?.name ?? '',
+    line: activeLine,
+  });
 
   return (
     <div
@@ -490,6 +506,12 @@ export default function Turnstile() {
       </main>
 
       <StreetFauna />
+
+      {/* Audio panel — shared singleton with the lounge so picking up
+          a station, switching to ambience, or pausing all works the
+          same way mid-ride. Always available, including during the
+          full-screen ride POV. */}
+      <AudioPanel />
 
       <style>{TRAIN_KEYFRAMES}</style>
     </div>
@@ -1365,6 +1387,10 @@ function SubwayCarPOV({
         arrived={arrived}
         isLast={isLast}
         riding={!arrived}
+        flatStops={flatStops}
+        stationIdx={stationIdx}
+        ridePlan={ridePlan}
+        transferStopIdx={transferStopIdx}
       />
 
       {/* status + exit */}
@@ -1538,6 +1564,10 @@ function SideViewCar({
   arrived,
   isLast,
   riding,
+  flatStops,
+  stationIdx,
+  ridePlan,
+  transferStopIdx,
 }: {
   line: Line;
   cam: Camera | null;
@@ -1547,7 +1577,47 @@ function SideViewCar({
   arrived: boolean;
   isLast: boolean;
   riding: boolean;
+  flatStops: Station[];
+  stationIdx: number;
+  ridePlan: Leg[];
+  transferStopIdx: number | null;
 }) {
+  // Ride phase. The audio hook drives chimes / speech; this state drives
+  // the matching VISUALS — dot-matrix message text, door slide, rumble
+  // shake, motion blur on/off. Timings are aligned with useTrainAudio so
+  // the glow appears when you hear the bong.
+  type Phase = 'in-motion' | 'approach' | 'doors-open' | 'doors-closing';
+  const [phase, setPhase] = useState<Phase>('in-motion');
+  useEffect(() => {
+    if (arrived) {
+      setPhase('approach');
+      const t1 = setTimeout(() => setPhase('doors-open'), 1300);
+      return () => clearTimeout(t1);
+    }
+    if (!riding) return;
+    if (stationIdx === 0) {
+      // Boarding origin — doors are closing, then we depart.
+      setPhase('doors-closing');
+      const t1 = setTimeout(() => setPhase('in-motion'), 1500);
+      return () => clearTimeout(t1);
+    }
+    // Mid-ride: pulled into a station. brake → doors open → close → go.
+    setPhase('approach');
+    const t1 = setTimeout(() => setPhase('doors-open'), 1300);
+    const t2 = setTimeout(() => setPhase('doors-closing'), 3500);
+    const t3 = setTimeout(() => setPhase('in-motion'), 4900);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [arrived, riding, stationIdx]);
+
+  const doorsOpen = phase === 'doors-open';
+  const inStation = phase !== 'in-motion';
+  const dotMatrix = (() => {
+    if (arrived || phase === 'approach') return `★ NOW ARRIVING · ${currentStation?.name ?? ''} ★`;
+    if (phase === 'doors-open') return `★ ${currentStation?.name ?? ''} · DOORS OPEN ★`;
+    if (phase === 'doors-closing') return '★ STAND CLEAR · DOORS CLOSING ★';
+    return isLast ? `★ NEXT STOP · ${currentStation?.name ?? ''} ★` : `★ NEXT STOP · ${nextStationName} ★`;
+  })();
+
   return (
     <div
       className="relative overflow-hidden"
@@ -1558,6 +1628,7 @@ function SideViewCar({
         borderRadius: 12,
         boxShadow: 'inset 0 0 80px rgba(0,0,0,0.55), 0 18px 30px rgba(0,0,0,0.55)',
         minHeight: 420,
+        animation: phase === 'approach' ? 'car-shake 0.36s ease-in-out 4' : undefined,
       }}
     >
       {/* ceiling fluorescents */}
@@ -1614,21 +1685,24 @@ function SideViewCar({
 
       {/* the door + window strip — the cam frame is the WINDOW */}
       <div className="relative px-2 sm:px-4 pt-1">
-        {/* "next stop" dot-matrix above the doors */}
+        {/* "next stop" dot-matrix above the doors. Phase-aware: switches
+            between NOW ARRIVING / DOORS OPEN / STAND CLEAR / NEXT STOP.
+            STAND CLEAR phase blinks like the real car displays. */}
         <div
           className="mx-auto mb-2 px-3 py-0.5 text-center font-mono text-[11px] tracking-[0.18em] uppercase max-w-[640px]"
           style={{
             background: '#000',
-            color: '#ff8a3a',
-            textShadow: '0 0 6px #ff8a3a, 0 0 14px #ff8a3a55',
+            color: phase === 'doors-closing' ? '#ffd600' : '#ff8a3a',
+            textShadow: phase === 'doors-closing'
+              ? '0 0 6px #ffd600, 0 0 14px #ffd60088'
+              : '0 0 6px #ff8a3a, 0 0 14px #ff8a3a55',
             border: '1px solid #1a1a1a',
+            backgroundImage:
+              'repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 2px)',
+            animation: phase === 'doors-closing' ? 'matrix-blink 0.55s steps(2,end) infinite' : undefined,
           }}
         >
-          {arrived
-            ? `★ NOW ARRIVING · ${currentStation?.name ?? ''} ★`
-            : isLast
-            ? `★ NEXT STOP · ${currentStation?.name ?? ''} ★`
-            : `★ NEXT STOP · ${nextStationName} ★`}
+          {dotMatrix}
         </div>
 
         {/* the door wall — flanked by stainless panels, with a vent
@@ -1637,28 +1711,43 @@ function SideViewCar({
           className="grid grid-cols-[60px_minmax(0,1fr)_60px] sm:grid-cols-[110px_minmax(0,1fr)_110px] gap-0"
         >
           {/* left stainless wall panel — vent + ad sliver */}
-          <StainlessWall side="left" />
+          <StainlessWall side="left" placard="ad" />
 
           {/* THE WINDOW — the cam goes here. Yellow door edges, dark
               window frame, the live cam image, motion-blur edge masks
               that pulse during the ride to sell the "passing by" feel. */}
           <div className="relative">
-            {/* yellow door edges (the sliding doors of the car) */}
+            {/* yellow door edges (the sliding doors of the car). When
+                doors are open they retract outward + a soft golden glow
+                pulses along the door so you SEE the doors open match
+                the chime you hear. */}
             <div
-              className="absolute top-0 bottom-0 w-3"
-              style={{ left: 0, background: 'linear-gradient(180deg,#FFD600,#E5C200)', borderRight: '2px solid #1a1a1a' }}
+              className="absolute top-0 bottom-0 w-3 transition-transform duration-500 ease-out"
+              style={{
+                left: 0,
+                background: 'linear-gradient(180deg,#FFD600,#E5C200)',
+                borderRight: '2px solid #1a1a1a',
+                transform: doorsOpen ? 'translateX(-9px)' : 'translateX(0)',
+                boxShadow: doorsOpen ? '0 0 14px #FFD600, 0 0 26px #FFD60055' : 'none',
+              }}
               aria-hidden
             />
             <div
-              className="absolute top-0 bottom-0 w-3"
-              style={{ right: 0, background: 'linear-gradient(180deg,#FFD600,#E5C200)', borderLeft: '2px solid #1a1a1a' }}
+              className="absolute top-0 bottom-0 w-3 transition-transform duration-500 ease-out"
+              style={{
+                right: 0,
+                background: 'linear-gradient(180deg,#FFD600,#E5C200)',
+                borderLeft: '2px solid #1a1a1a',
+                transform: doorsOpen ? 'translateX(9px)' : 'translateX(0)',
+                boxShadow: doorsOpen ? '0 0 14px #FFD600, 0 0 26px #FFD60055' : 'none',
+              }}
               aria-hidden
             />
 
             {/* the window itself — recessed, dark frame, rounded corners
                 like an actual subway window */}
             <div
-              className="relative mx-3"
+              className="relative mx-3 transition-shadow duration-500"
               style={{
                 aspectRatio: '16 / 9',
                 minHeight: 220,
@@ -1666,8 +1755,9 @@ function SideViewCar({
                 border: '4px solid #1a1a1a',
                 borderRadius: '14px / 10px',
                 overflow: 'hidden',
-                boxShadow:
-                  'inset 0 0 0 4px rgba(255,255,255,0.06), inset 0 0 60px rgba(0,0,0,0.7), 0 6px 14px rgba(0,0,0,0.6)',
+                boxShadow: doorsOpen
+                  ? 'inset 0 0 0 4px rgba(255,214,0,0.18), inset 0 0 80px rgba(255,214,0,0.10), 0 6px 14px rgba(0,0,0,0.6)'
+                  : 'inset 0 0 0 4px rgba(255,255,255,0.06), inset 0 0 60px rgba(0,0,0,0.7), 0 6px 14px rgba(0,0,0,0.6)',
               }}
             >
               {/* tunnel scroll — visible behind the cam */}
@@ -1680,9 +1770,9 @@ function SideViewCar({
                   alt={`Traffic camera near ${currentStation?.name ?? 'stop'}`}
                   referrerPolicy="no-referrer"
                   decoding="async"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover transition-[filter] duration-500"
                   style={{
-                    filter: arrived ? 'none' : 'contrast(1.05) saturate(0.92)',
+                    filter: inStation ? 'brightness(1.04) saturate(1.05)' : 'contrast(1.05) saturate(0.92)',
                   }}
                 />
               ) : (
@@ -1691,9 +1781,14 @@ function SideViewCar({
                 </div>
               )}
               {/* MOTION BLUR edges — fade dark on left + right; pulses
-                  while riding so it reads as "passing by", static on
-                  arrival when the train has stopped */}
-              {riding && <MotionEdges />}
+                  while riding so it reads as "passing by", drops out at
+                  the station so the platform reads as still. */}
+              {riding && !inStation && <MotionEdges />}
+              {/* PLATFORM TILE BAND — when doors are open, overlay a
+                  subway-tile band across the bottom of the window so it
+                  reads as "looking out at the platform wall" rather
+                  than the moving tunnel. */}
+              {doorsOpen && <PlatformTileBand stationName={currentStation?.name ?? ''} />}
               {/* glass reflection */}
               <div
                 className="absolute inset-x-0 top-0 h-1/3 pointer-events-none"
@@ -1719,8 +1814,17 @@ function SideViewCar({
             </div>
           </div>
 
-          {/* right stainless wall panel */}
-          <StainlessWall side="right" />
+          {/* right stainless wall panel — show the live route strip
+              instead of the second RX ad. Riders watch this. */}
+          <StainlessWall
+            side="right"
+            placard="route"
+            line={line}
+            flatStops={flatStops}
+            stationIdx={stationIdx}
+            ridePlan={ridePlan}
+            transferStopIdx={transferStopIdx}
+          />
         </div>
       </div>
 
@@ -1761,7 +1865,23 @@ function SideViewCar({
   );
 }
 
-function StainlessWall({ side }: { side: 'left' | 'right' }) {
+function StainlessWall({
+  side,
+  placard = 'ad',
+  line,
+  flatStops = [],
+  stationIdx = 0,
+  ridePlan = [],
+  transferStopIdx,
+}: {
+  side: 'left' | 'right';
+  placard?: 'ad' | 'route';
+  line?: Line;
+  flatStops?: Station[];
+  stationIdx?: number;
+  ridePlan?: Leg[];
+  transferStopIdx?: number | null;
+}) {
   return (
     <div
       className="hidden sm:flex flex-col self-stretch"
@@ -1776,17 +1896,150 @@ function StainlessWall({ side }: { side: 'left' | 'right' }) {
     >
       {/* rivet line + thin window slits (suggestive only) */}
       <div className="absolute top-2 bottom-2 w-1 rounded-full" style={{ left: side === 'left' ? '8px' : 'auto', right: side === 'right' ? '8px' : 'auto', background: 'repeating-linear-gradient(180deg,#5a5e66 0px,#5a5e66 2px,transparent 2px,transparent 6px)' }} />
-      {/* ad placard */}
-      <div
-        className="m-auto w-[80%] aspect-[3/4] flex items-center justify-center text-center px-1"
-        style={{ background: '#0e0f14', border: '1px solid #1a1a1a' }}
-      >
-        <div>
-          <div className="font-bungee text-[10px] sm:text-[12px] text-[#ff5582] neon">RX</div>
-          <div className="font-typewriter text-[7px] sm:text-[8px] uppercase tracking-[0.2em] text-white/65 mt-1 leading-tight">
-            See A<br/>Doctor<br/>About It
+      {placard === 'route' && line ? (
+        <RouteStripPlacard
+          line={line}
+          flatStops={flatStops}
+          stationIdx={stationIdx}
+          ridePlan={ridePlan}
+          transferStopIdx={transferStopIdx ?? null}
+        />
+      ) : (
+        <div
+          className="m-auto w-[80%] aspect-[3/4] flex items-center justify-center text-center px-1"
+          style={{ background: '#0e0f14', border: '1px solid #1a1a1a' }}
+        >
+          <div>
+            <div className="font-bungee text-[10px] sm:text-[12px] text-[#ff5582] neon">RX</div>
+            <div className="font-typewriter text-[7px] sm:text-[8px] uppercase tracking-[0.2em] text-white/65 mt-1 leading-tight">
+              See A<br/>Doctor<br/>About It
+            </div>
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+/* Vertical line-strip placard mounted on the right stainless wall —
+   classic NYC subway car "you are here" diagram. Each stop is a
+   labeled bullet; the active stop is haloed; the transfer stop is
+   marked with a yellow ring. Stops are clipped to the diagram space. */
+function RouteStripPlacard({
+  line,
+  flatStops,
+  stationIdx,
+  ridePlan,
+  transferStopIdx,
+}: {
+  line: Line;
+  flatStops: Station[];
+  stationIdx: number;
+  ridePlan: Leg[];
+  transferStopIdx: number | null;
+}) {
+  const lineForStop = (idx: number): Line => {
+    if (ridePlan.length < 2 || transferStopIdx == null) return ridePlan[0]?.line ?? line;
+    return idx < transferStopIdx ? ridePlan[0].line : ridePlan[1].line;
+  };
+  return (
+    <div
+      className="m-auto w-[88%] flex flex-col"
+      style={{
+        background: '#fdfaf0',
+        border: '1px solid #1a1a1a',
+        boxShadow: 'inset 0 0 0 2px #efe9d6',
+        padding: '6px 4px',
+        maxHeight: 360,
+      }}
+    >
+      <div
+        className="font-bungee text-[8px] uppercase tracking-[0.18em] text-black text-center"
+        style={{ borderBottom: '1px solid #1a1a1a', paddingBottom: 2, marginBottom: 4 }}
+      >
+        ★ {line} LINE ★
+      </div>
+      <div className="relative flex-1 overflow-hidden" style={{ minHeight: 120 }}>
+        {/* the rail */}
+        <div
+          className="absolute top-1 bottom-1 left-3 w-[3px]"
+          style={{ background: LINE_COLOR[line] }}
+        />
+        <ol className="relative pl-1">
+          {flatStops.map((s, i) => {
+            const here = i === stationIdx;
+            const passed = i < stationIdx;
+            const isTransfer = i === transferStopIdx;
+            const dotLine = lineForStop(i);
+            return (
+              <li key={`${s.name}-${i}`} className="flex items-center gap-1.5 mb-[2px]">
+                <span
+                  className="rounded-full"
+                  style={{
+                    width: here || isTransfer ? 9 : 7,
+                    height: here || isTransfer ? 9 : 7,
+                    marginLeft: here || isTransfer ? '6px' : '7px',
+                    background: passed || here ? LINE_COLOR[dotLine] : '#fff',
+                    border: `1.5px solid ${isTransfer ? '#FFD600' : '#1a1a1a'}`,
+                    boxShadow: here ? `0 0 0 2px ${LINE_COLOR[dotLine]}55` : 'none',
+                  }}
+                />
+                <span
+                  className="font-typewriter uppercase tracking-[0.06em] truncate"
+                  style={{
+                    fontSize: 7,
+                    color: here ? '#000' : passed ? '#5a5a5a' : '#0a0a0a',
+                    fontWeight: here || isTransfer ? 700 : 400,
+                  }}
+                >
+                  {s.name}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+      <div className="text-center text-[6px] tracking-[0.22em] text-black/55 font-typewriter mt-1">
+        ★ NYCTA · YOU ARE HERE
+      </div>
+    </div>
+  );
+}
+
+/* Tile band overlaid on the cam during DOORS OPEN — evokes the white
+   tile + black frieze + station-name lettering that you see across the
+   platform from a stopped subway car window. Sits at the bottom 30% of
+   the cam window so it doesn't fully obscure the cam image. */
+function PlatformTileBand({ stationName }: { stationName: string }) {
+  return (
+    <div className="absolute inset-x-0 bottom-0 h-[30%] pointer-events-none" aria-hidden>
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 8%, rgba(255,250,240,0.92) 22%, rgba(255,250,240,0.92) 100%)',
+        }}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 top-[22%]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(0,0,0,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.10) 1px, transparent 1px)',
+          backgroundSize: '14px 14px, 14px 14px',
+          opacity: 0.7,
+        }}
+      />
+      {/* black frieze + name */}
+      <div
+        className="absolute inset-x-0 top-[12%] h-[24%] flex items-center justify-center"
+        style={{ background: '#0a0a0a' }}
+      >
+        <span
+          className="font-bungee uppercase text-white tracking-[0.22em]"
+          style={{ fontSize: 12, textShadow: '0 0 8px rgba(255,255,255,0.18)' }}
+        >
+          {stationName}
+        </span>
       </div>
     </div>
   );
@@ -1893,17 +2146,157 @@ function RollSign({ line, destination }: { line: Line; destination: string }) {
   );
 }
 
-/* ──────────────────────────────────────── audio: train rumble */
+/* ──────────────────────────────────────── audio: train ride
 
-function useTrainRumble(active: boolean) {
+   useTrainAudio drives the full in-cabin sound bed:
+   • persistent brown-noise rumble (engine-room hum)
+   • irregular track clacks every 380-510 ms with slight pitch jitter
+     (the old fixed 420 ms beat sounded like a metronome — we randomize
+     so it feels like wheels on real welded rail)
+   • occasional wheel-flange squeal in curves
+   • brake whine + pneumatic hiss + NYC two-tone door bong on station
+     arrival
+   • SpeechSynthesis "the next stop is X" / "stand clear of the closing
+     doors" / "this is the last stop" callouts so the announcer voice
+     follows the rider through the ride.
+
+   All scheduled off the same AudioContext, which we resume on every
+   ride start (the ride is preceded by a SWIPE click, so we already
+   have a user gesture). Speech synthesis is gated behind a feature
+   check and silently no-ops where unavailable. */
+
+function useTrainAudio({
+  riding,
+  arrived,
+  stationIdx,
+  currentStationName,
+  nextStationName,
+  isTransferStop,
+  transferLine,
+  isLast,
+  finalStationName,
+  line,
+}: {
+  riding: boolean;
+  arrived: boolean;
+  stationIdx: number;
+  currentStationName: string;
+  nextStationName: string;
+  isTransferStop: boolean;
+  transferLine: Line | null;
+  isLast: boolean;
+  finalStationName: string;
+  line: Line;
+}) {
   const ctxRef = useRef<AudioContext | null>(null);
-  const stopRef = useRef<(() => void) | null>(null);
+  const stopBedRef = useRef<(() => void) | null>(null);
+
+  // ── one-shot SFX builders, all routed straight to ctx.destination so
+  // they sit on top of the rumble without coloring the bed.
+  const sfx = useRef({
+    doorBong(ctx: AudioContext, rising: boolean) {
+      // NYC R142/R160 two-tone door chime — a short bell at ~660 then
+      // ~770 (or reversed for "doors opening"). We sketch a bell with
+      // a sine + square mix and a short envelope.
+      const t0 = ctx.currentTime;
+      const tones = rising ? [660, 770] : [770, 660];
+      tones.forEach((freq, i) => {
+        const t = t0 + i * 0.18;
+        const sine = ctx.createOscillator();
+        const sq = ctx.createOscillator();
+        const g = ctx.createGain();
+        sine.type = 'sine'; sine.frequency.value = freq;
+        sq.type = 'triangle'; sq.frequency.value = freq * 2;
+        const gSq = ctx.createGain(); gSq.gain.value = 0.05;
+        sq.connect(gSq).connect(g);
+        sine.connect(g);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.16, t + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+        g.connect(ctx.destination);
+        sine.start(t); sq.start(t);
+        sine.stop(t + 0.6); sq.stop(t + 0.6);
+      });
+    },
+    pneumaticHiss(ctx: AudioContext) {
+      // Filtered white-noise burst — like a doors release.
+      const t = ctx.currentTime;
+      const dur = 0.55;
+      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * 0.7;
+      const s = ctx.createBufferSource(); s.buffer = buf;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
+      bp.frequency.value = 2800; bp.Q.value = 0.7;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.09, t + 0.04);
+      g.gain.linearRampToValueAtTime(0.0001, t + dur);
+      s.connect(bp).connect(g).connect(ctx.destination);
+      s.start(t); s.stop(t + dur);
+    },
+    brakeWhine(ctx: AudioContext) {
+      // Descending high-pitched whine: 4 kHz down to ~250 Hz over 1.4 s.
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(4200, t);
+      o.frequency.exponentialRampToValueAtTime(260, t + 1.4);
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
+      bp.frequency.value = 1800; bp.Q.value = 4;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.04, t + 0.12);
+      g.gain.linearRampToValueAtTime(0.0001, t + 1.4);
+      o.connect(bp).connect(g).connect(ctx.destination);
+      o.start(t); o.stop(t + 1.5);
+    },
+    flangeSqueal(ctx: AudioContext) {
+      // Random "wheel on a curve" squeak.
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'triangle';
+      const f = 1800 + Math.random() * 1400;
+      o.frequency.setValueAtTime(f, t);
+      o.frequency.linearRampToValueAtTime(f * 0.6, t + 1.2);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.025, t + 0.25);
+      g.gain.linearRampToValueAtTime(0.0001, t + 1.3);
+      o.connect(g).connect(ctx.destination);
+      o.start(t); o.stop(t + 1.4);
+    },
+  }).current;
+
+  // Speech synthesis with sensible defaults. `cancel: true` flushes any
+  // queued utterances so consecutive announcements don't pile up.
+  const speak = (text: string, opts: { cancel?: boolean; rate?: number; pitch?: number } = {}) => {
+    try {
+      const synth = window.speechSynthesis;
+      if (!synth) return;
+      if (opts.cancel) synth.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = opts.rate ?? 0.94;
+      u.pitch = opts.pitch ?? 0.92;
+      u.volume = 0.85;
+      const voices = synth.getVoices();
+      const preferred = voices.find((v) => /en-US/i.test(v.lang) && /male|daniel|alex|fred|google US/i.test(v.name))
+        ?? voices.find((v) => /en-US/i.test(v.lang))
+        ?? voices.find((v) => /en/i.test(v.lang));
+      if (preferred) u.voice = preferred;
+      synth.speak(u);
+    } catch { /* noop */ }
+  };
+
+  // ── start/stop the rumble bed when riding flips on/off.
   useEffect(() => {
-    if (!active) {
-      stopRef.current?.();
-      stopRef.current = null;
+    if (!riding && !arrived) {
+      stopBedRef.current?.();
+      stopBedRef.current = null;
+      try { window.speechSynthesis?.cancel(); } catch { /* noop */ }
       return;
     }
+    if (stopBedRef.current) return; // already running
     try {
       const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!Ctx) return;
@@ -1911,47 +2304,159 @@ function useTrainRumble(active: boolean) {
       const ctx = ctxRef.current;
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
+      // Brown rumble (low-passed) — engine room
       const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
       const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.6;
+      let last = 0;
+      for (let i = 0; i < data.length; i++) {
+        const w = Math.random() * 2 - 1;
+        data[i] = (last + 0.02 * w) / 1.02;
+        last = data[i];
+        data[i] *= 3.2;
+      }
       const src = ctx.createBufferSource();
       src.buffer = buf;
       src.loop = true;
       const lp = ctx.createBiquadFilter();
       lp.type = 'lowpass';
-      lp.frequency.value = 240;
-      const gain = ctx.createGain();
-      gain.gain.value = 0.06;
-      src.connect(lp).connect(gain).connect(ctx.destination);
+      lp.frequency.value = 220;
+      const rumbleGain = ctx.createGain();
+      rumbleGain.gain.value = arrived ? 0.025 : 0.07;
+      src.connect(lp).connect(rumbleGain).connect(ctx.destination);
       src.start();
 
-      const clackTimer = setInterval(() => {
-        try {
-          const t = ctx.currentTime;
-          const o = ctx.createOscillator();
-          const g = ctx.createGain();
-          o.type = 'square';
-          o.frequency.setValueAtTime(480, t);
-          o.frequency.exponentialRampToValueAtTime(80, t + 0.06);
-          g.gain.setValueAtTime(0.0001, t);
-          g.gain.exponentialRampToValueAtTime(0.05, t + 0.005);
-          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
-          o.connect(g).connect(ctx.destination);
-          o.start(t);
-          o.stop(t + 0.08);
-        } catch { /* noop */ }
-      }, 420);
+      // Subtle 60 Hz cab hum
+      const hum = ctx.createOscillator();
+      hum.type = 'sine'; hum.frequency.value = 58;
+      const humGain = ctx.createGain(); humGain.gain.value = 0.02;
+      hum.connect(humGain).connect(ctx.destination);
+      hum.start();
 
-      stopRef.current = () => {
+      // Irregular track clacks. Self-rescheduling so each interval is
+      // randomized — sounds organic, not metronomic.
+      let clackTimer: ReturnType<typeof setTimeout> | null = null;
+      const scheduleClack = () => {
+        if (arrived) return; // no clacks while standing in station
+        clackTimer = setTimeout(() => {
+          try {
+            const t = ctx.currentTime;
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'square';
+            const baseFreq = 460 + Math.random() * 60;
+            o.frequency.setValueAtTime(baseFreq, t);
+            o.frequency.exponentialRampToValueAtTime(70 + Math.random() * 30, t + 0.06);
+            g.gain.setValueAtTime(0.0001, t);
+            g.gain.exponentialRampToValueAtTime(0.045 + Math.random() * 0.015, t + 0.005);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+            const lpClack = ctx.createBiquadFilter();
+            lpClack.type = 'lowpass';
+            lpClack.frequency.value = 1200;
+            o.connect(lpClack).connect(g).connect(ctx.destination);
+            o.start(t);
+            o.stop(t + 0.09);
+            // Every ~7 clacks add a deeper double-thunk for the bogie joint
+            if (Math.random() < 0.14) {
+              const o2 = ctx.createOscillator();
+              const g2 = ctx.createGain();
+              o2.type = 'sine'; o2.frequency.value = 90;
+              g2.gain.setValueAtTime(0.0001, t + 0.06);
+              g2.gain.exponentialRampToValueAtTime(0.06, t + 0.07);
+              g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+              o2.connect(g2).connect(ctx.destination);
+              o2.start(t + 0.06);
+              o2.stop(t + 0.2);
+            }
+          } catch { /* noop */ }
+          scheduleClack();
+        }, 380 + Math.random() * 130);
+      };
+      scheduleClack();
+
+      // Wheel-flange squeal every 25-50s — only while moving
+      let squealTimer: ReturnType<typeof setTimeout> | null = null;
+      const scheduleSqueal = () => {
+        squealTimer = setTimeout(() => {
+          if (!arrived) {
+            try { sfx.flangeSqueal(ctx); } catch { /* noop */ }
+          }
+          scheduleSqueal();
+        }, 25_000 + Math.random() * 25_000);
+      };
+      scheduleSqueal();
+
+      stopBedRef.current = () => {
         try { src.stop(); } catch { /* noop */ }
-        clearInterval(clackTimer);
+        try { hum.stop(); } catch { /* noop */ }
+        if (clackTimer) clearTimeout(clackTimer);
+        if (squealTimer) clearTimeout(squealTimer);
       };
     } catch { /* noop */ }
+
     return () => {
-      stopRef.current?.();
-      stopRef.current = null;
+      stopBedRef.current?.();
+      stopBedRef.current = null;
     };
-  }, [active]);
+  }, [riding, arrived, sfx]);
+
+  // ── per-station event sequence. Fires whenever stationIdx changes
+  // while the train is riding: the train pulls in → brake whine → doors
+  // open chime → station announcement → doors close chime → "the next
+  // stop is X". When stationIdx is the first stop (boarding), we skip
+  // the brake/door-open and go straight to "stand clear of the closing
+  // doors" + the next-stop call.
+  const lastIdxRef = useRef<number>(-1);
+  useEffect(() => {
+    if (!riding) { lastIdxRef.current = -1; return; }
+    if (lastIdxRef.current === stationIdx) return;
+    lastIdxRef.current = stationIdx;
+    const ctx = ctxRef.current;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    if (stationIdx === 0) {
+      // Boarding the first time at the origin — closing doors + go.
+      try { ctx && sfx.doorBong(ctx, false); } catch { /* noop */ }
+      timers.push(setTimeout(() => { try { ctx && sfx.pneumaticHiss(ctx); } catch { /* noop */ } }, 350));
+      timers.push(setTimeout(() => {
+        speak(`This is a ${line} train. Stand clear of the closing doors please. The next stop is ${nextStationName}.`, { cancel: true });
+      }, 700));
+    } else {
+      // Mid-ride: pulled into a station. Brake → arrival chime → speech
+      // → door-close chime → next-stop announcement.
+      try { ctx && sfx.brakeWhine(ctx); } catch { /* noop */ }
+      timers.push(setTimeout(() => { try { ctx && sfx.pneumaticHiss(ctx); } catch { /* noop */ } }, 1100));
+      timers.push(setTimeout(() => { try { ctx && sfx.doorBong(ctx, true); } catch { /* noop */ } }, 1300));
+      timers.push(setTimeout(() => {
+        const stationLine = `${currentStationName}.`;
+        const transferLine2 = isTransferStop && transferLine
+          ? ` Transfer is available to the ${transferLine} train.`
+          : '';
+        speak(`${stationLine}${transferLine2}`, { cancel: true });
+      }, 1700));
+      if (!isLast) {
+        timers.push(setTimeout(() => { try { ctx && sfx.doorBong(ctx, false); } catch { /* noop */ } }, 3700));
+        timers.push(setTimeout(() => { try { ctx && sfx.pneumaticHiss(ctx); } catch { /* noop */ } }, 4000));
+        timers.push(setTimeout(() => {
+          speak(`Stand clear of the closing doors please. The next stop is ${nextStationName}.`);
+        }, 4300));
+      }
+    }
+    return () => { timers.forEach(clearTimeout); };
+  }, [riding, stationIdx, currentStationName, nextStationName, isTransferStop, transferLine, isLast, line, sfx]);
+
+  // ── final-stop announcement on arrived
+  useEffect(() => {
+    if (!arrived) return;
+    const ctx = ctxRef.current;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    try { ctx && sfx.brakeWhine(ctx); } catch { /* noop */ }
+    timers.push(setTimeout(() => { try { ctx && sfx.pneumaticHiss(ctx); } catch { /* noop */ } }, 1100));
+    timers.push(setTimeout(() => { try { ctx && sfx.doorBong(ctx, true); } catch { /* noop */ } }, 1300));
+    timers.push(setTimeout(() => {
+      speak(`${finalStationName}. This is the last stop on this train. Everyone off, please.`, { cancel: true });
+    }, 1700));
+    return () => { timers.forEach(clearTimeout); };
+  }, [arrived, finalStationName, sfx]);
 }
 
 /* ──────────────────────────────────────── animations */
@@ -2016,5 +2521,15 @@ const TRAIN_KEYFRAMES = `
 @keyframes transfer-flash {
   from { box-shadow: 4px 4px 0 #d11a2a, 0 0 0 0 rgba(255,214,0,0); }
   to   { box-shadow: 4px 4px 0 #d11a2a, 0 0 18px 2px rgba(255,214,0,0.7); }
+}
+@keyframes car-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-1.5px) translateY(0.6px); }
+  50%      { transform: translateX(1.5px); }
+  75%      { transform: translateX(-1px) translateY(-0.4px); }
+}
+@keyframes matrix-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0.35; }
 }
 `;
