@@ -1,13 +1,14 @@
 name: Deploy backend to Fly.io
 
 on:
-  # Auto-deploy whenever server-side code changes on main.
+  # Auto-deploy whenever server-side code changes on main. Paths are
+  # repo-relative; the project lives inside the nyc-traffic-cam/ folder.
   push:
     branches: [main]
     paths:
-      - "server/**"
-      - "Dockerfile"
-      - "fly.toml"
+      - "nyc-traffic-cam/server/**"
+      - "nyc-traffic-cam/Dockerfile"
+      - "nyc-traffic-cam/fly.toml"
       - ".github/workflows/deploy-fly.yml"
   # Always allow manual one-click deploys from the Actions tab.
   workflow_dispatch:
@@ -17,6 +18,12 @@ on:
 concurrency:
   group: fly-deploy-${{ github.ref }}
   cancel-in-progress: false
+
+# fly.toml + Dockerfile live inside nyc-traffic-cam/, so flyctl needs
+# to run from there.
+defaults:
+  run:
+    working-directory: nyc-traffic-cam
 
 jobs:
   deploy:

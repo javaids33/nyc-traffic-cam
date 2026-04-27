@@ -12,6 +12,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# All steps below run inside the nested project subfolder. The repo
+# layout is: <repo-root>/nyc-traffic-cam/{package.json,server,src,…}.
+defaults:
+  run:
+    working-directory: nyc-traffic-cam
+
 jobs:
   frontend:
     name: Frontend · typecheck + build
@@ -22,6 +28,7 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
+          cache-dependency-path: nyc-traffic-cam/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Typecheck
@@ -41,7 +48,7 @@ jobs:
         with:
           python-version: "3.13"
           cache: "pip"
-          cache-dependency-path: server/requirements.txt
+          cache-dependency-path: nyc-traffic-cam/server/requirements.txt
       - name: Install backend deps
         run: pip install -r server/requirements.txt
       - name: Smoke import
