@@ -122,8 +122,8 @@ export default function Lounge() {
     return close;
   }, []);
 
-  // Channel-surf: pick the next thing to put on screen.
-  // Priority: worthwhile alerts (sev ≥ 5, not boring kinds), else a random camera.
+  // Roulette state: just refs to the current focus and the live camera
+  // pool, so surfNext doesn't need them as dependencies.
   const focusRef = useRef<Channel | null>(focus);
   useEffect(() => {
     focusRef.current = focus;
@@ -131,8 +131,6 @@ export default function Lounge() {
 
   const camerasRef = useRef<Camera[]>(cameras);
   useEffect(() => { camerasRef.current = cameras; }, [cameras]);
-  const alertsRef = useRef<Alert[]>(alerts);
-  useEffect(() => { alertsRef.current = alerts; }, [alerts]);
 
   const flipTo = useCallback((next: Channel) => {
     recordTune(next.cameraId);
@@ -155,64 +153,31 @@ export default function Lounge() {
     return () => clearTimeout(t);
   }, []);
 
+  // Pure camera roulette: spin the wheel, land somewhere. No alert
+  // priority, no severity weights — every camera in the borough has an
+  // equal shot. Click-to-tune in the alert list still works as a manual
+  // override, but the site's auto-pick is just chance.
   const surfNext = useCallback(() => {
     const cur = focusRef.current;
-    const allAlerts = alertsRef.current;
     const allCams = camerasRef.current;
     const b = boroughRef.current;
+    if (!allCams.length) return;
 
-    const worthwhile = allAlerts.filter(
-      (a) =>
-        !a.resolved_at &&
-        a.severity >= 5 &&
-        a.kind !== 'static_feed' &&
-        a.kind !== 'camera_offline' &&
-        (b === 'ALL' || rough_borough(a.lat, a.lng) === b),
-    );
+    const inBorough = b === 'ALL' ? allCams : allCams.filter((c) => rough_borough(c.lat, c.lng) === b);
+    const baseline = inBorough.length ? inBorough : allCams;
+    const others = baseline.filter((c) => c.id !== cur?.cameraId);
+    const pool = others.length ? others : baseline;
+    const c = pool[Math.floor(Math.random() * pool.length)];
 
-    let next: Channel | null = null;
-
-    if (worthwhile.length > 0) {
-      // Avoid landing on the same camera if we have other options.
-      const others = worthwhile.filter((a) => a.camera_id !== cur?.cameraId);
-      const pool = others.length ? others : worthwhile;
-      // Weight by severity so spicier alerts come up more often.
-      const weights = pool.map((a) => a.severity * a.severity);
-      const total = weights.reduce((s, w) => s + w, 0);
-      let r = Math.random() * total;
-      let chosen = pool[0];
-      for (let i = 0; i < pool.length; i++) {
-        r -= weights[i];
-        if (r <= 0) { chosen = pool[i]; break; }
-      }
-      next = {
-        cameraId: chosen.camera_id,
-        caption: {
-          title: chosen.camera_name ?? chosen.camera_id,
-          subtitle: chosen.message,
-          meta: `${ALERT_LABELS_LONG[chosen.kind] ?? chosen.kind} · SEV ${chosen.severity} · ${rough_borough(chosen.lat, chosen.lng)}`,
-          coords: { lat: chosen.lat, lng: chosen.lng },
-          occurrences: chosen.occurrence_count,
-        },
-      };
-    } else if (allCams.length) {
-      const inBorough = b === 'ALL' ? allCams : allCams.filter((c) => rough_borough(c.lat, c.lng) === b);
-      const baseline = inBorough.length ? inBorough : allCams;
-      const others = baseline.filter((c) => c.id !== cur?.cameraId && c.last_polled_at);
-      const pool = others.length ? others : baseline;
-      const c = pool[Math.floor(Math.random() * pool.length)];
-      next = {
-        cameraId: c.id,
-        caption: {
-          title: c.name ?? c.id,
-          subtitle: 'just vibes',
-          meta: `B-ROLL · ${rough_borough(c.lat, c.lng)}`,
-          coords: { lat: c.lat, lng: c.lng },
-        },
-      };
-    }
-
-    if (next) flipTo(next);
+    flipTo({
+      cameraId: c.id,
+      caption: {
+        title: c.name ?? c.id,
+        subtitle: 'pure roulette',
+        meta: `ROULETTE · ${rough_borough(c.lat, c.lng)}`,
+        coords: { lat: c.lat, lng: c.lng },
+      },
+    });
   }, [flipTo]);
 
   // First pick once we have data
@@ -234,41 +199,24 @@ export default function Lounge() {
     return () => clearTimeout(t);
   }, [locked]);
 
-  // MetroCard intro: dismiss after 1.6s and remember in sessionStorage
+  // MetroCard intro: dismiss after 3.7s — long enough to actually read
+  // the card before it swipes back out. Remembered in sessionStorage so
+  // it only plays on the first visit per tab.
   useEffect(() => {
     if (!intro) return;
     const t = setTimeout(() => {
       setIntro(false);
       try { sessionStorage.setItem('nyc-cam-seen', '1'); } catch { /* noop */ }
-    }, 1600);
+    }, 3700);
     return () => clearTimeout(t);
   }, [intro]);
 
-  // Keyboard hotkeys: 1-9 channel jump, L lock, ? hotkeys panel, ESC close
+  // Keyboard: space spins the roulette, L locks the channel, ? toggles
+  // the hotkeys panel, ESC closes/unlocks.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement)?.tagName === 'INPUT') return;
-      if (e.key >= '1' && e.key <= '9') {
-        // Pick the Nth active worthwhile alert (or fall back to surfNext)
-        const worthwhile = alertsRef.current.filter(
-          (a) => !a.resolved_at && a.severity >= 5 && a.kind !== 'static_feed' && a.kind !== 'camera_offline',
-        );
-        const i = parseInt(e.key, 10) - 1;
-        if (worthwhile[i]) {
-          flipTo({
-            cameraId: worthwhile[i].camera_id,
-            caption: {
-              title: worthwhile[i].camera_name ?? worthwhile[i].camera_id,
-              subtitle: worthwhile[i].message,
-              meta: `${ALERT_LABELS_LONG[worthwhile[i].kind] ?? worthwhile[i].kind} · SEV ${worthwhile[i].severity} · ${rough_borough(worthwhile[i].lat, worthwhile[i].lng)}`,
-              coords: { lat: worthwhile[i].lat, lng: worthwhile[i].lng },
-              occurrences: worthwhile[i].occurrence_count,
-            },
-          });
-        } else {
-          surfNext();
-        }
-      } else if (e.key === 'l' || e.key === 'L') {
+      if (e.key === 'l' || e.key === 'L') {
         setLocked((v) => !v);
       } else if (e.key === '?') {
         setShowHotkeys((v) => !v);
@@ -282,7 +230,7 @@ export default function Lounge() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [flipTo, surfNext]);
+  }, [surfNext]);
 
   // Konami code → RAT MODE
   useEffect(() => {
@@ -400,19 +348,23 @@ export default function Lounge() {
                 {locked ? '— tap screen or HOLD again to resume —' : 'auto-surfs every 18s'}
               </span>
               <span className="ml-auto text-[10px] tracking-[0.22em] uppercase font-typewriter text-white/45">
-                tuning {alerts.filter((a) => !a.resolved_at && a.severity >= 5).length} live · {cameras.length} cams
+                roulette · {cameras.length} cams in the wheel
               </span>
             </div>
+
+            <ModesRack />
           </div>
 
           <CityServicesRail alerts={alerts} cameras={cameras} />
         </div>
       </main>
 
-      <TimesSquareTicker alerts={alerts} />
+      <TimesSquareTicker />
       <FooterMatchbook />
 
       <StreetFauna ratMode={ratMode} />
+      <FreshFlowers />
+      <ScratchOffs />
 
       {ratMode && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-[#FFD600] text-black px-3 py-1 font-bungee text-[12px] uppercase tracking-[0.2em]" style={{ boxShadow: '3px 3px 0 #d11a2a' }}>
@@ -488,6 +440,94 @@ function SkylineBg() {
   );
 }
 
+/* Plastic-wrapped sidewalk flower bucket — every NYC bodega has one. */
+function FreshFlowers() {
+  return (
+    <div className="pointer-events-none fixed left-[120px] bottom-1 z-10 hidden lg:block" aria-hidden>
+      <svg viewBox="0 0 70 110" width="58" height="92">
+        {/* shadow */}
+        <ellipse cx="35" cy="106" rx="28" ry="2" fill="rgba(0,0,0,0.4)" />
+        {/* black bucket */}
+        <path d="M 12 56 L 18 100 L 52 100 L 58 56 Z" fill="#1a1a1a" stroke="#0a0a0a" strokeWidth="1" />
+        <ellipse cx="35" cy="56" rx="23" ry="4" fill="#2a2a2a" />
+        <ellipse cx="35" cy="56" rx="20" ry="3" fill="#0a0a0a" />
+        {/* "$5" cardboard tag taped to the front */}
+        <rect x="22" y="74" width="14" height="10" fill="#f1ead8" stroke="#1a1a1a" strokeWidth="0.6" transform="rotate(-6 29 79)" />
+        <text x="29" y="82" textAnchor="middle" fontSize="7" fontFamily="Anton, Impact, sans-serif" fill="#d11a2a" transform="rotate(-6 29 79)">$5</text>
+        {/* cellophane wrap (a translucent cone behind the stems) */}
+        <path d="M 14 50 L 35 14 L 56 50 Z" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.35)" strokeWidth="0.6" />
+        {/* stems */}
+        <line x1="26" y1="48" x2="26" y2="22" stroke="#2f6a2a" strokeWidth="1.3" />
+        <line x1="35" y1="48" x2="35" y2="14" stroke="#2f6a2a" strokeWidth="1.3" />
+        <line x1="44" y1="48" x2="44" y2="20" stroke="#2f6a2a" strokeWidth="1.3" />
+        {/* leaves */}
+        <ellipse cx="29" cy="32" rx="3" ry="1.6" fill="#3a8030" transform="rotate(-30 29 32)" />
+        <ellipse cx="41" cy="34" rx="3" ry="1.6" fill="#3a8030" transform="rotate(28 41 34)" />
+        {/* roses — three blooms */}
+        <g>
+          <circle cx="26" cy="20" r="6" fill="#d11a2a" />
+          <circle cx="26" cy="19" r="3" fill="#ff5c3a" />
+          <circle cx="26" cy="18.5" r="1.4" fill="#ffb3a3" />
+        </g>
+        <g>
+          <circle cx="35" cy="12" r="6.4" fill="#e9b8d8" />
+          <circle cx="35" cy="11" r="3.2" fill="#fbd4e8" />
+          <circle cx="35" cy="10.5" r="1.4" fill="#fff0f6" />
+        </g>
+        <g>
+          <circle cx="44" cy="18" r="5.6" fill="#FFD600" />
+          <circle cx="44" cy="17.5" r="2.8" fill="#fff19a" />
+          <circle cx="44" cy="17" r="1.2" fill="#fff" />
+        </g>
+        {/* baby's breath specks */}
+        {[[20,30],[30,26],[40,26],[50,30],[24,40],[46,40]].map(([cx, cy], i) => (
+          <circle key={i} cx={cx} cy={cy} r="0.8" fill="#fff" opacity="0.7" />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/* Lottery scratch-off rack — taped-up "WIN $$$" placard. Sits in the
+   awning corner area on wider screens; a quiet bodega counter prop. */
+function ScratchOffs() {
+  return (
+    <div className="pointer-events-none fixed right-2 top-[150px] z-10 hidden 2xl:block" aria-hidden>
+      <div
+        className="bg-[#0a0a0a] border-2 border-[#FFD600] px-2 py-2"
+        style={{
+          boxShadow: '3px 3px 0 #d11a2a, 0 0 14px rgba(255,214,0,0.22)',
+          transform: 'rotate(2deg)',
+        }}
+      >
+        <div className="font-bungee uppercase text-[10px] tracking-[0.16em] text-[#FFD600] text-center mb-1.5">
+          ★ Lotto ★
+        </div>
+        <div className="grid grid-cols-2 gap-1">
+          {[
+            { c: '#d11a2a', t: '$5', n: 'CASH BLAST' },
+            { c: '#0039A6', t: '$3', n: 'LUCKY 7' },
+            { c: '#00933C', t: '$10', n: 'BIG APPLE' },
+            { c: '#ff8a3a', t: '$2', n: 'SUBWAY $$' },
+          ].map((s, i) => (
+            <div
+              key={i}
+              className="px-1.5 py-1 text-center"
+              style={{ background: s.c, transform: `rotate(${(i % 2 ? -1.5 : 1.5)}deg)` }}
+            >
+              <div className="font-bungee text-[12px] leading-none text-white">{s.t}</div>
+              <div className="font-typewriter text-[6px] uppercase tracking-[0.18em] text-white/85 mt-0.5">{s.n}</div>
+            </div>
+          ))}
+        </div>
+        <div className="font-typewriter text-[7px] uppercase tracking-[0.22em] text-[#FFD600]/65 text-center mt-1.5">
+          mega · take 5 · pick 3
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CornerBrasstack() {
   // Easter-egg corner — Greek "We Are Happy To Serve You" coffee cup with steam.
   return (
@@ -558,6 +598,95 @@ const NYC_FOOD = [
   'cash only after midnight, atm’s in the back, broken',
 ];
 
+/* "More at the deli" rack — surfaces the other modes prominently right
+   under the TV so first-time visitors actually find them. Each card is
+   a chunky linkable tile with iconography that tells you what mode it
+   is at a glance. */
+const MODES = [
+  {
+    href: '/turnstile',
+    badge: 'F',
+    badgeBg: '#FF6319',
+    title: 'Hop the Turnstile',
+    sub: 'ride blind through 5 stops · door window = nyc cam',
+    accent: '#FF6319',
+  },
+  {
+    href: '/geoguessr',
+    badge: '?',
+    badgeBg: '#FFD600',
+    title: 'Cam GeoGuessr',
+    sub: '5 rounds · pin the cam on the map · share to challenge',
+    accent: '#FFD600',
+  },
+  {
+    href: '/game',
+    badge: '25¢',
+    badgeBg: '#B5F500',
+    title: "Jimmy's Arcade",
+    sub: 'type nyc slang · 3 difficulties · grab quarters from the lounge',
+    accent: '#B5F500',
+  },
+  {
+    href: '/about',
+    badge: '?',
+    badgeBg: '#0039A6',
+    title: 'About + Credits',
+    sub: 'how this thing works · what is real · what is bit',
+    accent: '#0039A6',
+  },
+];
+
+function ModesRack() {
+  return (
+    <section
+      className="mt-4 px-3 py-3 border-2 border-[#FFD600]/55 bg-black/55"
+      style={{ boxShadow: '4px 4px 0 #d11a2a' }}
+      aria-label="More modes at the deli"
+    >
+      <div className="flex items-baseline justify-between mb-2">
+        <span className="font-bungee text-[14px] uppercase tracking-[0.04em] text-[#FFD600]">
+          ★ More at the Deli
+        </span>
+        <span className="font-typewriter text-[9px] uppercase tracking-[0.22em] text-white/55">
+          back rooms · pick a door
+        </span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {MODES.map((m) => (
+          <a
+            key={m.href}
+            href={m.href}
+            className="group relative bg-[#0a0a14] border-2 border-white/15 hover:border-[color:var(--accent)] hover:bg-black px-2.5 py-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+            style={{ ['--accent' as string]: m.accent }}
+          >
+            <div className="flex items-center gap-2">
+              <span
+                className="grid place-items-center w-7 h-7 rounded-full font-bungee text-[12px] leading-none shrink-0"
+                style={{ background: m.badgeBg, color: m.badgeBg === '#FFD600' || m.badgeBg === '#B5F500' ? '#000' : '#fff' }}
+              >
+                {m.badge}
+              </span>
+              <span
+                className="font-bungee text-[13px] sm:text-[14px] uppercase leading-tight tracking-[0.02em] group-hover:text-[color:var(--accent)] transition-colors"
+                style={{ color: '#fff' }}
+              >
+                {m.title}
+              </span>
+            </div>
+            <div className="font-typewriter text-[9px] uppercase tracking-[0.16em] text-white/65 mt-1.5 line-clamp-2">
+              {m.sub}
+            </div>
+            <span className="absolute bottom-1 right-2 font-typewriter text-[9px] tracking-[0.22em] uppercase text-white/35 group-hover:text-[color:var(--accent)] transition-colors">
+              go →
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function FooterMatchbook() {
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -573,11 +702,7 @@ function FooterMatchbook() {
       <span className="text-white/25 hidden md:inline">·</span>
       <span className="hidden md:inline text-[#FFD600]/80">today’s special: <span className="text-white/85">{NYC_FOOD[idx]}</span></span>
       <span className="ml-auto flex items-center gap-3">
-        <a href="/game" className="hover:text-[#FFD600] transition-colors">Jimmy's Arcade ★</a>
-        <span className="text-white/25">·</span>
         <a href="/about" className="hover:text-[#FFD600] transition-colors">about ?</a>
-        <span className="text-white/25">·</span>
-        <a href="/dashboard" className="text-[#FFD600]/80 hover:text-[#FFD600] transition-colors">/dashboard →</a>
       </span>
     </div>
   );
@@ -933,28 +1058,38 @@ function fmt311Age(ts: string): string {
   return `${Math.floor(min / (24 * 60))}d ago`;
 }
 
-function TimesSquareTicker({ alerts }: { alerts: Alert[] }) {
+/* City activity ticker — pure NYC: 311 service requests, MTA service
+   disruptions, and a few static "city is alive" lines as filler. No
+   camera alerts; the TV chyron carries that. */
+function TimesSquareTicker() {
   const requests311 = use311();
-  const camLines = alerts
-    .filter((a) => !a.resolved_at && a.severity >= 5)
-    .slice(0, 8)
-    .map((a) => `★ CAM SEV ${a.severity} · ${a.camera_name ?? a.camera_id}`);
-  const lines311 = requests311.slice(0, 8).map((c) => {
+  const { routes: mta } = useMtaRoutes();
+
+  const lines311 = requests311.slice(0, 12).map((c) => {
     const where = [c.incident_address, c.borough].filter(Boolean).join(' · ').toUpperCase();
     const what = (c.descriptor || c.complaint_type).toUpperCase();
     return `◉ 311 · ${what} · ${where || 'NYC'} · ${fmt311Age(c.created_date)}`;
   });
-  // Interleave so the two streams alternate.
+  const linesMta = mta
+    .filter((r) => r.status && r.status.toLowerCase() !== 'good service')
+    .slice(0, 8)
+    .map((r) => `🚇 MTA · ${r.id} · ${r.status.toUpperCase()}`);
+  // Static "alive" lines — keep the loop visibly NYC even when feeds are quiet
+  const linesAlive = [
+    '★ NYC · 8.4M PEOPLE · 24/7',
+    '★ DOLLAR SLICE INDEX · HOLDING STEADY',
+    '★ HALAL CART OF THE WEEK · 53RD & 6TH',
+    '★ ALT-SIDE PARKING IN EFFECT',
+    '★ EAST RIVER FERRY · ON TIME',
+  ];
   const interleaved: string[] = [];
-  const max = Math.max(camLines.length, lines311.length);
+  const max = Math.max(lines311.length, linesMta.length);
   for (let i = 0; i < max; i++) {
-    if (camLines[i]) interleaved.push(camLines[i]);
     if (lines311[i]) interleaved.push(lines311[i]);
+    if (linesMta[i]) interleaved.push(linesMta[i]);
+    if (i < linesAlive.length && (i % 3 === 2)) interleaved.push(linesAlive[i % linesAlive.length]);
   }
-  const filler = interleaved.length === 0
-    ? ['★ STANDBY · CITY IS QUIET · GOOD VIBES', '★ TUNE IN · 954 CAMS · FREE FOREVER', '★ DOLLAR SLICE INDEX: STABLE']
-    : interleaved;
-  // Duplicate to make the loop seamless
+  const filler = interleaved.length === 0 ? linesAlive : interleaved;
   const track = [...filler, ...filler];
   return (
     <div className="shrink-0 ticker-led border-y border-[#FFD600]/35 overflow-hidden">
@@ -978,8 +1113,7 @@ function HotkeysPanel({ onClose }: { onClose: () => void }) {
       <div className="bg-[#0b0b14] border border-[#FFD600] p-6 max-w-[420px] w-[90vw]" onClick={(e) => e.stopPropagation()}>
         <div className="font-bungee text-[#FFD600] text-2xl uppercase tracking-[0.06em] mb-3">Channel Guide</div>
         <ul className="space-y-2 text-sm font-typewriter uppercase tracking-[0.16em] text-white/85">
-          <li><kbd className="text-[#FFD600]">1–9</kbd> · jump to active alert N</li>
-          <li><kbd className="text-[#FFD600]">space</kbd> · surf to next channel</li>
+          <li><kbd className="text-[#FFD600]">space</kbd> · spin the roulette</li>
           <li><kbd className="text-[#FFD600]">L</kbd> · lock current channel</li>
           <li><kbd className="text-[#FFD600]">click TV</kbd> · same as L</li>
           <li><kbd className="text-[#FFD600]">esc</kbd> · close / unlock</li>
@@ -1004,7 +1138,7 @@ function MetroCardIntro() {
           padding: 18,
           fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
           boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
-          animation: 'metrocard-swipe 1.5s cubic-bezier(.4,.0,.2,1) forwards',
+          animation: 'metrocard-swipe 3.5s cubic-bezier(.4,.0,.2,1) forwards',
         }}
       >
         <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>★ MetroCard</div>
@@ -1021,9 +1155,9 @@ function MetroCardIntro() {
       </div>
       <style>{`
         @keyframes metrocard-swipe {
-          0% { transform: translateX(140vw) rotate(2deg) skewX(-4deg); }
-          55% { transform: translateX(0) rotate(0deg) skewX(0); }
-          85% { transform: translateX(0) rotate(0deg) skewX(0); opacity: 1; }
+          0%   { transform: translateX(140vw) rotate(2deg) skewX(-4deg); }
+          22%  { transform: translateX(0) rotate(0deg) skewX(0); }
+          85%  { transform: translateX(0) rotate(0deg) skewX(0); opacity: 1; }
           100% { transform: translateX(-150vw) rotate(-3deg) skewX(4deg); opacity: 0; }
         }
       `}</style>

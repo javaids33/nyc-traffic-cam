@@ -93,8 +93,7 @@ export default function About() {
         </Section>
 
         <div className="mt-10 font-typewriter text-[10px] uppercase tracking-[0.22em] text-white/40">
-          Made with affection · Not affiliated with NYC DOT, MTA, or Sabrett ·
-          <a href="/dashboard" className="ml-2 text-[#FFD600]/80 hover:text-[#FFD600]">/dashboard</a>
+          Made with affection · Not affiliated with NYC DOT, MTA, or Sabrett.
         </div>
       </main>
 

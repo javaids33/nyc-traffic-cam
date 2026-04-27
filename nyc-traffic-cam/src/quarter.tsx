@@ -13,14 +13,14 @@ const SEEDED_KEY = 'nyc-quarters-seeded';
 
 function readStash(): number {
   if (typeof window === 'undefined') return 0;
-  // First-time visitors get one free quarter so the arcade isn't a dead
-  // end. If they spend it the counter goes to zero and they have to
-  // hunt the rolling quarter like everyone else.
+  // First-time visitors get a small starter stack so the arcade isn't a
+  // dead end. Three quarters = a few plays before they have to start
+  // hunting the rolling coin.
   if (!localStorage.getItem(SEEDED_KEY)) {
     localStorage.setItem(SEEDED_KEY, '1');
     if (!localStorage.getItem(STORE_KEY)) {
-      localStorage.setItem(STORE_KEY, '1');
-      return 1;
+      localStorage.setItem(STORE_KEY, '3');
+      return 3;
     }
   }
   return parseInt(localStorage.getItem(STORE_KEY) || '0', 10) || 0;
@@ -127,10 +127,9 @@ export function RollingQuarter() {
   useEffect(() => {
     let stop = false;
     const tick = () => {
-      // Quieter cadence — quarters used to roll every 25-70s which felt
-      // like a screensaver. Now they show up every 90-210s so they read
-      // as a treat, not an interruption.
-      const wait = 90_000 + Math.random() * 120_000;
+      // 45-105s cadence — frequent enough that the hunt feels rewarding,
+      // sparse enough that it isn't a screensaver.
+      const wait = 45_000 + Math.random() * 60_000;
       setTimeout(() => {
         if (stop) return;
         setGrabbed(false);
@@ -138,8 +137,9 @@ export function RollingQuarter() {
         tick();
       }, wait);
     };
-    // First spawn ~30s in (long enough to read the page first).
-    setTimeout(() => { if (!stop) { setSeed((s) => s + 1); } }, 30_000);
+    // First spawn ~12s in — gives the page a moment to settle, then a
+    // coin shows up so new visitors learn the mechanic quickly.
+    setTimeout(() => { if (!stop) { setSeed((s) => s + 1); } }, 12_000);
     tick();
     return () => { stop = true; };
   }, []);

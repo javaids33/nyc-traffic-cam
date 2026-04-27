@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Lock, Maximize2, Minimize2, X } from 'lucide-react';
+import { Lock, Maximize2, Minimize2, Pause, Play, Radio, X } from 'lucide-react';
 import { apiUrl } from './api';
+import {
+  audioOff,
+  audioSetVol,
+  audioToggle,
+  audioTuneRadio,
+  nowPlayingLabel,
+  STATIONS,
+  useAudio,
+} from './audio-store';
 
 export const CHANNEL_LINEUP = [2, 4, 5, 7, 9, 11, 13, 21, 25, 31];
 
@@ -134,35 +143,6 @@ export function BodegaTV({
     return () => clearInterval(i);
   }, [refreshSec]);
 
-  // Channel-flip "click-thunk": tiny synthesized mechanical click each
-  // time the parent bumps flashKey. Lazy AudioContext so we never grab
-  // audio before a user gesture (avoids autoplay warnings).
-  const clickCtxRef = useRef<AudioContext | null>(null);
-  const firstFlashRef = useRef(true);
-  useEffect(() => {
-    if (firstFlashRef.current) { firstFlashRef.current = false; return; }
-    try {
-      if (!clickCtxRef.current) {
-        const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        clickCtxRef.current = new Ctx();
-      }
-      const ctx = clickCtxRef.current;
-      if (!ctx || ctx.state === 'suspended') return;
-      const t = ctx.currentTime;
-      // square knob-thunk
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = 'square';
-      o.frequency.setValueAtTime(180, t);
-      o.frequency.exponentialRampToValueAtTime(60, t + 0.05);
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.18, t + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
-      o.connect(g).connect(ctx.destination);
-      o.start(t); o.stop(t + 0.1);
-    } catch { /* noop */ }
-  }, [flashKey]);
-
   useEffect(() => {
     const onFs = () => setIsFs(document.fullscreenElement === wrapRef.current);
     document.addEventListener('fullscreenchange', onFs);
@@ -242,15 +222,22 @@ export function BodegaTV({
           </span>
           <span className="hidden md:inline tabular text-[#f3e9c0]/55">CH {String(channelNumber).padStart(2, '0')} · {hh}:{mm}</span>
           <button
+            type="button"
             onClick={toggleFullscreen}
-            className="ml-2 text-[#f3e9c0]/70 hover:text-white transition-colors"
+            className="ml-2 text-[#f3e9c0]/85 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
             title={isFs ? 'Exit fullscreen (esc)' : 'Fullscreen the TV'}
+            aria-label={isFs ? 'Exit fullscreen' : 'Enter fullscreen'}
           >
-            {isFs ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            {isFs ? <Minimize2 className="w-3.5 h-3.5" aria-hidden /> : <Maximize2 className="w-3.5 h-3.5" aria-hidden />}
           </button>
           {onClose && (
-            <button onClick={onClose} className="text-[#f3e9c0]/70 hover:text-white transition-colors">
-              <X className="w-3.5 h-3.5" />
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-[#f3e9c0]/85 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+              aria-label="Close TV"
+            >
+              <X className="w-3.5 h-3.5" aria-hidden />
             </button>
           )}
         </div>
@@ -262,14 +249,21 @@ export function BodegaTV({
 
         {/* screen bezel */}
         <div
-          className="relative bg-black overflow-hidden cursor-pointer flex-1"
+          className="relative bg-black overflow-hidden cursor-pointer flex-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
           style={{
             border: large ? '14px solid #0e0a07' : '8px solid #1a1410',
             borderRadius: '28px / 18px',
             boxShadow:
               'inset 0 0 60px rgba(0,0,0,0.95), 0 0 0 3px rgba(255,255,255,0.08), 0 0 70px rgba(255,150,40,0.08), inset 0 0 0 1px rgba(0,0,0,0.6)',
           }}
+          role={onScreenClick ? 'button' : undefined}
+          tabIndex={onScreenClick ? 0 : undefined}
+          aria-label={onScreenClick ? (locked ? 'Unlock channel' : 'Lock current channel') : undefined}
           onClick={onScreenClick}
+          onKeyDown={(e) => {
+            if (!onScreenClick) return;
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onScreenClick(); }
+          }}
         >
           <div
             key={flashKey}
@@ -366,11 +360,16 @@ export function BodegaTV({
           )}
         </div>
 
+        {/* in-cabinet mini audio control — also visible when the TV is
+            fullscreen, since the audio panel itself lives outside the
+            fullscreen element. Drives the same shared audio store. */}
+        <CabinetAudioBar />
+
         {/* bottom rail — left: model badge.  Right: a single decorative
             row of indicator LEDs.  We dropped the fake button strip
             entirely; if a control isn't wired up, it shouldn't claim
             to be one. */}
-        <div className="mt-3 flex items-center gap-2 sm:gap-3">
+        <div className="mt-2 flex items-center gap-2 sm:gap-3">
           <span className="text-[9px] tracking-[0.3em] uppercase font-typewriter text-[#f3e9c0]/55">
             ★ TC-21 · TRINITRON STYLE COLOR
           </span>
@@ -424,6 +423,96 @@ function nycHourNow(): number {
     hour12: false,
   });
   return parseInt(fmt.format(new Date()), 10) || 0;
+}
+
+/* In-cabinet audio bar. Same controls as the corner panel but always
+   visible inside the TV chassis, so the radio/ambience can be driven
+   even when the TV is fullscreened (the corner panel is outside the
+   fullscreen element and therefore hidden). */
+function CabinetAudioBar() {
+  const { src, vol, playing, error } = useAudio();
+  const label = nowPlayingLabel(src);
+  const station = src?.kind === 'radio' ? STATIONS.find((s) => s.id === src.stationId) : null;
+  const idx = station ? STATIONS.findIndex((s) => s.id === station.id) : -1;
+  const cycleStation = (delta: number) => {
+    if (!STATIONS.length) return;
+    const next = STATIONS[((idx === -1 ? 0 : idx) + delta + STATIONS.length) % STATIONS.length];
+    audioTuneRadio(next);
+  };
+  return (
+    <div
+      className="mt-3 px-2 py-1.5 flex items-center gap-2 border border-[#f3e9c0]/15"
+      style={{
+        background: 'linear-gradient(180deg,#0a0805 0%,#1a1006 100%)',
+        boxShadow: 'inset 0 1px 0 rgba(255,210,140,0.06)',
+      }}
+      role="group"
+      aria-label="In-cabinet audio control"
+    >
+      <Radio className="w-3 h-3 text-[#FFD600] shrink-0" aria-hidden />
+      <button
+        type="button"
+        onClick={() => cycleStation(-1)}
+        className="text-[#f3e9c0]/75 hover:text-[#FFD600] text-[12px] font-mono shrink-0 px-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+        aria-label="Previous station"
+        title="Previous station"
+      >
+        ◀
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          if (src) audioToggle();
+          else audioTuneRadio(STATIONS[2]); // default to WBGO
+        }}
+        className="text-[#FFD600] hover:text-white shrink-0 grid place-items-center w-5 h-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+        aria-label={playing ? 'Pause audio' : 'Play audio'}
+        title={playing ? 'Pause' : 'Play'}
+      >
+        {playing ? <Pause className="w-3 h-3" aria-hidden /> : <Play className="w-3 h-3" aria-hidden />}
+      </button>
+      <button
+        type="button"
+        onClick={() => cycleStation(1)}
+        className="text-[#f3e9c0]/75 hover:text-[#FFD600] text-[12px] font-mono shrink-0 px-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+        aria-label="Next station"
+        title="Next station"
+      >
+        ▶
+      </button>
+      <span
+        className="font-typewriter text-[9px] uppercase tracking-[0.18em] truncate flex-1 min-w-0"
+        style={{ color: error ? '#ff8a9a' : '#f3e9c0' }}
+        aria-live="polite"
+      >
+        {error ? error : label ?? 'audio off'}
+      </span>
+      <label className="flex items-center gap-1 shrink-0">
+        <span className="sr-only">Volume</span>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={vol}
+          onChange={(e) => audioSetVol(parseFloat(e.target.value))}
+          className="w-16 accent-[#FFD600]"
+          aria-label="Volume"
+        />
+      </label>
+      {src && (
+        <button
+          type="button"
+          onClick={audioOff}
+          className="text-[#f3e9c0]/55 hover:text-white text-[8px] tracking-[0.18em] shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+          aria-label="Stop audio"
+          title="Stop"
+        >
+          OFF
+        </button>
+      )}
+    </div>
+  );
 }
 
 /* Dead-hours late-night idle screen — runs 2am-5am NYC. The actual
@@ -680,7 +769,7 @@ export function KnobChannel({ value }: { value: number }) {
 }
 
 /* ────────────────────────────────────────────────── BodegaAwning
-   The shared header strip used on both Lounge and Dashboard pages. */
+   The shared header strip across all pages. */
 
 export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
   const weather = useNycWeather();
@@ -690,7 +779,7 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
 
       {/* light-bulb marquee strip — slow soft pulse, not a strobe */}
       <div className="bg-[#0a0a0a] h-3 flex items-center justify-around overflow-hidden">
-        {Array.from({ length: 60 }).map((_, i) => (
+        {Array.from({ length: 40 }).map((_, i) => (
           <span
             key={i}
             className="w-1.5 h-1.5 rounded-full bg-[#FFD600]"
@@ -705,7 +794,7 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
       </div>
 
       <div
-        className="bg-[#1B5E20] text-white px-3 sm:px-4 pt-1 pb-2 flex items-center gap-2 sm:gap-4 border-b-2 border-[#FFD600] relative flex-wrap"
+        className="bg-[#1B5E20] text-white px-3 sm:px-4 pt-1.5 pb-2 flex items-center gap-3 sm:gap-4 border-b-2 border-[#FFD600] relative"
         style={{ boxShadow: '0 4px 0 #0F3812, inset 0 -1px 0 rgba(0,0,0,0.4)' }}
       >
         <a href="/" className="font-bungee uppercase tracking-[0.06em] text-[16px] sm:text-[22px] leading-none whitespace-nowrap hover:text-[#FFD600] transition-colors">
@@ -713,19 +802,11 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
           <span className="text-white riso">CO.</span>
         </a>
 
-        <span className="hidden md:inline-flex flex-col items-center px-2 py-0.5 border border-[#FFD600] text-[#FFD600] font-typewriter text-[8px] leading-none uppercase tracking-[0.18em]">
-          <span>EST.</span><span>2026</span>
-        </span>
-
         <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 border border-[#ff5582] text-[#ff5582] font-bungee text-[10px] uppercase tracking-[0.18em] neon">
           OPEN · 24 / 7
         </span>
 
-        <span className="font-typewriter text-[11px] uppercase tracking-[0.18em] text-white/85 hidden xl:inline">
-          · cold beer · lotto · pork roll · chopped cheese · live cams ·
-        </span>
-
-        <span className="ml-auto flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+        <span className="ml-auto flex items-center gap-3 sm:gap-4 justify-end">
           {weather && (
             <a
               href="/about"
@@ -737,13 +818,7 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
               <span className="hidden lg:inline text-white/55">{weather.cond}</span>
             </a>
           )}
-          <span className="hidden sm:flex items-center gap-1.5">
-            <span className="subway-bullet" style={{ background: '#EE352E' }}>1</span>
-            <span className="subway-bullet" style={{ background: '#00933C' }}>4</span>
-            <span className="subway-bullet" style={{ background: '#0039A6' }}>A</span>
-            <span className="subway-bullet" style={{ background: '#A7A9AC', color: '#000' }}>L</span>
-          </span>
-          <span className="hidden sm:inline font-typewriter text-[10px] tracking-[0.2em] uppercase text-[#FFD600] pl-2">
+          <span className="hidden sm:inline font-typewriter text-[10px] tracking-[0.2em] uppercase text-[#FFD600]">
             NYC · {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
           </span>
           {rightSlot}
@@ -766,19 +841,21 @@ export function BodegaAwning({ rightSlot }: { rightSlot?: ReactNode }) {
 /* ────────────────────────────────────────────────── StreetFauna */
 
 export function StreetFauna({ ratMode = false, motion = false }: { ratMode?: boolean; motion?: boolean }) {
-  // Motion is opt-in. Default leaves the static corner cast (cat, hydrant,
-  // lamp, statue) and skips all the constantly-running cabs/rats/pigeons —
-  // the page reads as a quiet diorama rather than a busy screensaver.
-  // Rat mode (Konami cheat) re-enables the moving strip with extras.
+  // The rat is always around — it is a NYC bodega; there is always a rat.
+  // Other moving fauna (cab, pigeon, hot-dog cart…) is opt-in via `motion`
+  // so the page doesn't read like a busy screensaver. Rat mode (Konami)
+  // turns on the whole moving strip plus rat reinforcements.
   const showMotion = motion || ratMode;
   return (
     <>
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 overflow-hidden h-[40px]">
+        <Rat />
+        {ratMode && <Rat seedOffset={1} />}
+        {ratMode && <Rat seedOffset={2} />}
+        {ratMode && <Rat seedOffset={3} />}
+      </div>
       {showMotion && (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 overflow-hidden h-[140px]">
-          <Rat />
-          {ratMode && <Rat seedOffset={1} />}
-          {ratMode && <Rat seedOffset={2} />}
-          {ratMode && <Rat seedOffset={3} />}
           <YellowCab />
           <Pigeon />
           <SubwayCar />
