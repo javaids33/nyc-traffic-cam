@@ -3,15 +3,16 @@ import { BodegaAwning, StreetFauna } from './bodega-tv';
 import { QuarterStash, RollingQuarter, HiddenCoin } from './quarter';
 import { fetchCameras } from './api';
 import type { Camera } from './types';
-import baked from './cam-pois.json';
+import { usePoisByTime } from './usePoisByTime';
 
 /* ──────────────────────────────────────────────────────────────────────
    /poi — multi-cam POI feed.
 
-   Reads the baked classification JSON shipped at src/cam-pois.json
-   (populated by `python -m server.poi_classify`). Camera locations
-   don't move and POIs don't change, so this is a one-time-then-static
-   data file — no backend roundtrip needed for the classification.
+   Reads the baked classification JSON shipped at src/cam-pois.json or
+   time-specific files (cam-pois-day.json / cam-pois-night.json) based
+   on current hour. Camera locations don't move and POIs don't change
+   per time-of-day, so this is a one-time-then-static data file — no
+   backend roundtrip needed for the classification.
 
    The cam frames themselves still come direct from
    webcams.nyctmc.org/api/cameras/{id}/image — also no backend.
@@ -41,13 +42,6 @@ type PoiEntry = {
   _lat?: number;
   _lng?: number;
 };
-
-type PoiPayload = {
-  generated_at: number | null;
-  cameras: Record<string, PoiEntry>;
-};
-
-const POI = baked as PoiPayload;
 
 const NYCTMC_IMG = (id: string, t: number) =>
   `https://webcams.nyctmc.org/api/cameras/${id}/image?t=${t}`;

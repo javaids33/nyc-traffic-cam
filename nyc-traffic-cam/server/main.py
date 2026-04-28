@@ -27,6 +27,7 @@ from . import db, transit
 from .ingestor import Ingestor
 from .nyc_api import NycApi
 from .state import hub
+from .curator import registry as curator_registry
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("api")
@@ -148,6 +149,44 @@ async def get_stats() -> dict:
         "cameras_polled": polled_recently,
         "metrics": hub.metrics,
     }
+
+
+# ────────────────────────────────────────────────────────────────────
+# /api/curator/approve — save curator approval decisions
+# ────────────────────────────────────────────────────────────────────
+
+class CuratorApprovalBody(BaseModel):
+    cam_id: str = Field(..., min_length=1, max_length=256)
+    approved: bool | None = Field(None)
+    notes: str | None = Field(None, max_length=1024)
+    image_usable_override: bool | None = Field(None)
+
+
+@app.post("/api/curator/approve")
+async def curator_approve(body: CuratorApprovalBody) -> dict:
+    """Save a curator decision for a camera classification."""
+    try:
+        curator_registry.save_one(
+            cam_id=body.cam_id,
+            approved=body.approved,
+            notes=body.notes or "",
+        )
+        stats = curator_registry.stats()
+        return {
+            "cam_id": body.cam_id,
+            "approved": body.approved,
+            "saved_at": int(time.time()),
+            "stats": stats,
+        }
+    except Exception as e:
+        log.error(f"failed to save curator decision: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/curator/stats")
+async def curator_stats() -> dict:
+    """Get curator approval statistics."""
+    return curator_registry.stats()
 
 
 # ────────────────────────────────────────────────────────────────────

@@ -61,12 +61,47 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 OUT_PATH = DATA_DIR / "cam_pois.json"
 FRONTEND_OUT = ROOT / "src" / "cam-pois.json"
+OUT_PATH_DAY = DATA_DIR / "cam_pois-day.json"
+FRONTEND_OUT_DAY = ROOT / "src" / "cam-pois-day.json"
+OUT_PATH_NIGHT = DATA_DIR / "cam_pois-night.json"
+FRONTEND_OUT_NIGHT = ROOT / "src" / "cam-pois-night.json"
 
 NYCTMC_GRAPHQL = "https://webcams.nyctmc.org/cameras/graphql"
 NYCTMC_IMAGE = "https://webcams.nyctmc.org/api/cameras/{cam_id}/image"
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
-DEFAULT_MODEL = "llama3.2-vision"
+DEFAULT_MODEL = "qwen2.5vl:7b"
+
+PROMPT = """\
+You are looking at a still frame from a NYC DOT traffic camera.
+Identify whether this camera feed is among the BEST camera feeds for
+showcasing New York. Prioritize clarity, wide/interesting composition,
+unobstructed iconic landmarks or skyline, good lighting, and unique
+views that would make a compelling live feed.
+
+Categories to consider:
+- bridge          (Brooklyn, Manhattan, Williamsburg, Verrazano, GW, Queensboro, Triboro, etc.)
+- landmark        (Empire State, Statue of Liberty, Times Square, Wall St / Stock Exchange, MSG, etc.)
+- park            (Central Park, Prospect Park, Battery, Flushing Meadows)
+- waterway        (Hudson, East River, harbor, kill van kull)
+- tunnel          (Lincoln, Holland, Brooklyn-Battery, Queens-Midtown)
+- iconic          (any uniquely New York street view — elevated subway, brownstone block, etc.)
+- skyline         (sweeping cityscape view of buildings)
+- intersection    (clearly identifiable major crossing)
+
+If nothing notable is visible — or the feed is low-quality, obstructed,
+or not suitable as a showcase feed — return null fields.
+
+Return ONE valid JSON object, no other text. Be concise and aim to flag
+feeds that would be best for live, public-facing viewing (high confidence
+for strong candidates):
+{
+    "poi": "<name or null>",
+    "category": "<one of the categories above, or null>",
+    "description": "<8-word phrase max, or null>",
+    "confidence": <integer 0-100>
+}
+"""
 
 
 async def list_cameras(client: httpx.AsyncClient) -> list[dict[str, Any]]:
@@ -154,15 +189,51 @@ async def classify(
     return parse_response(text)
 
 
-def _write(cameras: dict[str, Any], model: str) -> None:
-    payload = {
-        "generated_at": int(time.time()),
-        "backend": "ollama",
-        "model": model,
-        "cameras": cameras,
-    }
-    OUT_PATH.write_text(json.dumps(payload, indent=2))
-    FRONTEND_OUT.write_text(json.dumps(payload, indent=2))
+def _write(cameras: dict[str, Any], model: str, split_by_time: bool = False) -> None:
+    if not split_by_time:
+        # Legacy single-file output
+        payload = {
+            "generated_at": int(time.time()),
+            "backend": "ollama",
+            "model": model,
+            "cameras": cameras,
+        }
+        OUT_PATH.write_text(json.dumps(payload, indent=2))
+        FRONTEND_OUT.write_text(json.dumps(payload, indent=2))
+    else:
+        # Split output by time_of_day: day and night files
+        day_cams: dict[str, Any] = {}
+        night_cams: dict[str, Any] = {}
+        for cam_id, rec in cameras.items():
+            tod = rec.get("time_of_day", "day")
+            if tod in ("dusk", "dawn"):
+                # Dawn/dusk go to both
+                day_cams[cam_id] = rec
+                night_cams[cam_id] = rec
+            elif tod == "night":
+                night_cams[cam_id] = rec
+            else:  # day
+                day_cams[cam_id] = rec
+        
+        # Write day
+        day_payload = {
+            "generated_at": int(time.time()),
+            "backend": "ollama",
+            "model": model,
+            "cameras": day_cams,
+        }
+        OUT_PATH_DAY.write_text(json.dumps(day_payload, indent=2))
+        FRONTEND_OUT_DAY.write_text(json.dumps(day_payload, indent=2))
+        
+        # Write night
+        night_payload = {
+            "generated_at": int(time.time()),
+            "backend": "ollama",
+            "model": model,
+            "cameras": night_cams,
+        }
+        OUT_PATH_NIGHT.write_text(json.dumps(night_payload, indent=2))
+        FRONTEND_OUT_NIGHT.write_text(json.dumps(night_payload, indent=2))
 
 
 def _print_one(cam_id: str, name: str, rec: dict[str, Any]) -> None:
@@ -203,6 +274,7 @@ async def run(
     ollama_url: str,
     model: str,
     dry_run: bool,
+    split_by_time: bool = False,
 ) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -230,8 +302,8 @@ async def run(
             cams = cams[:limit]
         todo = [c for c in cams if c["id"] not in existing]
         logging.info(
-            "classifying %d cameras (skipping %d already done · concurrency=%d · dry_run=%s)",
-            len(todo), len(cams) - len(todo), concurrency, dry_run,
+            "classifying %d cameras (skipping %d already done · concurrency=%d · dry_run=%s · split_by_time=%s)",
+            len(todo), len(cams) - len(todo), concurrency, dry_run, split_by_time,
         )
 
         sem = asyncio.Semaphore(concurrency)
@@ -269,7 +341,7 @@ async def run(
                     done, len(todo), 1 / max(rate, 0.01), remaining,
                 )
                 if not dry_run:
-                    _write(results, model)
+                    _write(results, model, split_by_time=split_by_time)
 
         await asyncio.gather(*(one(c) for c in todo))
 
@@ -296,9 +368,15 @@ async def run(
         if dry_run:
             logging.info("dry-run: nothing written to disk")
         else:
-            _write(results, model)
-            logging.info("wrote %s", OUT_PATH)
-            logging.info("wrote %s", FRONTEND_OUT)
+            _write(results, model, split_by_time=split_by_time)
+            if split_by_time:
+                logging.info("wrote %s", OUT_PATH_DAY)
+                logging.info("wrote %s", FRONTEND_OUT_DAY)
+                logging.info("wrote %s", OUT_PATH_NIGHT)
+                logging.info("wrote %s", FRONTEND_OUT_NIGHT)
+            else:
+                logging.info("wrote %s", OUT_PATH)
+                logging.info("wrote %s", FRONTEND_OUT)
 
 
 def main() -> None:
@@ -310,6 +388,7 @@ def main() -> None:
     p.add_argument("--ollama-url", default=DEFAULT_OLLAMA_URL, help=f"Ollama HTTP base URL (default: {DEFAULT_OLLAMA_URL}).")
     p.add_argument("--model", default=DEFAULT_MODEL, help=f"Ollama model tag (default: {DEFAULT_MODEL}).")
     p.add_argument("--dry-run", action="store_true", help="Smoke test mode: print each result, don't write files.")
+    p.add_argument("--split-by-time", action="store_true", help="Split output into separate day/night JSON files (default: single file).")
     args = p.parse_args()
     asyncio.run(run(
         limit=args.limit,
@@ -318,6 +397,7 @@ def main() -> None:
         ollama_url=args.ollama_url,
         model=args.model,
         dry_run=args.dry_run,
+        split_by_time=args.split_by_time,
     ))
 
 

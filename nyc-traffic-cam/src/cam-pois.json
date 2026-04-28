@@ -1,4 +1,47 @@
 {
-  "generated_at": null,
-  "cameras": {}
+  "generated_at": 1777325716,
+  "backend": "ollama",
+  "model": "llama3:8b",
+  "cameras": {
+    "300e0508-3c7e-4ac5-8527-b75bcf8292b8": {
+      "poi": "Brooklyn Bridge",
+      "category": "bridge",
+      "description": "Iconic NYC landmark",
+      "confidence": 90,
+      "_lat": 40.736207,
+      "_lng": -73.713777
+    },
+    "ec9eda79-e250-4e6f-a8f6-e51021fb054f": {
+      "poi": "Brooklyn Bridge",
+      "category": "bridge",
+      "description": "Iconic NYC landmark",
+      "confidence": 90,
+      "_lat": 40.771057,
+      "_lng": -73.987139
+    },
+    "1b3248f9-f26e-4f36-943f-b7a7731595fb": {
+      "poi": "Brooklyn Bridge",
+      "category": "bridge",
+      "description": "Iconic NYC landmark",
+      "confidence": 80,
+      "_lat": 40.750889,
+      "_lng": -73.940613
+    },
+    "8a6bc417-4877-4ebe-8052-88c1b261baf1": {
+      "poi": "Brooklyn Bridge",
+      "category": "bridge",
+      "description": "Iconic NYC landmark",
+      "confidence": 90,
+      "_lat": 40.785302,
+      "_lng": -73.969353
+    },
+    "ec1e7b42-18de-4475-8c89-9e80f21e5b6c": {
+      "poi": "Brooklyn Bridge",
+      "category": "bridge",
+      "description": "Iconic NYC landmark",
+      "confidence": 90,
+      "_lat": 40.798685,
+      "_lng": -73.929148
+    }
+  }
 }
