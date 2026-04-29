@@ -91,11 +91,27 @@ async def probe(client: httpx.AsyncClient, cam_id: str) -> dict[str, Any]:
 async def check_one(client: httpx.AsyncClient, sem: asyncio.Semaphore, cam_id: str) -> dict[str, Any]:
     async with sem:
         a = await probe(client, cam_id)
-        # Small gap between probes lets the upstream feed advance,
-        # which is how we tell "frozen" from "healthy".
-        await asyncio.sleep(2.5)
+        # NYC DOT cams refresh on a per-cam cadence between ~2s and
+        # ~10s. The gap here MUST exceed the slowest refresh, or
+        # genuinely-live cams whose refresh cycle straddles our two
+        # probes return identical bytes and get falsely flagged
+        # "frozen". 2.5s was wrong — caught hundreds of live cams in
+        # the same cycle. 8s covers all observed refresh windows
+        # without ballooning the sweep time (still <5min total at
+        # concurrency=24 because probes overlap).
+        await asyncio.sleep(8.0)
         b = await probe(client, cam_id)
         verdict = classify(a, b)
+        # If the bytes match but the gap is short, give the cam a
+        # benefit-of-the-doubt third probe. Frozen feeds will keep
+        # returning the same hash; a slow-refreshing live cam will
+        # eventually advance.
+        if verdict == "frozen":
+            await asyncio.sleep(6.0)
+            c = await probe(client, cam_id)
+            if c.get("hash") and c["hash"] != a.get("hash"):
+                verdict = "healthy"
+                return {"id": cam_id, "verdict": verdict, "a": a, "b": b, "c": c}
         return {"id": cam_id, "verdict": verdict, "a": a, "b": b}
 
 

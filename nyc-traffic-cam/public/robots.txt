@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://nyc-traffic-cam.pages.dev/sitemap.xml

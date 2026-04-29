@@ -9,6 +9,11 @@ export type Camera = {
   consecutive_failures: number;
   last_diff: number | null;
   active_severity: number | null;
+  // Baked into src/cameras.json by server/sync_boroughs.py — uses
+  // NYC's official borough polygon for an exact GPS-driven check
+  // instead of the old bounding-box hack that mis-classified the
+  // East River seam (Queens Plaza, LIC, Greenpoint, Astoria).
+  borough?: 'MANHATTAN' | 'BRONX' | 'BROOKLYN' | 'QUEENS' | 'STATEN ISLAND' | null;
 };
 
 export type AlertKind = 'sudden_change' | 'static_feed' | 'camera_offline' | 'high_activity';

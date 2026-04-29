@@ -108,6 +108,84 @@ function useNycWeather() {
 const NYCTMC_IMG = (id: string, t: number) =>
   `https://webcams.nyctmc.org/api/cameras/${id}/image?t=${t}`;
 
+// TV chassis variants — controls cabinet styling. Same screen
+// content for all; only the bezel/wood/plastic surrounding it
+// changes. CRT keeps the antennas; plasma + flatscreen don't.
+export type TvChassis = 'wood-crt' | 'plasma' | 'flatscreen' | 'portable';
+
+const CHASSIS_META: Record<TvChassis, {
+  label: string;
+  hint: string;
+  cabinetClass: string;
+  cabinetStyle: React.CSSProperties;
+  borderRadius: number;
+  showAntennas: boolean;
+  showVents: boolean;
+  textColor: string;
+}> = {
+  'wood-crt': {
+    label: 'Wood CRT',
+    hint: 'Walnut cabinet · rabbit ears · 1978 vibes',
+    cabinetClass: 'wood-grain',
+    cabinetStyle: {
+      boxShadow:
+        '0 30px 0 -14px rgba(0,0,0,0.85), 0 18px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,228,160,0.08), inset 0 -22px 36px rgba(0,0,0,0.55)',
+    },
+    borderRadius: 22,
+    showAntennas: true,
+    showVents: true,
+    textColor: '#f3e9c0',
+  },
+  'plasma': {
+    label: 'Plasma',
+    hint: 'Glossy black bezel · early-2000s home theater',
+    cabinetClass: '',
+    cabinetStyle: {
+      background:
+        'linear-gradient(180deg, #1a1a1c 0%, #0a0a0c 50%, #050506 100%)',
+      boxShadow:
+        '0 30px 0 -14px rgba(0,0,0,0.9), 0 18px 50px rgba(0,0,0,0.85), inset 0 2px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(255,255,255,0.04), inset 0 -22px 36px rgba(0,0,0,0.7)',
+      border: '1px solid #000',
+    },
+    borderRadius: 6,
+    showAntennas: false,
+    showVents: false,
+    textColor: '#a0a8b4',
+  },
+  'flatscreen': {
+    label: 'Flatscreen',
+    hint: 'Slim silver bezel · modern LCD',
+    cabinetClass: '',
+    cabinetStyle: {
+      background:
+        'linear-gradient(180deg, #2a2c30 0%, #1a1c20 100%)',
+      boxShadow:
+        '0 18px 0 -10px rgba(0,0,0,0.7), 0 12px 30px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -1px 0 rgba(255,255,255,0.04)',
+      border: '1px solid #000',
+    },
+    borderRadius: 4,
+    showAntennas: false,
+    showVents: false,
+    textColor: '#c9ccd2',
+  },
+  'portable': {
+    label: 'Portable',
+    hint: 'Plastic bedroom set · knob era',
+    cabinetClass: '',
+    cabinetStyle: {
+      background:
+        'linear-gradient(180deg,#e85d2e 0%,#b9461f 60%,#7a2d12 100%)',
+      boxShadow:
+        '0 24px 0 -12px rgba(0,0,0,0.8), 0 14px 30px rgba(0,0,0,0.7), inset 0 2px 0 rgba(255,255,255,0.18), inset 0 -16px 26px rgba(0,0,0,0.5)',
+      border: '1px solid #4a1a08',
+    },
+    borderRadius: 14,
+    showAntennas: true,
+    showVents: false,
+    textColor: '#fff5dc',
+  },
+};
+
 export function BodegaTV({
   cameraId,
   caption,
@@ -120,6 +198,7 @@ export function BodegaTV({
   onClose,
   refreshSec = 1.5,
   liveSource = 'nyctmc',
+  chassis = 'wood-crt',
 }: {
   cameraId: string | null;
   caption: TVCaption | null;
@@ -132,7 +211,9 @@ export function BodegaTV({
   onClose?: () => void;
   refreshSec?: number;
   liveSource?: 'nyctmc' | 'backend';
+  chassis?: TvChassis;
 }) {
+  const tvMeta = CHASSIS_META[chassis] ?? CHASSIS_META['wood-crt'];
   const [tick, setTick] = useState(() => Date.now());
   const [isFs, setIsFs] = useState(false);
   // Medium mode = TV overlays the page at near-viewport size without
@@ -194,67 +275,66 @@ export function BodegaTV({
       ref={wrapRef}
       className={`select-none bodega-tv-fullscreen ${mediumOn ? 'fixed inset-3 sm:inset-6 z-50 overflow-auto bg-transparent' : 'w-full'}`}
     >
-      {/* rabbit-ear antennas — taller on large */}
+      {/* rabbit-ear antennas — only on chassis variants that have them */}
       <div className="relative h-0">
-        <div
-          className="antenna"
-          style={{ left: '38%', transform: 'rotate(-32deg)', height: large ? 96 : 72 }}
-        />
-        <div
-          className="antenna"
-          style={{ right: '38%', transform: 'rotate(28deg)', height: large ? 86 : 64 }}
-        />
-        {/* ON AIR neon sign — only large variant */}
-        {large && (
-          <div className="absolute -left-2 top-[-72px] hidden md:block">
+        {tvMeta.showAntennas && (
+          <>
             <div
-              className="font-bungee text-[28px] tracking-[0.05em] neon"
-              style={{ transform: 'rotate(-8deg)', color: '#ff5582' }}
-            >
-              ON AIR
-            </div>
-            <div className="text-[9px] font-typewriter uppercase tracking-[0.3em] text-[#ff5582]/60 mt-0.5">
-              · live broadcast ·
-            </div>
-          </div>
+              className="antenna"
+              style={{ left: '38%', transform: 'rotate(-32deg)', height: large ? 96 : 72 }}
+            />
+            <div
+              className="antenna"
+              style={{ right: '38%', transform: 'rotate(28deg)', height: large ? 86 : 64 }}
+            />
+          </>
         )}
       </div>
 
-      {/* wood cabinet — fat back CRT vibe */}
+      {/* Cabinet — chassis-specific styling */}
       <div
-        className="wood-grain relative"
+        className={`${tvMeta.cabinetClass} relative`}
         style={{
-          borderTopLeftRadius: 22,
-          borderTopRightRadius: 22,
+          borderTopLeftRadius: tvMeta.borderRadius,
+          borderTopRightRadius: tvMeta.borderRadius,
           padding: large ? '20px 18px 24px' : '14px 12px 18px',
-          boxShadow:
-            '0 30px 0 -14px rgba(0,0,0,0.85), 0 18px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,228,160,0.08), inset 0 -22px 36px rgba(0,0,0,0.55)',
+          ...tvMeta.cabinetStyle,
         }}
       >
-        {/* top vents + nameplate row */}
-        <div className="flex items-center justify-between mb-2 text-[10px] tracking-[0.3em] uppercase font-typewriter text-[#f3e9c0]/85">
+        {/* top vents + nameplate row — vents only show on the wood
+            CRT cabinet (and the portable). Plasma/flatscreen drop
+            them, since their bezels don't have a top vent strip. */}
+        <div className="flex items-center justify-between mb-2 text-[10px] tracking-[0.3em] uppercase font-typewriter" style={{ color: `${tvMeta.textColor}d9` }}>
           <span className="flex items-center gap-2">
             <span className="w-2 h-2 bg-[#ff5026] rec-dot rounded-full" style={{ boxShadow: '0 0 6px #ff5026' }} />
-            <span className="font-bungee tracking-[0.08em] text-[12px] text-[#f3e9c0]">RCA</span>
-            <span className="text-[#f3e9c0]/60">· SOLID-STATE COLOR · TC-21 ·</span>
+            <span className="font-bungee tracking-[0.08em] text-[12px]" style={{ color: tvMeta.textColor }}>
+              {chassis === 'plasma' ? 'SONY' : chassis === 'flatscreen' ? 'BRAVIA' : chassis === 'portable' ? 'PORTACOLOR' : 'RCA'}
+            </span>
+            <span style={{ color: `${tvMeta.textColor}99` }}>
+              · {chassis === 'plasma' ? 'PLASMA · KE-42' : chassis === 'flatscreen' ? '4K LCD · 50"' : chassis === 'portable' ? '13" PORTABLE · DM-13' : 'SOLID-STATE COLOR · TC-21'} ·
+            </span>
           </span>
-          <span className="hidden md:flex items-center gap-1 flex-1 justify-center mx-4">
-            {Array.from({ length: 22 }).map((_, i) => (
-              <span
-                key={i}
-                className="h-[3px] flex-1 max-w-[10px]"
-                style={{
-                  background: 'linear-gradient(90deg, rgba(0,0,0,0.85), rgba(60,40,20,0.4))',
-                  boxShadow: 'inset 0 1px 0 rgba(255,210,120,0.08)',
-                }}
-              />
-            ))}
-          </span>
-          <span className="hidden md:inline tabular text-[#f3e9c0]/55">CH {String(channelNumber).padStart(2, '0')} · {hh}:{mm}</span>
+          {tvMeta.showVents && (
+            <span className="hidden md:flex items-center gap-1 flex-1 justify-center mx-4">
+              {Array.from({ length: 22 }).map((_, i) => (
+                <span
+                  key={i}
+                  className="h-[3px] flex-1 max-w-[10px]"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(0,0,0,0.85), rgba(60,40,20,0.4))',
+                    boxShadow: 'inset 0 1px 0 rgba(255,210,120,0.08)',
+                  }}
+                />
+              ))}
+            </span>
+          )}
+          {!tvMeta.showVents && <span className="hidden md:flex flex-1" />}
+          <span className="hidden md:inline tabular" style={{ color: `${tvMeta.textColor}8a` }}>CH {String(channelNumber).padStart(2, '0')} · {hh}:{mm}</span>
           <button
             type="button"
             onClick={toggleMedium}
-            className="ml-2 text-[#f3e9c0]/85 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+            className="ml-2 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+            style={{ color: `${tvMeta.textColor}d9` }}
             title={mediumOn ? 'Shrink TV (esc)' : 'Fit TV to browser window'}
             aria-label={mediumOn ? 'Shrink TV' : 'Fit TV to browser window'}
             aria-pressed={mediumOn}
@@ -381,10 +461,40 @@ export function BodegaTV({
           {staticOn && <div className="crt-static absolute inset-0 pointer-events-none opacity-75" />}
         </div>
 
-          {/* right knob stack — large variant only */}
+          {/* right knob stack — large variant only. The CHAN knob is
+              now interactive: clicking it flips channel (calls the
+              parent's onScreenClick if no surfNext is wired, falling
+              back to a no-op). Dispatches a custom 'tv:flip-channel'
+              event so the parent can listen — keeps BodegaTV
+              decoupled from the lounge's surf logic. */}
           {large && (
             <div className="flex flex-col items-center justify-between gap-2 py-1 pr-1 w-[64px] sm:w-[80px] shrink-0">
-              <KnobDial label="CHAN" value={String(channelNumber).padStart(2, '0')} digit />
+              <button
+                type="button"
+                onClick={() => {
+                  // Bubble out as a DOM event so any host page can
+                  // listen and call its own surfNext().
+                  window.dispatchEvent(new CustomEvent('tv:flip-channel'));
+                }}
+                title="CHANGE CHANNEL · click the knob to surf"
+                aria-label="Change channel"
+                className="block rounded-full p-0 transition-transform active:rotate-12 hover:rotate-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+              >
+                <KnobDial label="CHAN" value={String(channelNumber).padStart(2, '0')} digit />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('tv:flip-borough'));
+                }}
+                title="FLIP BOROUGH · cycle Manhattan ↦ Bronx ↦ Brooklyn ↦ Queens ↦ SI ↦ All"
+                aria-label="Cycle borough"
+                className="block rounded-full p-0 transition-transform active:rotate-12 hover:rotate-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}
+              >
+                <KnobDial label="BORO" value="ALL" />
+              </button>
               <KnobDial label="VOL" value="●●●○○" />
               <KnobDial label="TINT" small />
               <KnobDial label="V·HOLD" small />

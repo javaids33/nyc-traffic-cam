@@ -1,0 +1,5 @@
+{
+  "_comment": "Manual corrections for /poi tagging — wins over the AI-baked cam-pois.json. Edit in the /poi 'Edit Tags' mode and click 'Export overrides.json' to refresh this file.",
+  "generated_at": null,
+  "overrides": {}
+}

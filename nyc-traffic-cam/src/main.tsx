@@ -10,6 +10,9 @@ import GeoGuessr from './geoguessr';
 import Scratch from './scratch';
 import Shrine from './shrine';
 import Poi from './poi';
+import Cab from './cab';
+import { AudioPanel } from './audio-panel';
+import { BodegaCat } from './bodega-cat';
 
 const path = window.location.pathname;
 const Page = path.startsWith('/about')
@@ -28,10 +31,18 @@ const Page = path.startsWith('/about')
               ? Shrine
               : path.startsWith('/poi') || path.startsWith('/landmarks')
                 ? Poi
-                : Lounge;
+                : path.startsWith('/cab') || path.startsWith('/taxi')
+                  ? Cab
+                  : Lounge;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    {/* Page is the route component; AudioPanel + BodegaCat live at
+        the app root so they appear on every route, with their
+        position + state restored from localStorage on each
+        navigation (each anchor is a real reload — no router). */}
     <Page />
+    <AudioPanel />
+    <BodegaCat />
   </React.StrictMode>,
 );

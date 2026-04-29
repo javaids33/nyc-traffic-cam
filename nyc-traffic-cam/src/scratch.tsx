@@ -927,7 +927,17 @@ function TttPlay({ ticket, onTicketChange }: { ticket: TttTicket; onTicketChange
 
 /* ──────────────────────────────────────── canvas scratch primitive */
 
-const SCRATCH_THRESHOLD = 0.35;
+// Real scratch-offs reveal the value once you've cleared roughly a
+// third of the foil — you don't have to scratch every corner. We
+// drop the threshold to 28% and now check on every drag pulse (not
+// just on pointer-up) so the card pops the second the user has
+// uncovered enough to read the prize. Feels right; saves the player
+// from the futile "scratch every pixel" ritual.
+const SCRATCH_THRESHOLD = 0.28;
+// Sample every Nth drag-frame instead of every frame — getImageData
+// is the expensive step, ~1ms on a small canvas but called 60 times
+// a second is overkill. Every 4th frame still feels instant.
+const CHECK_EVERY_N_FRAMES = 4;
 
 function ScratchCell({
   revealed,
@@ -946,7 +956,9 @@ function ScratchCell({
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const flakeLayerRef = useRef<HTMLDivElement | null>(null);
   const drawingRef = useRef(false);
+  const frameCountRef = useRef(0);
   const [revealedLocal, setRevealedLocal] = useState(revealed);
 
   useEffect(() => { setRevealedLocal(revealed); }, [revealed]);
@@ -998,6 +1010,31 @@ function ScratchCell({
     ctx.beginPath();
     ctx.arc(x, y, 18, 0, Math.PI * 2);
     ctx.fill();
+    emitFlakes(x, y);
+  };
+
+  // Emit 1-3 small foil flakes at the scratch point. Each is an
+  // absolutely-positioned div on a sibling layer that floats outward
+  // with random direction + rotation, then removes itself. Sells the
+  // "scraping with a quarter" feel — the foil is leaving the card,
+  // not just disappearing. Throttled so a frantic drag doesn't blow
+  // the DOM up: only emit on every other frame.
+  const emitFlakes = (x: number, y: number) => {
+    if ((frameCountRef.current & 1) !== 0) return;
+    const layer = flakeLayerRef.current;
+    if (!layer) return;
+    const count = 1 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < count; i++) {
+      const f = document.createElement('span');
+      f.className = 'scratch-flake';
+      const dx = (Math.random() - 0.5) * 36;
+      const dy = -8 - Math.random() * 28;
+      const rot = (Math.random() - 0.5) * 220;
+      const size = 3 + Math.random() * 3;
+      f.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;--fx:${dx}px;--fy:${dy}px;--fr:${rot}deg;`;
+      layer.appendChild(f);
+      setTimeout(() => f.remove(), 750);
+    }
   };
 
   const checkReveal = () => {
@@ -1025,8 +1062,20 @@ function ScratchCell({
   const bindDrag = useDrag(
     ({ first, last, dragging, xy: [x, y] }) => {
       if (revealedLocal) return;
-      if (first) drawingRef.current = true;
-      if (dragging) eraseAt(x, y);
+      if (first) {
+        drawingRef.current = true;
+        frameCountRef.current = 0;
+      }
+      if (dragging) {
+        eraseAt(x, y);
+        frameCountRef.current++;
+        // Mid-drag reveal: real scratch-offs pop the moment you've
+        // cleared enough — you don't have to lift the quarter first.
+        // Sample every Nth frame to keep this cheap.
+        if (frameCountRef.current % CHECK_EVERY_N_FRAMES === 0) {
+          checkReveal();
+        }
+      }
       if (last) {
         drawingRef.current = false;
         checkReveal();
@@ -1067,11 +1116,21 @@ function ScratchCell({
         <div>{children}</div>
       </div>
       {!revealedLocal && (
-        <canvas
-          ref={canvasRef}
-          {...bindDrag()}
-          className="absolute inset-0 touch-none"
-        />
+        <>
+          <canvas
+            ref={canvasRef}
+            {...bindDrag()}
+            className="absolute inset-0 touch-none"
+          />
+          {/* Foil-flake layer: emitFlakes() spawns DOM nodes here on
+              every couple of drag frames. Pointer-events:none so it
+              never steals the canvas's drag stream. */}
+          <div
+            ref={flakeLayerRef}
+            className="absolute inset-0 pointer-events-none overflow-hidden"
+            aria-hidden
+          />
+        </>
       )}
     </div>
   );

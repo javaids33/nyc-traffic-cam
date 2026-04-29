@@ -41,6 +41,19 @@ TIME_OF_DAY_VALUES = {"day", "dusk", "dawn", "night"}
 WEATHER_VALUES = {"clear", "wet", "snow", "fog"}
 CONGESTION_VALUES = {"empty", "light", "busy", "jammed"}
 
+# `area_type` captures the neighborhood character — a higher-level
+# read than `scene` (which is "type of road/structure"). Two cams can
+# both be scene=intersection but one is commercial midtown and the
+# other is a quiet residential corner — area_type tells them apart
+# and feeds directly into the interest score.
+#   commercial   — retail strip, storefronts, billboards, ads
+#   residential  — brownstones, side streets, parked cars
+#   downtown     — dense urban core, skyscrapers, financial / midtown vibe
+#   transit      — primarily about a station / bus depot / bridge
+#   waterfront   — water dominant or visible alongside the scene
+#   mixed        — none of the above clearly dominates
+AREA_TYPE_VALUES = {"commercial", "residential", "downtown", "transit", "waterfront", "mixed"}
+
 # `quality` bucket — replaces the binary `image_usable` flag with a
 # four-way classification so the frontend can render BOTH "best of"
 # and "boring/broken" rails without dropping data.
@@ -66,13 +79,14 @@ TAG_VALUES = {
     "skyline", "skyscraper", "brownstone", "corner_house", "storefront",
     "bodega", "billboard", "scaffolding", "construction",
     # nature / open space
-    "tree", "park", "water", "river", "snow",
+    "tree", "park", "water", "river", "snow", "harbor",
     # life on the street
     "people", "crowd", "vehicles", "bus", "truck", "bicycle", "subway",
+    "taxi", "food_cart", "garbage_bin", "traffic_cone", "subway_entrance",
     # weather / lighting
     "rain", "fog", "sun_glare", "night_lights",
     # iconic
-    "landmark", "statue", "monument",
+    "landmark", "statue", "monument", "mural",
 }
 
 # Map new scene → legacy /poi page category. The /poi page only
@@ -92,50 +106,64 @@ _SCENE_TO_LEGACY_CATEGORY = {
 
 
 PROMPT = """\
-You are looking at a still frame from a NYC DOT traffic camera.
-The image is roughly 352x240 pixels with a timestamp burn-in at the
-top. Be conservative: if you are unsure, prefer null/false/empty and
-lower the confidence rather than guess.
+Describe this NYC traffic camera frame as JSON. Look at the actual
+pixels — do not guess what NYC "usually" looks like.
 
-Output ONE JSON object with these exact fields and no other text:
+JSON schema (return exactly these fields):
 
 {
-  "quality": <one of:
-      "good"   — clear frame, something worth looking at,
-      "boring" — clear but uneventful (empty pavement, blank wall),
-      "broken" — mispointed, frozen, signal-loss, completely unusable,
-      "dirty"  — lens covered in water/dirt/smudge>,
-  "scene": <one of: "highway", "bridge", "tunnel", "intersection",
-                    "boulevard", "residential", "skyline", "other">,
-  "tags": <array of 0..10 strings, each one of:
-      "bridge","tunnel","highway","road","intersection","crosswalk",
-      "traffic_lights","street_signs","lamppost",
-      "skyline","skyscraper","brownstone","corner_house","storefront",
-      "bodega","billboard","scaffolding","construction",
-      "tree","park","water","river","snow",
-      "people","crowd","vehicles","bus","truck","bicycle","subway",
-      "rain","fog","sun_glare","night_lights",
-      "landmark","statue","monument"
-      — list every element you can clearly see in the frame; omit
-      anything you are unsure about>,
-  "skyline_visible": <bool — true if the Manhattan skyline silhouette
-                      is visible in the distance, even from a cam
-                      that isn't primarily a skyline shot>,
-  "sun_glare":        <bool — true if significant glare or lens-flare>,
-  "lens_obstruction": <bool — water droplets, dirt, smudge on lens>,
-  "time_of_day": <one of: "day", "dusk", "dawn", "night">,
-  "weather":     <one of: "clear", "wet", "snow", "fog">,
-  "congestion":  <one of: "empty", "light", "busy", "jammed">,
-  "crowd_or_event":    <bool — 5+ pedestrians clustered, tents/booths,
-                        road work / cones / barriers, unusual gathering>,
-  "event_description": <if crowd_or_event is true, an 8-word
-                        description; else null>,
-  "landmark_name":     <if a recognizable NYC landmark is clearly in
-                        frame (Brooklyn Bridge, Empire State,
-                        Citi Field, Barclays Center, etc.) name it;
-                        else null>,
-  "confidence":        <integer 0-100, your overall confidence>
+  "quality": "good" | "boring" | "broken" | "dirty",
+  "scene": "highway" | "bridge" | "tunnel" | "intersection" | "boulevard" | "residential" | "skyline" | "other",
+  "area_type": "commercial" | "residential" | "downtown" | "transit" | "waterfront" | "mixed",
+  "tags": [string array — every visible element from the allowed list below; pick all that apply],
+  "proposed_tags": [up to 5 lowercase_snake_case strings for visible things no allowed tag covers; else []],
+  "skyline_visible": boolean,
+  "sun_glare": boolean,
+  "lens_obstruction": boolean,
+  "time_of_day": "day" | "dusk" | "dawn" | "night",
+  "weather": "clear" | "wet" | "snow" | "fog",
+  "congestion": "empty" | "light" | "busy" | "jammed",
+  "crowd_or_event": boolean,
+  "event_description": string-or-null,
+  "landmark_name": string-or-null,
+  "confidence": integer 0-100
 }
+
+Quality rules:
+- "broken" if frame shows "camera being serviced" / "camera error" / "no signal" overlay text, or is solid black, grey, or a frozen single still
+- "dirty" if lens is fogged, splashed, smudged
+- "boring" if frame shows only road / pavement / blank wall / parked cars with nothing happening
+- "good" otherwise
+
+Tag rules — include EVERY allowed tag that is visibly in the frame.
+Do not include a tag if you cannot point to where you see it.
+
+Allowed tags:
+bridge, tunnel, highway, road, intersection, crosswalk,
+traffic_lights, street_signs, lamppost,
+skyline, skyscraper, brownstone, corner_house, storefront,
+bodega, billboard, scaffolding, construction, traffic_cone,
+tree, park, water, river, harbor, snow,
+people, crowd, vehicles, bus, truck, taxi, bicycle, subway,
+food_cart, garbage_bin, subway_entrance,
+rain, fog, sun_glare, night_lights,
+landmark, statue, monument, mural
+
+Examples of correct outputs:
+
+Frame: empty highway shot at midday, no buildings.
+  -> "tags": ["highway","road"], "scene":"highway", "quality":"boring", "area_type":"mixed"
+
+Frame: midtown intersection with storefronts, taxis, scaffolding, people.
+  -> "tags": ["intersection","crosswalk","traffic_lights","storefront","scaffolding","taxi","vehicles","people"], "scene":"intersection", "quality":"good", "area_type":"commercial"
+
+Frame: quiet residential corner with brownstones and parked cars.
+  -> "tags": ["road","brownstone","tree"], "scene":"residential", "quality":"boring", "area_type":"residential"
+
+Frame: shows the text "This camera is being serviced".
+  -> "tags": [], "scene":"other", "quality":"broken", "area_type":"mixed"
+
+Now describe THIS frame as JSON. Return the JSON only, no prose.
 """
 
 
@@ -178,6 +206,45 @@ def _coerce_tag_list(v: Any) -> list[str]:
         if s in TAG_VALUES and s not in seen:
             out.append(s)
             seen.add(s)
+    return out
+
+
+def _coerce_proposed_tag_list(v: Any, in_vocab: set[str]) -> list[str]:
+    """Sanitize the model's free-form proposals.
+
+    Rules:
+      - lowercase snake_case
+      - alpha + underscore only (strip everything else)
+      - 2-24 chars per entry
+      - max 5 entries
+      - drop anything already covered by the controlled vocabulary
+        so the proposed list never duplicates `tags`
+    """
+    if not isinstance(v, list):
+        if isinstance(v, str):
+            v = [t.strip() for t in v.split(",")]
+        else:
+            return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for t in v:
+        if not isinstance(t, str):
+            continue
+        # Lowercase, replace dash/space with underscore, strip non-alpha-underscore.
+        s = t.strip().lower().replace("-", "_").replace(" ", "_")
+        s = "".join(ch for ch in s if ch.isalpha() or ch == "_")
+        # Collapse repeated underscores, trim leading/trailing.
+        while "__" in s:
+            s = s.replace("__", "_")
+        s = s.strip("_")
+        if not (2 <= len(s) <= 24):
+            continue
+        if s in in_vocab or s in seen:
+            continue
+        out.append(s)
+        seen.add(s)
+        if len(out) >= 5:
+            break
     return out
 
 
@@ -227,7 +294,9 @@ def parse_response(text: str) -> dict[str, Any]:
         "quality":           quality,
         "image_usable":      quality in {"good", "boring", "dirty"},
         "scene":             _coerce_str_enum(parsed.get("scene"), SCENE_VALUES, "other"),
+        "area_type":         _coerce_str_enum(parsed.get("area_type"), AREA_TYPE_VALUES, "mixed"),
         "tags":              _coerce_tag_list(parsed.get("tags")),
+        "proposed_tags":     _coerce_proposed_tag_list(parsed.get("proposed_tags"), TAG_VALUES),
         "skyline_visible":   _coerce_bool(parsed.get("skyline_visible", False)),
         "sun_glare":         _coerce_bool(parsed.get("sun_glare", False)),
         "lens_obstruction":  _coerce_bool(parsed.get("lens_obstruction", False)),
@@ -255,7 +324,9 @@ def _empty_record() -> dict[str, Any]:
         "quality": "broken",
         "image_usable": False,
         "scene": "other",
+        "area_type": "mixed",
         "tags": [],
+        "proposed_tags": [],
         "skyline_visible": False,
         "sun_glare": False,
         "lens_obstruction": False,
@@ -292,6 +363,19 @@ _WEATHER_BONUS = {"snow": 25, "fog": 15, "wet": 10, "clear": 0}
 _TIME_BONUS    = {"night": 10, "dawn": 8, "dusk": 4, "day": 0}
 _CONG_BONUS    = {"jammed": 12, "busy": 5, "light": 0, "empty": -3}
 
+# Area type bonus — neighborhood vibe matters as much as the road
+# type for "is this worth looking at". A downtown skyscraper canyon
+# is more interesting than a residential side street even when both
+# are scene=intersection in light traffic.
+_AREA_TYPE_BONUS = {
+    "downtown":    10,
+    "waterfront":   8,
+    "commercial":   5,
+    "transit":      4,
+    "mixed":        0,
+    "residential": -2,
+}
+
 # Per-tag bonus — extra points when these visual elements are
 # present. Tags that already contribute via scene/weather are scored
 # at 0 here to avoid double-counting.
@@ -299,6 +383,7 @@ _TAG_BONUS: dict[str, int] = {
     "landmark":    20,
     "statue":      15,
     "monument":    12,
+    "mural":        7,   # NYC street art is photogenic
     "skyline":      0,   # covered by scene + skyline_visible
     "skyscraper":   3,
     "brownstone":   4,
@@ -308,19 +393,25 @@ _TAG_BONUS: dict[str, int] = {
     "billboard":    3,
     "scaffolding":  2,
     "construction": 4,
+    "traffic_cone": 2,   # signals active street work
     "tree":         3,
     "park":         6,
     "water":        6,
     "river":        7,
+    "harbor":       8,
     "snow":         0,   # covered by weather
     "rain":         0,   # covered by weather (wet)
     "fog":          0,   # covered by weather
     "people":       4,
     "crowd":       10,
+    "food_cart":    5,   # NYC iconic, often a small crowd nearby
     "subway":       8,
+    "subway_entrance": 6,
     "bus":          2,
     "truck":        1,
+    "taxi":         3,
     "bicycle":      2,
+    "garbage_bin":  0,
     "night_lights": 5,
     "sun_glare":   -8,
 }
@@ -366,6 +457,7 @@ def interest_score(rec: dict[str, Any]) -> int:
     score += _WEATHER_BONUS.get(rec.get("weather") or "clear", 0)
     score += _TIME_BONUS.get(rec.get("time_of_day") or "day", 0)
     score += _CONG_BONUS.get(rec.get("congestion") or "empty", 0)
+    score += _AREA_TYPE_BONUS.get(rec.get("area_type") or "mixed", 0)
 
     # Tag richness — variety is interesting, but cap so a model that
     # over-tags a single frame can't run away with the score.

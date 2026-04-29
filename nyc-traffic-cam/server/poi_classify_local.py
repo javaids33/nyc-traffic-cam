@@ -10,10 +10,8 @@ Quickstart:
     #    On Linux:   curl -fsSL https://ollama.com/install.sh | sh && ollama serve &
 
     # 2. Pull a vision model (one-time):
-    ollama pull llama3.2-vision        # ~7.9 GB, default
-    # OR a sharper landmark recognizer:
-    ollama pull qwen2.5vl:7b           # ~6 GB
-    # OR lightweight:
+    ollama pull qwen2.5vl:7b           # ~6 GB, default — best quality at this size
+    # OR lightweight (older, weaker tags but fits 8 GB GPUs comfortably):
     ollama pull llava:7b               # ~4.7 GB
 
     # 3. Smoke test on 5 cams (prints to stdout, doesn't write files):
@@ -70,16 +68,28 @@ NYCTMC_GRAPHQL = "https://webcams.nyctmc.org/cameras/graphql"
 NYCTMC_IMAGE = "https://webcams.nyctmc.org/api/cameras/{cam_id}/image"
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
-# llava:7b is the default because its compute graph (~40 MiB) fits
-# fully on an 8 GB consumer GPU. Confirmed on an RTX 3070: full
-# 33/33 layer offload, ~2.8 s/cam steady-state — a 960-cam sweep
-# finishes in <50 minutes.
+# llava:7b is the default — it's the only Ollama VLM that fully fits
+# the 3070's 8 GB VRAM (~4.5 GB) and runs ~2.8 s/cam, finishing the
+# whole 960-cam sweep in <50 minutes. Quality is coarser than larger
+# models, but we lean on three things to compensate:
+#   1. The PROMPT in poi_taxonomy.py is rewritten for exhaustive
+#      enumeration (systematic frame scan, big tag vocab)
+#   2. fetch_image_b64() validates JPEG magic + min size, so frozen
+#      placeholders never reach the model
+#   3. /poi has a manual override editor for the inevitable misses
 #
-# qwen2.5vl:7b produces richer tags but allocates a 6.7 GiB compute
-# graph for its vision encoder; on cards with <12 GiB VRAM the
-# Ollama scheduler refuses to offload any layer and the model runs
-# entirely on CPU at ~50 s/cam (13 hours for a full sweep). Use
-# `--model qwen2.5vl:7b` only on workstations with ≥12 GB VRAM.
+# Models we tried and rejected on this card:
+#   - qwen2.5vl:7b/3b — vision encoder compute graph needs 12+ GiB,
+#                       Ollama 0.22 falls 100% to CPU (~50 s and
+#                       ~25 s per cam respectively, no GPU offload)
+#   - llava-llama3:8b — fits GPU but hallucinates: same tag list for
+#                       every cam, fabricates landmarks
+#   - llava:13b — fits GPU at 9 GB via WDDM shared memory, quality
+#                 is genuinely better, but PCIe-paged spillover means
+#                 ~25 s/cam (~6.5 h sweep). Not worth the wait when
+#                 the cloud Anthropic path (poi_classify.py) is
+#                 ~30 min for the same money sink. Use `--model llava:13b`
+#                 if you want it.
 DEFAULT_MODEL = "llava:7b"
 
 # Use the shared prompt from poi_taxonomy. Don't shadow it with a
@@ -139,13 +149,35 @@ async def list_cameras(client: httpx.AsyncClient) -> list[dict[str, Any]]:
 
 
 async def fetch_image_b64(client: httpx.AsyncClient, cam_id: str) -> str | None:
-    """Pull one frame from a camera; return base64-encoded JPEG."""
+    """Pull one frame from a camera; return base64-encoded JPEG.
+
+    Validates the bytes before sending them to the VLM:
+      - HTTP 200 + non-empty body
+      - Starts with the JPEG magic prefix `\\xff\\xd8\\xff` so we
+        don't pass HTML error pages or PNG placeholders to the model
+      - At least MIN_BYTES — NYCTMC's own "camera offline" status
+        image is ~1.5 KB; a real frame is ≥3-4 KB. Below MIN_BYTES we
+        skip the cam entirely (routed to quality=empty by the caller),
+        saving ~3 s of GPU inference per dead frame.
+
+    Returns None on any rejection — the caller already routes that
+    via `empty_skipped_record("no_image")`.
+    """
     url = NYCTMC_IMAGE.format(cam_id=cam_id)
+    MIN_BYTES = 3000
     try:
         r = await client.get(url, timeout=15.0)
-        if r.status_code != 200 or not r.content:
+        if r.status_code != 200:
             return None
-        return base64.standard_b64encode(r.content).decode("ascii")
+        body = r.content
+        if not body or len(body) < MIN_BYTES:
+            return None
+        # JPEG magic: every real JPEG starts FF D8 FF (then E0/E1/etc).
+        # Reject anything that doesn't — usually an HTML error page
+        # served as text/plain or a tiny PNG status placeholder.
+        if not body.startswith(b"\xff\xd8\xff"):
+            return None
+        return base64.standard_b64encode(body).decode("ascii")
     except Exception:
         return None
 
@@ -201,22 +233,29 @@ async def classify(
             "num_predict": 600,
             # GPU memory tuning — see ollama server.log if changing.
             #
-            # qwen2.5vl:7b on an 8 GB card needs *all four* of these
-            # to fit, and the dominant cost is the compute graph
-            # (image-preprocessing scratch buffers), not the weights:
-            #   weights ........ 5.6 GiB  (Q4_K_M, 8.3B params)
-            #   kv cache ....... 112 MiB  (at num_ctx=2048)
-            #   compute graph .. 6.7 GiB  (at num_batch=512, default)
-            #   ─────────────────────────
-            #   total .......... 12.4 GiB ← won't fit, Ollama falls
-            #                                back to CPU (~50 s/cam)
+            # The dominant cost for Qwen2.5-VL is the vision encoder's
+            # compute graph (image-preprocessing scratch buffers), not
+            # the weights. Ollama 0.22's scheduler is all-or-nothing:
+            # if the projected total > free VRAM, it drops 100% to CPU
+            # (no partial offload). Numbers measured on an RTX 3070
+            # (8 GB · ~6 GB free with desktop apps running):
             #
-            # Cutting num_batch 512→128 shrinks the compute graph
-            # ~4x, and num_ctx 4096→2048 halves KV cache. Combined,
-            # the 7B-Q4 vision model fits in ~6 GiB of the 8 GiB card
-            # with a ~10x speedup over CPU.
-            "num_ctx": 2048,
-            "num_batch": 128,
+            #   qwen2.5vl:7b  weights 5.6 GiB + graph 6.7 GiB = 12 GiB   → CPU only
+            #   qwen2.5vl:3b  weights 2.6 GiB + graph 6.7 GiB = 10 GiB   → CPU only at num_batch=128
+            #   qwen2.5vl:3b  weights 2.6 GiB + graph 1.7 GiB =  4 GiB   → fits, ~3-5s/cam at num_batch=32
+            #   llava:7b      weights 4.5 GiB + graph 0.4 GiB =  5 GiB   → fits, ~2.8s/cam
+            #
+            # num_batch=32 is the smallest setting that still lets the
+            # vision encoder run; below that it errors. Together with
+            # num_ctx=2048 this is the only config that gets a Qwen
+            # vision model onto the 3070.
+            # llava:7b is small enough that we can afford 4096 ctx on
+            # the 3070 (still fits at ~5 GiB total). The longer ctx
+            # matters because the v3 prompt is ~3 KB after the image
+            # tokens — at num_ctx=2048 the model runs out of headroom
+            # and emits truncated JSON (only the first tag, etc).
+            "num_ctx": 4096,
+            "num_batch": 32,
             "num_gpu": 99,        # offload as many layers as fit
         },
         "messages": [
@@ -243,8 +282,8 @@ def _write(
     if not split_by_time:
         # Single-file output. By default writes data/cam_pois.json +
         # src/cam-pois.json — pass `output_name` to route a parallel
-        # run to a sibling file (e.g. `cam_pois_moondream` writes
-        # data/cam_pois_moondream.json + src/cam-pois-moondream.json)
+        # run to a sibling file (e.g. `cam_pois_qwen25vl` writes
+        # data/cam_pois_qwen25vl.json + src/cam-pois-qwen25vl.json)
         # without clobbering the primary run.
         payload = {
             "generated_at": int(time.time()),
@@ -322,6 +361,12 @@ def _print_one(cam_id: str, name: str, rec: dict[str, Any]) -> None:
     tags = rec.get("tags") or []
     if tags:
         extras.append(f"tags={','.join(tags[:6])}")
+    proposed = rec.get("proposed_tags") or []
+    if proposed:
+        extras.append(f"+proposed={','.join(proposed)}")
+    area = rec.get("area_type")
+    if area and area != "mixed":
+        extras.append(f"area={area}")
 
     print(
         f"  {cam_id[:8]}  {name[:38]:38s}  "
@@ -354,7 +399,7 @@ async def run(
         await wait_for_sunset_plus(at_sunset_plus)
 
     # Pick the file we resume from + write to. `output_name` lets a
-    # parallel run (e.g. moondream comparison) target its own JSON
+    # parallel run (e.g. a model comparison) target its own JSON
     # without touching the main cam_pois.json.
     out_data_path = (DATA_DIR / f"{output_name}.json") if output_name else OUT_PATH
 
@@ -478,7 +523,7 @@ def main() -> None:
     p.add_argument("--model", default=DEFAULT_MODEL, help=f"Ollama model tag (default: {DEFAULT_MODEL}).")
     p.add_argument("--dry-run", action="store_true", help="Smoke test mode: print each result, don't write files.")
     p.add_argument("--split-by-time", action="store_true", help="Split output into separate day/night JSON files (default: single file).")
-    p.add_argument("--output-name", default=None, help="Override output basename (e.g. 'cam_pois_moondream' to write a parallel comparison file without clobbering the main run).")
+    p.add_argument("--output-name", default=None, help="Override output basename (e.g. 'cam_pois_qwen25vl' to write a parallel comparison file without clobbering the main run).")
     p.add_argument("--at-sunset-plus", type=int, default=None, metavar="MIN", help="Sleep until N minutes after today's NYC sunset before classifying. Used for the nightly run that captures actual nighttime frames; pair with --output-name cam_pois_night.")
     p.add_argument("--night", action="store_true", help="Convenience preset: --at-sunset-plus 20 --output-name cam_pois_night.")
     args = p.parse_args()

@@ -7,10 +7,13 @@ import {
   CHANNEL_LINEUP,
   StreetFauna,
   type TVCaption,
+  type TvChassis,
 } from './bodega-tv';
 import { QuarterStash, RollingQuarter, QuarterIcon, useQuarters, HiddenCoin } from './quarter';
-import { AudioPanel } from './audio-panel';
+// AudioPanel is mounted at app root in main.tsx so it persists
+// across every page. Don't import here.
 import { recordTune, loreLine } from './cam-lore';
+// BodegaCat is mounted at app root in main.tsx alongside AudioPanel.
 
 const ALERT_LABELS_LONG: Record<string, string> = {
   sudden_change: 'SUDDEN CHANGE',
@@ -36,13 +39,15 @@ const BOROUGH_TABS: { id: Borough; label: string; short: string }[] = [
   { id: 'STATEN ISLAND', label: 'STATEN IS', short: 'SI' },
 ];
 
-function rough_borough(lat: number, lng: number): Borough {
-  // Loose bounding boxes — Easter-egg accuracy, not survey-grade.
-  if (lat > 40.78 && lng > -73.94) return 'BRONX';
-  if (lng < -74.05) return 'STATEN ISLAND';
-  if (lat < 40.7 && lng > -73.95) return 'BROOKLYN';
-  if (lng > -73.93) return 'QUEENS';
-  return 'MANHATTAN';
+// Each cam in src/cameras.json now carries a `borough` field baked
+// in by server/sync_boroughs.py via point-in-polygon against NYC's
+// official borough boundaries. The earlier bounding-box hack
+// mis-classified the East River seam — Queens Plaza, LIC, Greenpoint,
+// Astoria all came out Manhattan because the longitude check used a
+// single fixed meridian. Fall back to 'MANHATTAN' only if the field
+// is missing (e.g. the cameras.json file is older than this code).
+function camBorough(c: Camera): Borough {
+  return (c.borough ?? 'MANHATTAN') as Borough;
 }
 
 export default function Lounge() {
@@ -63,6 +68,18 @@ export default function Lounge() {
   const [borough, setBorough] = useState<Borough>('ALL');
   const boroughRef = useRef<Borough>('ALL');
   useEffect(() => { boroughRef.current = borough; }, [borough]);
+
+  // TV chassis variant — wood CRT, plasma, modern flatscreen, or
+  // colored portable. Persisted so the user's choice survives a
+  // navigation (each anchor is a real reload — no router).
+  const [chassis, setChassis] = useState<TvChassis>(() => {
+    try {
+      const v = localStorage.getItem('nyc-tv-chassis') as TvChassis | null;
+      return v && ['wood-crt', 'plasma', 'flatscreen', 'portable'].includes(v) ? v : 'wood-crt';
+    } catch { return 'wood-crt'; }
+  });
+  useEffect(() => { try { localStorage.setItem('nyc-tv-chassis', chassis); } catch { /* private mode */ } }, [chassis]);
+  const [chassisOpen, setChassisOpen] = useState(false);
   const [intro, setIntro] = useState(() => {
     if (typeof window === 'undefined') return false;
     return !sessionStorage.getItem('nyc-cam-seen');
@@ -129,7 +146,7 @@ export default function Lounge() {
     const b = boroughRef.current;
     if (!allCams.length) return;
 
-    const inBorough = b === 'ALL' ? allCams : allCams.filter((c) => rough_borough(c.lat, c.lng) === b);
+    const inBorough = b === 'ALL' ? allCams : allCams.filter((c) => camBorough(c) === b);
     const baseline = inBorough.length ? inBorough : allCams;
     const others = baseline.filter((c) => c.id !== cur?.cameraId);
     const pool = others.length ? others : baseline;
@@ -140,11 +157,39 @@ export default function Lounge() {
       caption: {
         title: c.name ?? c.id,
         subtitle: null,
-        meta: `ROULETTE · ${rough_borough(c.lat, c.lng)}`,
+        meta: `ROULETTE · ${camBorough(c)}`,
         coords: { lat: c.lat, lng: c.lng },
       },
     });
   }, [flipTo]);
+
+  // Listen for the TV's CHAN + BORO knobs — clicking them
+  // dispatches custom DOM events so BodegaTV stays decoupled.
+  // CHAN → surfNext (static flash). BORO → cycle borough and
+  // surf into the new borough.
+  useEffect(() => {
+    const onFlipChan = () => {
+      setLocked(false);
+      surfNext();
+    };
+    const onFlipBoro = () => {
+      const order: Borough[] = ['ALL', 'MANHATTAN', 'BRONX', 'BROOKLYN', 'QUEENS', 'STATEN ISLAND'];
+      setBorough((cur) => {
+        const idx = order.indexOf(cur);
+        const next = order[(idx + 1) % order.length];
+        // Surf into the new borough on next tick so the borough
+        // ref has updated.
+        setTimeout(() => { setLocked(false); surfNext(); }, 0);
+        return next;
+      });
+    };
+    window.addEventListener('tv:flip-channel', onFlipChan);
+    window.addEventListener('tv:flip-borough', onFlipBoro);
+    return () => {
+      window.removeEventListener('tv:flip-channel', onFlipChan);
+      window.removeEventListener('tv:flip-borough', onFlipBoro);
+    };
+  }, [surfNext]);
 
   // First pick once we have data
   useEffect(() => {
@@ -222,7 +267,9 @@ export default function Lounge() {
       <BodegaAwning />
       <QuarterStash />
       <RollingQuarter />
-      <AudioPanel />
+      {/* AudioPanel + BodegaCat moved to main.tsx — they persist
+          across every route now, with position restored from
+          localStorage on each page load. */}
 
       <main className="flex-1 relative flex items-start justify-center px-2 sm:px-6 pt-6 sm:pt-8 pb-6 overflow-y-auto">
         <SkylineBg />
@@ -251,14 +298,15 @@ export default function Lounge() {
           <div className="min-w-0">
             {/* borough filter — its own sub-header bar so it doesn't get
                 visually swallowed by the awning's toothy bottom edge.
-                Opaque so the TV's "ON AIR / live broadcast" neon sign
-                behind it doesn't bleed through. */}
+                Opaque so it forms a tight composition with the
+                inline ON AIR neon (right side) — they read as one
+                "TV channel knob" instead of two competing elements. */}
             <div
-              className="relative z-20 mb-3 px-2 py-1.5 flex flex-wrap items-center gap-1 font-typewriter text-[10px] uppercase tracking-[0.18em] bg-[#0a0a14] border border-[#FFD600]/40"
+              className="relative z-20 mb-3 px-2 py-1.5 flex flex-wrap items-center gap-1 font-typewriter text-[11px] uppercase tracking-[0.18em] bg-[#0a0a14] border border-[#FFD600]/40"
               style={{ boxShadow: '2px 2px 0 #d11a2a' }}
             >
-              <span className="text-[#FFD600] mr-1.5 font-bungee text-[11px] tracking-[0.06em] hidden sm:inline">★ TUNE BY BOROUGH</span>
-              {BOROUGH_TABS.map((b) => {
+              <span className="text-[#FFD600] mr-1.5 font-bungee text-[12px] tracking-[0.06em] hidden sm:inline">★ TUNE BY BOROUGH</span>
+              {BOROUGH_TABS.map((b, i) => {
                 const active = borough === b.id;
                 return (
                   <button
@@ -266,22 +314,58 @@ export default function Lounge() {
                     onClick={() => {
                       setBorough(b.id);
                       // Force a fresh pick that respects the new filter — don't wait
-                      // for the 18s tick.
+                      // for the 18s tick. flipTo() flashes the static
+                      // overlay automatically, so this also reads as a
+                      // proper "channel flip".
                       setLocked(false);
                       setTimeout(() => surfNext(), 0);
                     }}
-                    className={`px-2 py-0.5 border transition-colors ${
+                    className={`px-2 py-1 border transition-colors text-[11px] ${
                       active
                         ? 'bg-[#FFD600] text-black border-[#FFD600]'
                         : 'border-white/20 text-white/75 hover:border-[#FFD600] hover:text-[#FFD600]'
                     }`}
-                    title={b.label}
+                    title={`${b.label} · channel ${i + 1}`}
                   >
+                    {/* Channel-style number prefix sells the "borough
+                        button is a tuner knob" idea; visible on wider
+                        screens, hidden when crowded so the labels stay
+                        legible on mobile. */}
+                    <span className="hidden md:inline text-white/40 mr-1 font-mono text-[9px]">CH·{String(i).padStart(2, '0')}</span>
                     <span className="sm:hidden">{b.short}</span>
                     <span className="hidden sm:inline">{b.label}</span>
                   </button>
                 );
               })}
+              {/* Inline ON AIR neon — moved here from the TV chassis so
+                  the borough bar can't obscure it. Lights up steady
+                  when a cam is focused, switches to a magenta "ZAPPING"
+                  pulse during the channel-flip static flash. */}
+              <div className="ml-auto flex items-baseline gap-1.5 pl-2 border-l border-white/10">
+                {staticOn ? (
+                  <>
+                    <span className="font-bungee text-[14px] tracking-[0.08em] text-[#ff5582] neon" style={{ animation: 'tip-bounce 0.38s linear' }}>
+                      ⚡ ZAPPING
+                    </span>
+                    <span className="hidden md:inline font-typewriter text-[9px] uppercase tracking-[0.22em] text-[#ff5582]/65">
+                      ↦ {borough === 'ALL' ? 'all five' : borough.toLowerCase()}
+                    </span>
+                  </>
+                ) : focus ? (
+                  <>
+                    <span className="font-bungee text-[14px] tracking-[0.08em] neon" style={{ color: '#ff5582' }}>
+                      ● ON AIR
+                    </span>
+                    <span className="hidden md:inline font-typewriter text-[9px] uppercase tracking-[0.22em] text-[#ff5582]/55">
+                      live broadcast
+                    </span>
+                  </>
+                ) : (
+                  <span className="font-bungee text-[14px] tracking-[0.08em] text-white/35">
+                    ○ STANDBY
+                  </span>
+                )}
+              </div>
             </div>
             <div className="relative">
               <BodegaTV
@@ -293,6 +377,7 @@ export default function Lounge() {
                 locked={locked}
                 large
                 onScreenClick={() => setLocked((l) => !l)}
+                chassis={chassis}
               />
             </div>
 
@@ -300,29 +385,89 @@ export default function Lounge() {
               <button
                 type="button"
                 onClick={() => surfNext()}
-                title="Next channel (space)"
-                className="px-3 py-1.5 border border-[#FFD600] text-[#FFD600] hover:bg-[#FFD600] hover:text-black transition-colors font-typewriter text-[10px] sm:text-[11px] uppercase tracking-[0.22em]"
+                title="Next channel — surf to a random camera (keyboard: space)"
+                className="px-3 py-1.5 border border-[#FFD600] text-[#FFD600] hover:bg-[#FFD600] hover:text-black transition-colors font-typewriter text-[11px] sm:text-[12px] uppercase tracking-[0.22em]"
                 style={{ boxShadow: '2px 2px 0 #d11a2a' }}
               >
                 CH ▶ NEXT
               </button>
+              {/* Yellow Cab moved out of this row — now its own
+                  mode card in the "More at the Deli" rack and a
+                  full /cab page mimicking the Hop-the-Turnstile UX
+                  with vintage NYC records. */}
               <button
                 type="button"
                 onClick={() => setLocked((l) => !l)}
-                title="Lock / unlock the channel"
-                className={`px-3 py-1.5 border transition-colors font-typewriter text-[10px] sm:text-[11px] uppercase tracking-[0.22em] ${
+                title={locked ? 'Channel locked — click or press L to release auto-surf' : 'Lock the current channel — stops auto-surf (or press L)'}
+                aria-pressed={locked}
+                className={`px-3 py-1.5 border transition-colors font-typewriter text-[11px] sm:text-[12px] uppercase tracking-[0.22em] ${
                   locked
                     ? 'bg-[#FFD600] text-black border-[#FFD600]'
-                    : 'border-white/30 text-white/75 hover:border-[#FFD600] hover:text-[#FFD600]'
+                    : 'border-white/30 text-white/85 hover:border-[#FFD600] hover:text-[#FFD600]'
                 }`}
               >
                 {locked ? '🔒 LOCKED' : 'HOLD CHANNEL'}
               </button>
-              <span className="hidden sm:inline text-[10px] tracking-[0.22em] uppercase font-typewriter text-[#FFD600]/65 ml-1">
+              <span className="hidden sm:inline text-[11px] tracking-[0.22em] uppercase font-typewriter text-[#FFD600]/85 ml-1">
                 {locked ? '— tap screen or HOLD again to resume —' : 'auto-surfs every 18s'}
               </span>
-              <span className="ml-auto text-[10px] tracking-[0.22em] uppercase font-typewriter text-white/45">
-                roulette · {cameras.length} cams in the wheel
+              {/* TV chassis picker — small button that pops a menu of
+                  the four available chassis variants. Click outside
+                  to close (the modal backdrop does that). */}
+              <div className="relative ml-auto">
+                <button
+                  type="button"
+                  onClick={() => setChassisOpen((v) => !v)}
+                  className="px-3 py-1.5 border border-white/30 text-white/75 hover:border-[#FFD600] hover:text-[#FFD600] transition-colors font-typewriter text-[10px] sm:text-[11px] uppercase tracking-[0.22em]"
+                  title="Switch the TV cabinet style — wood CRT, plasma, flatscreen, or portable"
+                  aria-haspopup="menu"
+                  aria-expanded={chassisOpen}
+                >
+                  📺 {chassis === 'wood-crt' ? 'CRT' : chassis === 'plasma' ? 'PLASMA' : chassis === 'flatscreen' ? 'LCD' : 'PORTABLE'}
+                </button>
+                {chassisOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setChassisOpen(false)} aria-hidden />
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-full mt-1 z-50 min-w-[200px] bg-[#0a0a14] border border-[#FFD600] font-typewriter text-[10px] uppercase tracking-[0.18em]"
+                      style={{ boxShadow: '4px 4px 0 #d11a2a' }}
+                    >
+                      {(['wood-crt', 'plasma', 'flatscreen', 'portable'] as TvChassis[]).map((c) => {
+                        const labels: Record<TvChassis, string> = {
+                          'wood-crt':   '📺 Wood CRT',
+                          'plasma':     '🖥️ Plasma',
+                          'flatscreen': '🖼️ Flatscreen',
+                          'portable':   '📻 Portable',
+                        };
+                        const hints: Record<TvChassis, string> = {
+                          'wood-crt':   'walnut · rabbit ears · 1978',
+                          'plasma':     'glossy black · early-2000s',
+                          'flatscreen': 'silver bezel · modern',
+                          'portable':   'orange plastic · knob era',
+                        };
+                        const active = chassis === c;
+                        return (
+                          <button
+                            key={c}
+                            role="menuitemradio"
+                            aria-checked={active}
+                            type="button"
+                            onClick={() => { setChassis(c); setChassisOpen(false); }}
+                            className={`w-full text-left px-3 py-2 border-b border-white/5 transition-colors block ${active ? 'bg-[#FFD600] text-black' : 'text-white/85 hover:bg-white/10 hover:text-[#FFD600]'}`}
+                            title={hints[c]}
+                          >
+                            <div>{labels[c]}</div>
+                            <div className={`text-[8px] tracking-[0.16em] mt-0.5 ${active ? 'text-black/65' : 'text-white/45'} normal-case`}>{hints[c]}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+              <span className="hidden md:inline text-[11px] tracking-[0.22em] uppercase font-typewriter text-white/65" title={`The roulette draws from all ${cameras.length} live NYC DOT cameras`}>
+                {cameras.length} cams · roulette
               </span>
             </div>
 
@@ -567,8 +712,8 @@ function CornerBrasstack() {
       target="_blank"
       rel="noopener noreferrer"
       className="group fixed right-4 bottom-24 z-30 hidden md:block transition-transform hover:scale-[1.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
-      title="like the site? buy me a coffee — anthora optional"
-      aria-label="Buy me a coffee — opens in a new tab"
+      title="like the site? lemme hold a dolla — anthora optional"
+      aria-label="Lemme hold a dolla — opens buymeacoffee in a new tab"
     >
       {/* steam — three plumes drifting up from the cup */}
       <div className="relative h-14 w-24 mx-auto pointer-events-none" aria-hidden>
@@ -588,7 +733,7 @@ function CornerBrasstack() {
           />
         ))}
       </div>
-      <svg viewBox="0 0 100 130" width="120" height="156" aria-hidden>
+      <svg viewBox="0 0 100 130" width="120" height="156" aria-hidden className="coffee-wiggle">
         <defs>
           <linearGradient id="anthoraSide" x1="0" x2="1">
             <stop offset="0%" stopColor="#0a3a82" />
@@ -607,9 +752,11 @@ function CornerBrasstack() {
         {/* cup body — slight taper */}
         <path d="M 12 22 L 22 124 L 78 124 L 88 22 Z" fill="url(#anthoraSide)" stroke="#04204c" strokeWidth="1" />
 
-        {/* white inner shield panel */}
+        {/* white inner shield panel — pulled further down + shrunk
+            again per second pass. Now hugs the lettering + espresso
+            cups with minimal blank padding above/below. */}
         <path
-          d="M 28 36 Q 30 32 34 32 L 66 32 Q 70 32 72 36 L 70 96 Q 68 100 64 100 L 36 100 Q 32 100 30 96 Z"
+          d="M 28 46 Q 30 42 34 42 L 66 42 Q 70 42 72 46 L 70 86 Q 68 90 64 90 L 36 90 Q 32 90 30 86 Z"
           fill="#fdfdfb"
           stroke="#04204c"
           strokeWidth="0.6"
@@ -617,52 +764,58 @@ function CornerBrasstack() {
 
         {/* Greek meander border — top */}
         <rect x="14" y="30" width="72" height="4" fill="url(#meander)" />
-        {/* Greek meander border — bottom */}
-        <rect x="14" y="116" width="72" height="4" fill="url(#meander)" />
+        {/* Greek meander border — bottom. Cup is tapered (narrower at
+            base) so the bottom band must be shorter than the top, or
+            it visibly overhangs the cup edges. At y=116 the cup
+            interior runs ~x=21 to x=79, so 22-78 fits cleanly. */}
+        <rect x="22" y="116" width="56" height="4" fill="url(#meander)" />
 
-        {/* "WE ARE HAPPY / TO SERVE YOU" — orange tabloid lettering */}
-        <text x="50" y="49" textAnchor="middle" fontSize="6.5" fontWeight="700" fontFamily="Anton, Impact, 'Bungee', sans-serif" fill="#d96412" letterSpacing="0.4">
+        {/* "WE ARE HAPPY / TO SERVE YOU" — orange tabloid lettering.
+            Shifted +4 in y to match the shield's new top edge so the
+            text doesn't ride right against the corner curve. */}
+        <text x="50" y="53" textAnchor="middle" fontSize="6.5" fontWeight="700" fontFamily="Anton, Impact, 'Bungee', sans-serif" fill="#d96412" letterSpacing="0.4">
           WE ARE HAPPY
         </text>
-        <text x="50" y="58" textAnchor="middle" fontSize="6.5" fontWeight="700" fontFamily="Anton, Impact, 'Bungee', sans-serif" fill="#d96412" letterSpacing="0.4">
+        <text x="50" y="62" textAnchor="middle" fontSize="6.5" fontWeight="700" fontFamily="Anton, Impact, 'Bungee', sans-serif" fill="#d96412" letterSpacing="0.4">
           TO SERVE YOU
         </text>
 
         {/* three little espresso cups with steam squiggles above each */}
         {[34, 50, 66].map((cx, i) => (
           <g key={i}>
-            {/* steam squiggles */}
+            {/* steam squiggles — shifted +4 in y to follow the
+                shield panel's new bottom edge */}
             <path
-              d={`M ${cx - 2} 70 q 1 -3 0 -6 q -1 -3 0 -6`}
+              d={`M ${cx - 2} 74 q 1 -3 0 -6 q -1 -3 0 -6`}
               stroke="#d96412"
               strokeWidth="0.9"
               fill="none"
               opacity="0.85"
             />
             <path
-              d={`M ${cx} 71 q 1 -3 0 -6 q -1 -3 0 -6`}
+              d={`M ${cx} 75 q 1 -3 0 -6 q -1 -3 0 -6`}
               stroke="#d96412"
               strokeWidth="0.9"
               fill="none"
               opacity="0.65"
             />
             <path
-              d={`M ${cx + 2} 70 q 1 -3 0 -6 q -1 -3 0 -6`}
+              d={`M ${cx + 2} 74 q 1 -3 0 -6 q -1 -3 0 -6`}
               stroke="#d96412"
               strokeWidth="0.9"
               fill="none"
               opacity="0.85"
             />
             {/* cup outline + saucer */}
-            <ellipse cx={cx} cy="84" rx="6.5" ry="1" fill="#d96412" opacity="0.9" />
+            <ellipse cx={cx} cy="88" rx="6.5" ry="1" fill="#d96412" opacity="0.9" />
             <path
-              d={`M ${cx - 5} 76 L ${cx + 5} 76 L ${cx + 4} 83 L ${cx - 4} 83 Z`}
+              d={`M ${cx - 5} 80 L ${cx + 5} 80 L ${cx + 4} 87 L ${cx - 4} 87 Z`}
               fill="#d96412"
               stroke="#9c4708"
               strokeWidth="0.4"
             />
             {/* handle */}
-            <path d={`M ${cx + 5} 78 q 3 0 3 3 q 0 2 -2 2`} stroke="#d96412" strokeWidth="1" fill="none" />
+            <path d={`M ${cx + 5} 82 q 3 0 3 3 q 0 2 -2 2`} stroke="#d96412" strokeWidth="1" fill="none" />
           </g>
         ))}
 
@@ -674,10 +827,21 @@ function CornerBrasstack() {
         <ellipse cx="50" cy="20" rx="40" ry="5" fill="#0a3a82" />
         <ellipse cx="50" cy="20" rx="36" ry="3.5" fill="#000814" />
 
-        {/* tiny "TIP THE COOK" overlay — only on hover */}
-      </svg>
-      <div className="absolute -top-2 right-1 px-1.5 py-0.5 bg-[#FFD600] text-black font-bungee text-[9px] tracking-[0.16em] uppercase opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ boxShadow: '2px 2px 0 #d11a2a' }}>
-        ★ TIP $1
+        </svg>
+      {/* Always-on tip incentive — bounces gently to draw the eye.
+          Was hover-only, which meant nobody on a touch device ever
+          saw the prompt. Now reads "BUY ME A COFFEE ☕" the moment
+          anyone lands on the page. */}
+      <div
+        className="tip-bounce absolute -top-3 -right-2 px-2 py-1 bg-[#FFD600] text-black font-bungee text-[10px] tracking-[0.14em] uppercase pointer-events-none whitespace-nowrap"
+        style={{ boxShadow: '2px 2px 0 #d11a2a' }}
+      >
+        💵 Lemme hold a dolla
+      </div>
+      <div
+        className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-black/85 border border-[#FFD600] text-[#FFD600] font-typewriter text-[8px] tracking-[0.18em] uppercase pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        click me · $1+
       </div>
     </a>
   );
@@ -737,7 +901,53 @@ type Mode = {
   sub: string;
   accent: string;
   cta?: string;
+  // upcoming = card renders but the link is unclickable / wrapped in
+  // a non-anchor tag with a "🚧 SOON" pill instead of the cta.
+  upcoming?: boolean;
+  // funMode = optional inline interactive flair on the card itself
+  // (e.g. the rat that follows the cursor on the sewer card).
+  funMode?: 'rat';
+  // badgeImage = a special slot. When 'mayor', the card pulls the
+  // current Wikipedia photo of Zohran Mamdani and uses it as the
+  // round badge instead of the `badge` glyph. Shares its
+  // localStorage cache with the /shrine page (PHOTO_CACHE_KEY)
+  // so we never double-fetch.
+  badgeImage?: 'mayor';
 };
+
+// Slim mayor-photo fetch — same cache key as shrine.tsx's
+// useMayorPhoto so both surfaces share the cached URL.
+const MAYOR_WIKI_URL_LOUNGE = 'https://en.wikipedia.org/api/rest_v1/page/summary/Zohran_Mamdani';
+const MAYOR_PHOTO_CACHE_KEY = 'nyc-mamdani-photo-v1';
+const MAYOR_PHOTO_CACHE_MS = 24 * 60 * 60 * 1000;
+function useMayorBadge() {
+  const [src, setSrc] = useState<string | null>(() => {
+    try {
+      const raw = localStorage.getItem(MAYOR_PHOTO_CACHE_KEY);
+      if (!raw) return null;
+      const c = JSON.parse(raw) as { ts: number; src: string };
+      if (Date.now() - c.ts < MAYOR_PHOTO_CACHE_MS) return c.src;
+    } catch { /* noop */ }
+    return null;
+  });
+  useEffect(() => {
+    if (src) return;
+    let stop = false;
+    (async () => {
+      try {
+        const r = await fetch(MAYOR_WIKI_URL_LOUNGE);
+        if (!r.ok) return;
+        const j = (await r.json()) as { thumbnail?: { source: string }; originalimage?: { source: string } };
+        const url = j.thumbnail?.source ?? j.originalimage?.source;
+        if (stop || !url) return;
+        setSrc(url);
+        try { localStorage.setItem(MAYOR_PHOTO_CACHE_KEY, JSON.stringify({ ts: Date.now(), src: url })); } catch { /* noop */ }
+      } catch { /* fall back to glyph badge */ }
+    })();
+    return () => { stop = true; };
+  }, [src]);
+  return src;
+}
 const MODES: Mode[] = [
   {
     href: '/turnstile',
@@ -780,6 +990,7 @@ const MODES: Mode[] = [
     title: 'Mamdani Shrine',
     sub: 'civic temple · live council bills · scriptures of the platform',
     accent: '#FFD600',
+    badgeImage: 'mayor',
   },
   {
     href: '/poi',
@@ -789,6 +1000,25 @@ const MODES: Mode[] = [
     sub: 'cameras with a point of interest · classified once · static',
     accent: '#FF6319',
     cta: '★ NEW',
+  },
+  {
+    href: '/cab',
+    badge: '🚖',
+    badgeBg: '#FFD600',
+    title: 'Take a Yellow Cab',
+    sub: 'hop in · ride through old NYC · vintage photos + DOT records',
+    accent: '#FFD600',
+    upcoming: true,
+  },
+  {
+    href: '/sewer',
+    badge: '🐀',
+    badgeBg: '#3a4a1a',
+    title: 'Sewer Mode',
+    sub: 'underbelly view · subway rumble · pizza rats · drips',
+    accent: '#6CBE45',
+    upcoming: true,
+    funMode: 'rat',
   },
 ];
 
@@ -809,54 +1039,150 @@ function ModesRack() {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2">
         {MODES.map((m) => (
-          <a
-            key={m.href}
-            href={m.href}
-            className="group relative bg-[#0a0a14] border-2 border-white/15 hover:border-[color:var(--accent)] hover:bg-black px-2.5 pt-2 pb-6 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
-            style={{ ['--accent' as string]: m.accent }}
-          >
-            <div className="flex items-start gap-2">
-              {m.badge === 'MTA' ? (
-                <MtaLogo size={26} />
-              ) : (
-                <span
-                  className="grid place-items-center w-7 h-7 rounded-full font-bungee text-[12px] leading-none shrink-0"
-                  style={{ background: m.badgeBg, color: m.badgeBg === '#FFD600' || m.badgeBg === '#B5F500' ? '#000' : '#fff' }}
-                >
-                  {m.badge}
-                </span>
-              )}
-              <span
-                className="font-bungee text-[12px] sm:text-[13px] uppercase leading-tight tracking-[0.02em] group-hover:text-[color:var(--accent)] transition-colors min-w-0 break-words"
-                style={{ color: '#fff' }}
-              >
-                {m.title}
-              </span>
-            </div>
-            <div className="font-typewriter text-[9px] uppercase tracking-[0.16em] text-white/65 mt-1.5 line-clamp-2">
-              {m.sub}
-            </div>
-            <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between gap-2">
-              {m.cta ? (
-                <span
-                  className="font-bungee text-[8.5px] tracking-[0.16em] uppercase px-1.5 py-0.5"
-                  style={{
-                    background: m.accent,
-                    color: m.accent === '#FFD600' || m.accent === '#B5F500' ? '#000' : '#fff',
-                    boxShadow: '2px 2px 0 #000',
-                  }}
-                >
-                  {m.cta}
-                </span>
-              ) : <span />}
-              <span className="font-typewriter text-[9px] tracking-[0.22em] uppercase text-white/35 group-hover:text-[color:var(--accent)] transition-colors">
-                go →
-              </span>
-            </div>
-          </a>
+          <ModeCard key={m.href} mode={m} />
         ))}
       </div>
     </section>
+  );
+}
+
+/* Single mode card. Active modes render as <a>, upcoming modes
+   render as <div> with a "🚧 SOON" pill instead of "go →" and
+   reduced opacity. The sewer card is special — it has a small rat
+   that follows the cursor on hover and runs across the card on
+   click, even though the card itself is unavailable. */
+function ModeCard({ mode: m }: { mode: Mode }) {
+  const isLink = !m.upcoming;
+  // Mamdani photo for the shrine card. Returns null while the
+  // Wikipedia REST request is in-flight or if the fetch failed —
+  // we fall back to the glyph badge in either case.
+  const mayorPhoto = useMayorBadge();
+  // Rat motion state — only used when funMode === 'rat'. Tracks
+  // pointer position relative to the card; on click, run-state
+  // animates a translateX 0 → cardWidth+50 over ~1.4s.
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [ratX, setRatX] = useState(8);
+  const [ratRunning, setRatRunning] = useState(false);
+  const onPtrMove = (e: React.PointerEvent) => {
+    if (m.funMode !== 'rat' || ratRunning) return;
+    const r = cardRef.current?.getBoundingClientRect();
+    if (!r) return;
+    // Rat is the small badge — translate horizontally with cursor
+    // within the card bounds. Clamped 8 → cardWidth-32.
+    const x = Math.max(8, Math.min(r.width - 32, e.clientX - r.left - 12));
+    setRatX(x);
+  };
+  const onCardClick = (e: React.MouseEvent) => {
+    if (m.funMode === 'rat' && !ratRunning) {
+      setRatRunning(true);
+      setTimeout(() => { setRatRunning(false); setRatX(8); }, 1400);
+    }
+    if (!isLink) {
+      e.preventDefault();
+    }
+  };
+
+  const Wrap: any = isLink ? 'a' : 'div';
+  const wrapProps: Record<string, unknown> = isLink
+    ? { href: m.href }
+    : { role: 'group', 'aria-disabled': 'true' };
+
+  return (
+    <Wrap
+      ref={cardRef}
+      {...wrapProps}
+      onPointerMove={m.funMode === 'rat' ? onPtrMove : undefined}
+      onClick={onCardClick}
+      title={isLink ? m.sub : `Coming soon — ${m.title.toLowerCase()}`}
+      className={`group relative bg-[#0a0a14] border-2 px-2.5 pt-2 pb-6 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600] ${
+        isLink
+          ? 'border-white/15 hover:border-[color:var(--accent)] hover:bg-black cursor-pointer'
+          : 'border-white/10 cursor-not-allowed opacity-75'
+      }`}
+      style={{ ['--accent' as string]: m.accent }}
+    >
+      <div className="flex items-start gap-2">
+        {m.badge === 'MTA' ? (
+          <MtaLogo size={26} />
+        ) : m.badgeImage === 'mayor' && mayorPhoto ? (
+          // Mayor face badge — photo from Wikipedia summary API,
+          // cached in localStorage. Round, with the Knicks-blue
+          // ring so it still reads as the shrine card at a glance.
+          <img
+            src={mayorPhoto}
+            alt="Mayor Zohran Mamdani"
+            referrerPolicy="no-referrer"
+            decoding="async"
+            className="w-7 h-7 rounded-full object-cover shrink-0"
+            style={{ border: `1.5px solid ${m.badgeBg}`, boxShadow: '0 0 0 1px #000' }}
+          />
+        ) : (
+          <span
+            className="grid place-items-center w-7 h-7 rounded-full font-bungee text-[12px] leading-none shrink-0"
+            style={{ background: m.badgeBg, color: m.badgeBg === '#FFD600' || m.badgeBg === '#B5F500' ? '#000' : '#fff' }}
+          >
+            {m.badge}
+          </span>
+        )}
+        <span
+          className={`font-bungee text-[12px] sm:text-[13px] uppercase leading-tight tracking-[0.02em] transition-colors min-w-0 break-words ${
+            isLink ? 'group-hover:text-[color:var(--accent)] text-white' : 'text-white/65'
+          }`}
+        >
+          {m.title}
+        </span>
+      </div>
+      <div className={`font-typewriter text-[9px] uppercase tracking-[0.16em] mt-1.5 line-clamp-2 ${isLink ? 'text-white/65' : 'text-white/45'}`}>
+        {m.sub}
+      </div>
+
+      {/* Rat that lives on the sewer card. Two states:
+          - idle: static at ratX, faces the cursor
+          - running: dashes from left to right of card                */}
+      {m.funMode === 'rat' && (
+        <span
+          aria-hidden
+          className="absolute pointer-events-none text-[18px] select-none"
+          style={{
+            bottom: 6,
+            left: ratRunning ? '110%' : ratX,
+            transform: ratRunning ? 'scaleX(-1)' : 'none',
+            transition: ratRunning
+              ? 'left 1.4s cubic-bezier(0.45, 0.05, 0.55, 1)'
+              : 'left 0.18s ease-out',
+            filter: 'drop-shadow(0 1px 0 rgba(0,0,0,0.6))',
+          }}
+        >
+          🐀
+        </span>
+      )}
+
+      <div className="absolute bottom-1 left-2 right-2 flex items-center justify-between gap-2">
+        {m.upcoming ? (
+          <span
+            className="font-bungee text-[8.5px] tracking-[0.16em] uppercase px-1.5 py-0.5 bg-white/10 text-white/65 border border-white/20"
+          >
+            🚧 SOON
+          </span>
+        ) : m.cta ? (
+          <span
+            className="font-bungee text-[8.5px] tracking-[0.16em] uppercase px-1.5 py-0.5"
+            style={{
+              background: m.accent,
+              color: m.accent === '#FFD600' || m.accent === '#B5F500' ? '#000' : '#fff',
+              boxShadow: '2px 2px 0 #000',
+            }}
+          >
+            {m.cta}
+          </span>
+        ) : <span />}
+        <span className={`font-typewriter text-[9px] tracking-[0.22em] uppercase transition-colors ${
+          isLink ? 'text-white/35 group-hover:text-[color:var(--accent)]' : 'text-white/25'
+        }`}>
+          {isLink ? 'go →' : 'upcoming'}
+        </span>
+      </div>
+    </Wrap>
   );
 }
 

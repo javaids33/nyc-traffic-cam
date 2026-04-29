@@ -109,14 +109,21 @@ type Band = {
   emoji: string;
 };
 
+// Bands tuned 2026-04 for "friendly yet competitive" — close calls
+// feel rewarding, the wrong-borough zone keeps a dignity floor, and
+// the spread between top and bottom stays wide enough that a great
+// run beats a mediocre one decisively. Earlier curve had a 50m
+// bullseye (too tight to ever hit) and a 1-pt floor on wrong-borough
+// guesses (felt mean). Adjacent bands stay continuous: each band's
+// floor at upTo equals the next band's ceiling at the same distance.
 const SCORE_BANDS: Band[] = [
-  { id: 'bullseye', label: 'BULLSEYE',         blurb: 'on the dot · you\'ve actually been there', color: '#FFD600', upTo: 50,    floor: 95, ceiling: 100, emoji: '🎯' },
-  { id: 'block',    label: 'SAME BLOCK',       blurb: 'one corner over · u smell the halal cart', color: '#B5F500', upTo: 200,   floor: 80, ceiling: 95,  emoji: '🚏' },
-  { id: 'nbhd',     label: 'SAME NEIGHBORHOOD', blurb: 'right zip · wrong avenue',                 color: '#6CBE45', upTo: 1000,  floor: 60, ceiling: 80,  emoji: '🏘️' },
-  { id: 'district', label: 'SAME DISTRICT',     blurb: 'a couple stops off',                       color: '#0039A6', upTo: 3000,  floor: 35, ceiling: 60,  emoji: '🚇' },
-  { id: 'borough',  label: 'SAME BOROUGH',      blurb: 'roughly · take the bus',                   color: '#FF6319', upTo: 8000,  floor: 15, ceiling: 35,  emoji: '🗽' },
-  { id: 'wrong',    label: 'WRONG BOROUGH',     blurb: 'that\'s a whole different vibe',           color: '#d11a2a', upTo: 25_000, floor: 1,  ceiling: 15,  emoji: '🌉' },
-  { id: 'lost',     label: 'JERSEY?',           blurb: 'are u even on the map?',                   color: '#5a2a55', upTo: Infinity, floor: 0, ceiling: 1, emoji: '😬' },
+  { id: 'bullseye', label: 'BULLSEYE',          blurb: 'on the dot · you\'ve actually been there', color: '#FFD600', upTo: 75,     floor: 95, ceiling: 100, emoji: '🎯' },
+  { id: 'block',    label: 'SAME BLOCK',        blurb: 'one corner over · u smell the halal cart', color: '#B5F500', upTo: 250,    floor: 82, ceiling: 95,  emoji: '🚏' },
+  { id: 'nbhd',     label: 'SAME NEIGHBORHOOD', blurb: 'right zip · wrong avenue',                 color: '#6CBE45', upTo: 1200,   floor: 65, ceiling: 82,  emoji: '🏘️' },
+  { id: 'district', label: 'SAME DISTRICT',     blurb: 'a couple stops off',                       color: '#0039A6', upTo: 3500,   floor: 42, ceiling: 65,  emoji: '🚇' },
+  { id: 'borough',  label: 'SAME BOROUGH',      blurb: 'roughly · take the bus',                   color: '#FF6319', upTo: 9000,   floor: 22, ceiling: 42,  emoji: '🗽' },
+  { id: 'wrong',    label: 'WRONG BOROUGH',     blurb: 'that\'s a whole different vibe',           color: '#d11a2a', upTo: 25_000, floor: 6,  ceiling: 22,  emoji: '🌉' },
+  { id: 'lost',     label: 'JERSEY?',           blurb: 'are u even on the map?',                   color: '#5a2a55', upTo: Infinity, floor: 0, ceiling: 6, emoji: '😬' },
 ];
 
 function bandFor(distanceMeters: number): Band {
@@ -311,10 +318,16 @@ export default function GeoGuessr() {
   };
 
   const replay = () => {
-    // New seed, fresh rounds
+    // New seed, fresh rounds. Strip every URL param that pins the
+    // current run — `seed` (deterministic picker), `score` (legacy
+    // friend-score banner), AND `h` (challenge hash that pins 5
+    // specific cameras on the server). Without dropping `h`, NEW
+    // GAME on a shared challenge link would just reload the same
+    // 5 cams forever — players can't replay with fresh cameras.
     const url = new URL(window.location.href);
     url.searchParams.delete('seed');
     url.searchParams.delete('score');
+    url.searchParams.delete('h');
     window.location.href = url.toString();
   };
 
@@ -907,6 +920,7 @@ function Summary({
           </button>
           <button
             onClick={() => copy('url')}
+            title="Copy a link that pins these same 5 cameras for 24h — friends play your exact run"
             className="px-3 py-1.5 font-bungee text-[12px] uppercase tracking-[0.06em]"
             style={{ background: '#0e0f14', color: '#FFD600', border: '2px solid #FFD600' }}
           >
@@ -914,6 +928,7 @@ function Summary({
           </button>
           <button
             onClick={() => copy('text')}
+            title="Copy a brag-worthy text snippet with your score and the share link"
             className="px-3 py-1.5 font-bungee text-[12px] uppercase tracking-[0.06em]"
             style={{ background: '#0e0f14', color: '#FFD600', border: '2px solid #FFD600' }}
           >
@@ -921,6 +936,7 @@ function Summary({
           </button>
           <button
             onClick={onReplay}
+            title="Drop the current 5 cams (and any shared challenge) and start fresh"
             className="px-3 py-1.5 font-bungee text-[12px] uppercase tracking-[0.06em] ml-auto"
             style={{ background: '#FF6319', color: '#fff', border: '2px solid #000', boxShadow: '3px 3px 0 #000' }}
           >
