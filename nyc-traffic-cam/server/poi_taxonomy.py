@@ -3,28 +3,23 @@
 Holds the prompt, the response schema, and the parser shared by both
 poi_classify_local.py (Ollama) and poi_classify.py (Anthropic).
 
-The taxonomy was rewritten 2026-04 after a hands-on review of ~22 cam
-frames showed the original 8-class POI prompt (bridge / landmark /
-park / waterway / tunnel / iconic / skyline / intersection) was a
-poor fit for the actual corpus:
+The taxonomy was rewritten 2026-04 a second time after a hands-on
+review showed the previous 14-field shape ("one scene per cam") wasn't
+expressive enough for the /poi page's new tag-pivot UI: a single
+camera might show a bridge AND people AND a tree at the same time, and
+a viewer who clicks the "trees" tag wants to see every cam that has a
+tree visible — not just cams whose dominant scene is a park.
 
-  - "bodega" was unresolvable at 352x240
-  - "landmark" / "iconic" were too rare or too fuzzy to train against
-  - 15% of cams produce unusable frames (sun glare, mispointed,
-    frozen on infrastructure) — that's a class in itself
-  - The genuinely interesting signal is event-like (crowd, tents,
-    cones) and state-like (weather, congestion), not point-of-interest
+The new schema keeps every legacy field, and ADDS a free-form `tags`
+array (bounded vocabulary) plus a `quality` bucket so we can route
+broken / dirty / empty frames into a separate "boring" rail instead of
+spiking the interest score with phantom signals.
 
-The new schema is a 14-field structured record split into four
-buckets — scene type, quality flags, time/weather/congestion state,
-and event detection. Each ships with its own controlled vocabulary
-so a small VLM can stay on rails.
-
-Backward compatibility: to_record() always emits the legacy poi /
-category / description / confidence fields the existing src/poi.tsx
-page reads, derived from the new fields. The on-disk cam_pois.json
-shape is a strict superset of the old shape — older consumers keep
-working unchanged.
+Backward compatibility: to_record() still emits the legacy poi /
+category / description / confidence fields the existing /poi page
+reads, derived from the new fields. The on-disk cam_pois.json shape
+is a strict superset of the old shape — older consumers keep working
+unchanged.
 """
 from __future__ import annotations
 
@@ -46,6 +41,40 @@ TIME_OF_DAY_VALUES = {"day", "dusk", "dawn", "night"}
 WEATHER_VALUES = {"clear", "wet", "snow", "fog"}
 CONGESTION_VALUES = {"empty", "light", "busy", "jammed"}
 
+# `quality` bucket — replaces the binary `image_usable` flag with a
+# four-way classification so the frontend can render BOTH "best of"
+# and "boring/broken" rails without dropping data.
+#   good    — clear frame, something worth looking at
+#   boring  — clear frame but nothing notable (empty road, blank wall)
+#   broken  — mispointed, frozen, glitched, totally unusable
+#   dirty   — lens covered in water/dirt/smudge but partially visible
+#   empty   — no feed at all (used at fetch-failure time, never by VLM)
+QUALITY_VALUES = {"good", "boring", "broken", "dirty", "empty"}
+
+# ── Tag vocabulary ──────────────────────────────────────────────────
+# A controlled set of visual elements the model is allowed to flag in
+# a single frame. The model returns a SUBSET of these as a list. The
+# frontend pivots on these for the /poi tag picker.
+#
+# Keep this list tight (~30 entries) so a 7B VLM can stay on rails.
+# Add new tags only after seeing them appear in dry-run logs.
+TAG_VALUES = {
+    # built infrastructure
+    "bridge", "tunnel", "highway", "road", "intersection", "crosswalk",
+    "traffic_lights", "street_signs", "lamppost",
+    # buildings
+    "skyline", "skyscraper", "brownstone", "corner_house", "storefront",
+    "bodega", "billboard", "scaffolding", "construction",
+    # nature / open space
+    "tree", "park", "water", "river", "snow",
+    # life on the street
+    "people", "crowd", "vehicles", "bus", "truck", "bicycle", "subway",
+    # weather / lighting
+    "rain", "fog", "sun_glare", "night_lights",
+    # iconic
+    "landmark", "statue", "monument",
+}
+
 # Map new scene → legacy /poi page category. The /poi page only
 # renders cams whose category is one of: bridge, landmark, park,
 # waterway, tunnel, iconic, skyline, intersection. We map our scenes
@@ -64,36 +93,48 @@ _SCENE_TO_LEGACY_CATEGORY = {
 
 PROMPT = """\
 You are looking at a still frame from a NYC DOT traffic camera.
-The image is roughly 352x240 pixels with a timestamp burn-in at
-the top of the frame. Be conservative: if unsure, prefer
-null/false and lower the confidence rather than guess.
+The image is roughly 352x240 pixels with a timestamp burn-in at the
+top. Be conservative: if you are unsure, prefer null/false/empty and
+lower the confidence rather than guess.
 
 Output ONE JSON object with these exact fields and no other text:
 
 {
-  "image_usable": <bool — false if the frame is blown out by sun,
-                   covered by water/dirt/smudge on the lens, pointed
-                   at empty pavement or just bridge railings, or
-                   otherwise unusable>,
+  "quality": <one of:
+      "good"   — clear frame, something worth looking at,
+      "boring" — clear but uneventful (empty pavement, blank wall),
+      "broken" — mispointed, frozen, signal-loss, completely unusable,
+      "dirty"  — lens covered in water/dirt/smudge>,
   "scene": <one of: "highway", "bridge", "tunnel", "intersection",
                     "boulevard", "residential", "skyline", "other">,
-  "skyline_visible": <bool — true if Manhattan skyline silhouette
+  "tags": <array of 0..10 strings, each one of:
+      "bridge","tunnel","highway","road","intersection","crosswalk",
+      "traffic_lights","street_signs","lamppost",
+      "skyline","skyscraper","brownstone","corner_house","storefront",
+      "bodega","billboard","scaffolding","construction",
+      "tree","park","water","river","snow",
+      "people","crowd","vehicles","bus","truck","bicycle","subway",
+      "rain","fog","sun_glare","night_lights",
+      "landmark","statue","monument"
+      — list every element you can clearly see in the frame; omit
+      anything you are unsure about>,
+  "skyline_visible": <bool — true if the Manhattan skyline silhouette
                       is visible in the distance, even from a cam
                       that isn't primarily a skyline shot>,
-  "sun_glare": <bool — true if significant glare or lens-flare>,
+  "sun_glare":        <bool — true if significant glare or lens-flare>,
   "lens_obstruction": <bool — water droplets, dirt, smudge on lens>,
   "time_of_day": <one of: "day", "dusk", "dawn", "night">,
-  "weather": <one of: "clear", "wet", "snow", "fog">,
-  "congestion": <one of: "empty", "light", "busy", "jammed">,
-  "crowd_or_event": <bool — true if 5+ pedestrians clustered, tents
-                     or vendor booths, road work / cones / barriers,
-                     or any unusual gathering>,
+  "weather":     <one of: "clear", "wet", "snow", "fog">,
+  "congestion":  <one of: "empty", "light", "busy", "jammed">,
+  "crowd_or_event":    <bool — 5+ pedestrians clustered, tents/booths,
+                        road work / cones / barriers, unusual gathering>,
   "event_description": <if crowd_or_event is true, an 8-word
                         description; else null>,
-  "landmark_name": <if a recognizable NYC landmark is clearly in
-                    frame (Brooklyn Bridge, Empire State, Citi Field,
-                    Barclays Center, etc.), name it; else null>,
-  "confidence": <integer 0-100, your overall confidence>
+  "landmark_name":     <if a recognizable NYC landmark is clearly in
+                        frame (Brooklyn Bridge, Empire State,
+                        Citi Field, Barclays Center, etc.) name it;
+                        else null>,
+  "confidence":        <integer 0-100, your overall confidence>
 }
 """
 
@@ -118,6 +159,26 @@ def _coerce_str_or_none(v: Any) -> str | None:
         return None
     s = str(v).strip()
     return s or None
+
+
+def _coerce_tag_list(v: Any) -> list[str]:
+    """Normalize a model-returned tags field into a deduped, in-vocab list."""
+    if not isinstance(v, list):
+        # Some models return a comma-joined string. Try to recover.
+        if isinstance(v, str):
+            v = [t.strip() for t in v.split(",")]
+        else:
+            return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for t in v:
+        if not isinstance(t, str):
+            continue
+        s = t.strip().lower().replace("-", "_").replace(" ", "_")
+        if s in TAG_VALUES and s not in seen:
+            out.append(s)
+            seen.add(s)
+    return out
 
 
 def parse_response(text: str) -> dict[str, Any]:
@@ -157,9 +218,16 @@ def parse_response(text: str) -> dict[str, Any]:
             "_parse_error": (text or "")[:200],
         }
 
-    return {
-        "image_usable":      _coerce_bool(parsed.get("image_usable", True)),
+    quality = _coerce_str_enum(parsed.get("quality"), QUALITY_VALUES, None)
+    if quality is None:
+        # Older prompts emitted only `image_usable`. Translate it.
+        quality = "good" if _coerce_bool(parsed.get("image_usable", True)) else "broken"
+
+    rec: dict[str, Any] = {
+        "quality":           quality,
+        "image_usable":      quality in {"good", "boring", "dirty"},
         "scene":             _coerce_str_enum(parsed.get("scene"), SCENE_VALUES, "other"),
+        "tags":              _coerce_tag_list(parsed.get("tags")),
         "skyline_visible":   _coerce_bool(parsed.get("skyline_visible", False)),
         "sun_glare":         _coerce_bool(parsed.get("sun_glare", False)),
         "lens_obstruction":  _coerce_bool(parsed.get("lens_obstruction", False)),
@@ -171,6 +239,7 @@ def parse_response(text: str) -> dict[str, Any]:
         "landmark_name":     _coerce_str_or_none(parsed.get("landmark_name")),
         "confidence":        _clamp_int(parsed.get("confidence"), 0, 100, 0),
     }
+    return rec
 
 
 def _clamp_int(v: Any, lo: int, hi: int, default: int) -> int:
@@ -183,8 +252,10 @@ def _clamp_int(v: Any, lo: int, hi: int, default: int) -> int:
 
 def _empty_record() -> dict[str, Any]:
     return {
+        "quality": "broken",
         "image_usable": False,
         "scene": "other",
+        "tags": [],
         "skyline_visible": False,
         "sun_glare": False,
         "lens_obstruction": False,
@@ -203,7 +274,7 @@ def _empty_record() -> dict[str, Any]:
 # derived purely from the structured fields. Computed at bake time
 # and shipped in cam-pois.json so the frontend can sort instantly.
 #
-# Weights are tuned so the typical highway + clear day + light traffic
+# Weights are tuned so a typical highway + clear day + light traffic
 # scores near 0; a bridge with skyline at dusk scores ~20-30; a
 # crowd/event on a rainy night with a landmark in frame scores 70+.
 
@@ -221,22 +292,60 @@ _WEATHER_BONUS = {"snow": 25, "fog": 15, "wet": 10, "clear": 0}
 _TIME_BONUS    = {"night": 10, "dawn": 8, "dusk": 4, "day": 0}
 _CONG_BONUS    = {"jammed": 12, "busy": 5, "light": 0, "empty": -3}
 
+# Per-tag bonus — extra points when these visual elements are
+# present. Tags that already contribute via scene/weather are scored
+# at 0 here to avoid double-counting.
+_TAG_BONUS: dict[str, int] = {
+    "landmark":    20,
+    "statue":      15,
+    "monument":    12,
+    "skyline":      0,   # covered by scene + skyline_visible
+    "skyscraper":   3,
+    "brownstone":   4,
+    "corner_house": 4,
+    "bodega":       6,
+    "storefront":   2,
+    "billboard":    3,
+    "scaffolding":  2,
+    "construction": 4,
+    "tree":         3,
+    "park":         6,
+    "water":        6,
+    "river":        7,
+    "snow":         0,   # covered by weather
+    "rain":         0,   # covered by weather (wet)
+    "fog":          0,   # covered by weather
+    "people":       4,
+    "crowd":       10,
+    "subway":       8,
+    "bus":          2,
+    "truck":        1,
+    "bicycle":      2,
+    "night_lights": 5,
+    "sun_glare":   -8,
+}
+
 
 def interest_score(rec: dict[str, Any]) -> int:
     """Compute a 0-100 interest score from a parsed/canonical record.
 
-    Returns 0 for any frame flagged image_usable=false — broken cams
-    should never bubble up regardless of their other fields.
+    Returns 0 for any frame whose quality is broken/empty — busted
+    cams should never bubble up regardless of their other fields.
 
     Confidence acts as a multiplier so low-confidence guesses can't
     dominate the leaderboard with phantom events.
     """
-    if not rec.get("image_usable", True):
+    quality = rec.get("quality") or "good"
+    if quality in {"broken", "empty"}:
         return 0
 
     score = 0.0
 
     # Quality penalties — visible artifacts lower the rank
+    if quality == "dirty":
+        score -= 20
+    if quality == "boring":
+        score -= 10
     if rec.get("sun_glare"):
         score -= 20
     if rec.get("lens_obstruction"):
@@ -257,6 +366,14 @@ def interest_score(rec: dict[str, Any]) -> int:
     score += _WEATHER_BONUS.get(rec.get("weather") or "clear", 0)
     score += _TIME_BONUS.get(rec.get("time_of_day") or "day", 0)
     score += _CONG_BONUS.get(rec.get("congestion") or "empty", 0)
+
+    # Tag richness — variety is interesting, but cap so a model that
+    # over-tags a single frame can't run away with the score.
+    tags = rec.get("tags") or []
+    tag_score = 0
+    for t in tags:
+        tag_score += _TAG_BONUS.get(t, 0)
+    score += min(tag_score, 30)
 
     # Confidence multiplier so a 30%-confident "event" can't outrank
     # a 90%-confident landmark shot.
@@ -291,8 +408,6 @@ def to_record(
     if landmark:
         legacy_poi = landmark
         legacy_desc = landmark
-        # If we have a landmark, prefer the more specific category
-        # buckets the /poi page already renders.
         legacy_cat = _scene_or_skyline_category(scene, out.get("skyline_visible", False))
     elif event:
         legacy_poi = event
@@ -303,9 +418,9 @@ def to_record(
         legacy_poi = legacy_cat
         legacy_desc = _flavor_phrase(out)
 
-    # If the frame is unusable, suppress legacy surfacing entirely so
-    # the /poi page doesn't render a card for a broken cam.
-    if not out.get("image_usable", True):
+    # Suppress legacy surfacing for unusable frames so the /poi page's
+    # legacy code path doesn't render a card for a broken cam.
+    if (out.get("quality") in {"broken", "empty"}) or not out.get("image_usable", True):
         legacy_poi = None
         legacy_cat = None
         legacy_desc = None
@@ -354,6 +469,7 @@ def empty_skipped_record(reason: str) -> dict[str, Any]:
     """Record for cams we couldn't even fetch an image for."""
     return {
         **_empty_record(),
+        "quality": "empty",
         "poi": None,
         "category": None,
         "description": None,
@@ -366,6 +482,7 @@ def empty_error_record(err: str) -> dict[str, Any]:
     """Record for cams whose classification call raised."""
     return {
         **_empty_record(),
+        "quality": "broken",
         "poi": None,
         "category": None,
         "description": None,

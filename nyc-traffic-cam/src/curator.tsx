@@ -25,6 +25,8 @@ type PoiEntry = {
   description: string | null;
   confidence: number;
   interest?: number;
+  quality?: 'good' | 'boring' | 'broken' | 'dirty' | 'empty' | null;
+  tags?: string[];
   scene?: string | null;
   weather?: string | null;
   time_of_day?: string | null;
@@ -94,7 +96,8 @@ export default function Curator() {
     for (const c of cameras) {
       const p = POI.cameras[c.id];
       if (!p) continue;
-      if (showOnlyUsable && p.image_usable === false) continue;
+      const quality = p.quality ?? (p.image_usable === false ? 'broken' : 'good');
+      if (showOnlyUsable && (quality === 'broken' || quality === 'empty')) continue;
       out.push({ cam: c, poi: p });
     }
     // Sort by interest score descending
@@ -267,9 +270,21 @@ export default function Curator() {
                   <div>{current.poi.congestion ?? '?'}</div>
                 </div>
                 <div>
-                  <span className="text-white/60">Image Usable:</span>
-                  <div>{current.poi.image_usable === false ? '❌ No' : '✓ Yes'}</div>
+                  <span className="text-white/60">Quality:</span>
+                  <div>{current.poi.quality ?? (current.poi.image_usable === false ? 'broken' : 'good')}</div>
                 </div>
+                {current.poi.tags && current.poi.tags.length > 0 && (
+                  <div>
+                    <span className="text-white/60">Tags:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {current.poi.tags.map((t) => (
+                        <span key={t} className="px-1 py-0.5 bg-white/10 border border-white/20 text-[8px]">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-white/40">No cameras to review</div>
@@ -285,7 +300,7 @@ export default function Curator() {
                   <img
                     key={current.cam.id}
                     src={NYCTMC_IMG(current.cam.id, tick)}
-                    alt={current.cam.name}
+                    alt={current.cam.name ?? undefined}
                     referrerPolicy="no-referrer"
                     decoding="async"
                     className="absolute inset-0 w-full h-full object-cover"
@@ -397,7 +412,9 @@ function CuratorGallery({ cameras, onBack }: { cameras: Camera[]; onBack: () => 
     const out: { cam: Camera; poi: PoiEntry }[] = [];
     for (const c of cameras) {
       const p = POI.cameras[c.id];
-      if (!p || p.image_usable === false) continue;
+      if (!p) continue;
+      const quality = p.quality ?? (p.image_usable === false ? 'broken' : 'good');
+      if (quality === 'broken' || quality === 'empty') continue;
       if (filter !== 'all' && p.scene !== filter) continue;
       out.push({ cam: c, poi: p });
     }
@@ -405,6 +422,8 @@ function CuratorGallery({ cameras, onBack }: { cameras: Camera[]; onBack: () => 
     return out;
   }, [cameras, filter]);
 
+  // Build a sorted list of every scene that actually appears, with
+  // counts. The filter pills below pivot on this axis.
   const scenes = useMemo(() => {
     const s = new Set<string>();
     for (const c of cameras) {
@@ -461,7 +480,7 @@ function CuratorGallery({ cameras, onBack }: { cameras: Camera[]; onBack: () => 
             <div className="relative bg-black border border-white/10 mb-1" style={{ aspectRatio: '1', minHeight: 80 }}>
               <img
                 src={NYCTMC_IMG(cam.id, tick)}
-                alt={cam.name}
+                alt={cam.name ?? undefined}
                 referrerPolicy="no-referrer"
                 decoding="async"
                 className="absolute inset-0 w-full h-full object-cover"

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Lock, Maximize2, Minimize2, Pause, Play, Radio, X } from 'lucide-react';
+import { Lock, Maximize2, Minimize2, Pause, Play, Radio, ScreenShare, X } from 'lucide-react';
 import { apiUrl } from './api';
 import {
   audioOff,
@@ -135,6 +135,12 @@ export function BodegaTV({
 }) {
   const [tick, setTick] = useState(() => Date.now());
   const [isFs, setIsFs] = useState(false);
+  // Medium mode = TV overlays the page at near-viewport size without
+  // engaging the browser Fullscreen API. Sits between the small inline
+  // size and true fullscreen — gives users a "make it bigger but still
+  // in my browser" option (escape hatch from FS APIs that some users
+  // dislike on multi-monitor setups).
+  const [mediumOn, setMediumOn] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const clock = useClock();
 
@@ -149,21 +155,45 @@ export function BodegaTV({
     return () => document.removeEventListener('fullscreenchange', onFs);
   }, []);
 
+  // ESC closes medium mode (only when medium is on; native FS already
+  // owns ESC when fullscreened, so we stay out of the way).
+  useEffect(() => {
+    if (!mediumOn) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMediumOn(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mediumOn]);
+
   const toggleFullscreen = () => {
     if (!wrapRef.current) return;
     if (document.fullscreenElement) {
       document.exitFullscreen?.();
     } else {
+      // Going to true fullscreen — drop medium so we don't end up in a
+      // doubled-up overlay state when the browser exits FS later.
+      setMediumOn(false);
       wrapRef.current.requestFullscreen?.().catch(() => { /* user cancelled or unsupported */ });
     }
   };
+
+  const toggleMedium = () => setMediumOn((v) => !v);
 
   const hh = String(clock.getHours()).padStart(2, '0');
   const mm = String(clock.getMinutes()).padStart(2, '0');
   const screenMinH = large ? 380 : 260;
 
   return (
-    <div ref={wrapRef} className="select-none w-full bodega-tv-fullscreen">
+    <>
+      {mediumOn && (
+        <div
+          className="fixed inset-0 z-40 bg-black/85 backdrop-blur-sm"
+          onClick={() => setMediumOn(false)}
+        />
+      )}
+    <div
+      ref={wrapRef}
+      className={`select-none bodega-tv-fullscreen ${mediumOn ? 'fixed inset-3 sm:inset-6 z-50 overflow-auto bg-transparent' : 'w-full'}`}
+    >
       {/* rabbit-ear antennas — taller on large */}
       <div className="relative h-0">
         <div
@@ -223,8 +253,18 @@ export function BodegaTV({
           <span className="hidden md:inline tabular text-[#f3e9c0]/55">CH {String(channelNumber).padStart(2, '0')} · {hh}:{mm}</span>
           <button
             type="button"
-            onClick={toggleFullscreen}
+            onClick={toggleMedium}
             className="ml-2 text-[#f3e9c0]/85 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+            title={mediumOn ? 'Shrink TV (esc)' : 'Fit TV to browser window'}
+            aria-label={mediumOn ? 'Shrink TV' : 'Fit TV to browser window'}
+            aria-pressed={mediumOn}
+          >
+            <ScreenShare className="w-3.5 h-3.5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="ml-1 text-[#f3e9c0]/85 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
             title={isFs ? 'Exit fullscreen (esc)' : 'Fullscreen the TV'}
             aria-label={isFs ? 'Exit fullscreen' : 'Enter fullscreen'}
           >
@@ -401,6 +441,7 @@ export function BodegaTV({
         }}
       />
     </div>
+    </>
   );
 }
 

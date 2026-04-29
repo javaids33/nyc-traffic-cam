@@ -3,6 +3,7 @@ dist
 .DS_Store
 *.log
 .vite
+vite.config.ts.timestamp-*
 data/
 __pycache__/
 .venv/

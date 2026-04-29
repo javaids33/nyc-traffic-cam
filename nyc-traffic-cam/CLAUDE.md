@@ -67,8 +67,14 @@ One-time data jobs (run from repo root):
                                                         # smoke test: prints labels for 5 cams to stdout, NO file writes
 .venv/bin/python -m server.poi_classify_local --resume  # classify cams via LOCAL Ollama vision model
                                                         # → writes src/cam-pois.json (lights up /poi page)
-                                                        # default model: llama3.2-vision (needs Ollama ≥ 0.5.13)
-                                                        # fallback: --model llava:7b on older Ollama
+                                                        # default model: llava:7b (fits 8 GB GPU at 33/33 layers)
+                                                        # alt: --model qwen2.5vl:7b (richer tags, needs ≥12 GB VRAM)
+.venv/bin/python -m server.poi_classify_local --night   # nightly one-shot — sleeps until 20 min past NYC sunset,
+                                                        # then classifies all cams to src/cam-pois-night.json.
+                                                        # Equivalent to: --at-sunset-plus 20 --output-name cam_pois_night
+                                                        # /poi auto-switches to this file at dusk via usePoisByTime.
+                                                        # Schedule daily via Task Scheduler / cron at e.g. noon —
+                                                        # the script handles the wait until sunset itself.
 .venv/bin/python -m server.poi_classify --resume        # same job, but cloud Anthropic API (needs ANTHROPIC_API_KEY)
 ```
 

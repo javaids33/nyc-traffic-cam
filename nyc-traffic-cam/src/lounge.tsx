@@ -68,6 +68,7 @@ export default function Lounge() {
     return !sessionStorage.getItem('nyc-cam-seen');
   });
 
+
   // initial fetch — alerts pipeline disabled, cameras only
   useEffect(() => {
     fetchCameras().then(setCameras).catch(() => {});
@@ -282,16 +283,18 @@ export default function Lounge() {
                 );
               })}
             </div>
-            <BodegaTV
-              cameraId={focus?.cameraId ?? null}
-              caption={focus?.caption ?? null}
-              channelNumber={CHANNEL_LINEUP[channelIdx]}
-              flashKey={flashKey}
-              staticOn={staticOn}
-              locked={locked}
-              large
-              onScreenClick={() => setLocked((l) => !l)}
-            />
+            <div className="relative">
+              <BodegaTV
+                cameraId={focus?.cameraId ?? null}
+                caption={focus?.caption ?? null}
+                channelNumber={CHANNEL_LINEUP[channelIdx]}
+                flashKey={flashKey}
+                staticOn={staticOn}
+                locked={locked}
+                large
+                onScreenClick={() => setLocked((l) => !l)}
+              />
+            </div>
 
             <div className="mt-3 flex flex-wrap items-center gap-2 px-1">
               <button
@@ -1381,41 +1384,156 @@ function HotkeysPanel({ onClose }: { onClose: () => void }) {
 }
 
 function MetroCardIntro() {
+  // Faithful pastiche of the iconic gold MTA MetroCard: gold gradient
+  // body, top-left MTA roundel, big italic blue "MetroCard" wordmark
+  // skewed against the slope, the black magnetic stripe along the
+  // bottom, and the yellow ribbon with chevron arrows + "Insert this
+  // way / This side facing you". One swipe in, hold ~3s, swipe out.
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none overflow-hidden bg-black/70 backdrop-blur-sm grid place-items-center">
+    <div className="fixed inset-0 z-[60] pointer-events-none overflow-hidden bg-black/75 backdrop-blur-sm grid place-items-center">
       <div
-        className="metrocard"
+        className="metrocard relative"
         style={{
-          width: 360,
-          height: 220,
-          background: '#FFD600',
-          color: '#003B70',
-          padding: 18,
-          fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.6)',
-          animation: 'metrocard-swipe 3.5s cubic-bezier(.4,.0,.2,1) forwards',
+          width: 'min(620px, 88vw)',
+          aspectRatio: '1.586 / 1',
+          borderRadius: 14,
+          overflow: 'hidden',
+          background:
+            'linear-gradient(135deg, #F8B11C 0%, #FBC93B 38%, #F2A50C 70%, #C77F00 100%)',
+          boxShadow: '0 30px 70px rgba(0,0,0,0.7), 0 8px 22px rgba(0,0,0,0.5), inset 0 0 0 2px #ffffff66',
+          animation: 'metrocard-swipe 4.2s cubic-bezier(.4,.0,.2,1) forwards',
         }}
       >
-        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1 }}>★ MetroCard</div>
-        <div style={{ fontSize: 28, fontWeight: 900, marginTop: 12, lineHeight: 1.05 }}>
-          NYC TRAFFIC<br/>CAM CO.
+        {/* Glossy laminate sheen in upper-left */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at 28% 22%, #ffffff66 0%, transparent 48%)',
+            mixBlendMode: 'screen',
+          }}
+        />
+
+        {/* MTA roundel — yellow disc with white "MTA" */}
+        <div
+          className="absolute"
+          style={{
+            top: '7%',
+            left: '5%',
+            width: '21%',
+            aspectRatio: '1',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle at 35% 35%, #FFE066 0%, #E8A317 60%, #B17600 100%)',
+            boxShadow: 'inset 0 0 0 3px #ffffff55, 0 4px 12px #00000044',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: '"Bungee", "Helvetica Neue", sans-serif',
+            color: '#FFF8DC',
+            fontSize: 'clamp(18px, 4.5vw, 36px)',
+            fontWeight: 900,
+            textShadow: '2px 2px 0 #00000044',
+            letterSpacing: '0.04em',
+          }}
+        >
+          MTA
         </div>
-        <div style={{ fontSize: 11, marginTop: 12, fontWeight: 600 }}>
-          GOOD FOR ONE FARE · UNLIMITED RIDES THROUGH THE CITY'S TRAFFIC FEEDS
+
+        {/* Big italic blue MetroCard wordmark */}
+        <div
+          className="absolute"
+          style={{
+            top: '20%',
+            left: '5%',
+            right: '5%',
+            fontFamily: '"Bungee", "Helvetica Neue", sans-serif',
+            fontWeight: 900,
+            fontStyle: 'italic',
+            fontSize: 'clamp(34px, 9.5vw, 84px)',
+            lineHeight: 0.95,
+            color: '#0039A6',
+            letterSpacing: '-0.02em',
+            transform: 'skewX(-10deg)',
+            textShadow: '4px 4px 0 #00000022, 6px 6px 14px #00000055',
+            userSelect: 'none',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          MetroCard<sup style={{ fontSize: '0.32em', marginLeft: 4 }}>®</sup>
         </div>
-        <div style={{ fontSize: 11, marginTop: 24, display: 'flex', justifyContent: 'space-between' }}>
-          <span>EXP — NEVER</span>
-          <span style={{ fontFamily: 'IBM Plex Mono, monospace' }}>0000 0000 0954 LIVE</span>
+
+        {/* Subtle nyc·traffic·cam·co micro-print row, like the wave pattern on the real card */}
+        <div
+          className="absolute"
+          style={{
+            top: '53%',
+            left: '6%',
+            right: '6%',
+            fontFamily: '"IBM Plex Mono", monospace',
+            fontSize: 'clamp(9px, 1.3vw, 13px)',
+            color: '#0039A6',
+            opacity: 0.7,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+          }}
+        >
+          ★ NYC Traffic Cam Co. · Single Fare · Unlimited Rides Through The City's Feeds
+        </div>
+
+        {/* Black magnetic stripe */}
+        <div
+          className="absolute inset-x-0"
+          style={{
+            bottom: '14%',
+            height: '13%',
+            background: 'linear-gradient(180deg, #1a1a1a 0%, #050505 50%, #1a1a1a 100%)',
+            boxShadow: 'inset 0 1px 0 #ffffff22, inset 0 -1px 0 #00000088',
+          }}
+        />
+
+        {/* Yellow instruction ribbon — Insert this way · This side facing you */}
+        <div
+          className="absolute inset-x-0 flex items-center justify-between px-3"
+          style={{
+            bottom: 0,
+            height: '14%',
+            background: 'linear-gradient(180deg, #FFD600 0%, #F6B800 100%)',
+            borderTop: '1px solid #00000033',
+            fontFamily: '"Bungee", "Helvetica Neue", sans-serif',
+            fontSize: 'clamp(9px, 1.4vw, 15px)',
+            color: '#000',
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            fontWeight: 900,
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <MetroChevrons /> Insert this way
+          </span>
+          <span style={{ flex: 1, textAlign: 'center', color: '#fff', textShadow: '1px 1px 0 #000' }}>
+            ◀ This side facing you ◀
+          </span>
         </div>
       </div>
       <style>{`
         @keyframes metrocard-swipe {
           0%   { transform: translateX(140vw) rotate(2deg) skewX(-4deg); }
-          22%  { transform: translateX(0) rotate(0deg) skewX(0); }
-          85%  { transform: translateX(0) rotate(0deg) skewX(0); opacity: 1; }
+          18%  { transform: translateX(0) rotate(0deg) skewX(0); }
+          82%  { transform: translateX(0) rotate(0deg) skewX(0); opacity: 1; }
           100% { transform: translateX(-150vw) rotate(-3deg) skewX(4deg); opacity: 0; }
         }
       `}</style>
     </div>
+  );
+}
+
+function MetroChevrons() {
+  return (
+    <span style={{ display: 'inline-flex', gap: 2 }}>
+      <span style={{ opacity: 0.55 }}>◀</span>
+      <span style={{ opacity: 0.8 }}>◀</span>
+      <span>◀</span>
+    </span>
   );
 }

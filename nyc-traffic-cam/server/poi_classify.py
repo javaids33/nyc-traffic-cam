@@ -80,8 +80,8 @@ async def classify(client: httpx.AsyncClient, image_b64: str, key: str) -> dict[
     """Send the image to Claude and parse the structured response."""
     body = {
         "model": CLASSIFIER_MODEL,
-        # 14 structured fields fit comfortably under 400 tokens.
-        "max_tokens": 400,
+        # 14 structured fields plus a tags array fits in ~600 tokens.
+        "max_tokens": 600,
         "messages": [
             {
                 "role": "user",
@@ -109,7 +109,8 @@ async def classify(client: httpx.AsyncClient, image_b64: str, key: str) -> dict[
 
 def _print_one(cam_id: str, rec: dict[str, Any]) -> None:
     flags = []
-    if not rec.get("image_usable", True): flags.append("UNUSABLE")
+    quality = rec.get("quality") or ("good" if rec.get("image_usable", True) else "broken")
+    if quality != "good": flags.append(quality.upper())
     if rec.get("sun_glare"): flags.append("glare")
     if rec.get("lens_obstruction"): flags.append("lens")
     if rec.get("crowd_or_event"): flags.append("EVENT")
@@ -119,11 +120,14 @@ def _print_one(cam_id: str, rec: dict[str, Any]) -> None:
     extras = []
     if rec.get("landmark_name"): extras.append(f"landmark={rec['landmark_name']!r}")
     if rec.get("event_description"): extras.append(f"event={rec['event_description']!r}")
+    tags = rec.get("tags") or []
+    if tags: extras.append(f"tags={','.join(tags[:6])}")
 
     print(
-        f"  {cam_id[:8]}  scene={rec.get('scene'):12s}  "
-        f"{rec.get('time_of_day'):4s}  {rec.get('weather'):5s}  "
-        f"cong={rec.get('congestion'):6s}  conf={rec.get('confidence'):3d}{flag_str}"
+        f"  {cam_id[:8]}  scene={(rec.get('scene') or '?'):12s}  "
+        f"{(rec.get('time_of_day') or '?'):4s}  {(rec.get('weather') or '?'):5s}  "
+        f"cong={(rec.get('congestion') or '?'):6s}  "
+        f"int={rec.get('interest', 0):3d}  conf={rec.get('confidence', 0):3d}{flag_str}"
         + (f"  {' '.join(extras)}" if extras else "")
     )
 
