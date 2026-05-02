@@ -339,12 +339,48 @@ function buildTaxiCab(scene: THREE.Scene): CabRig {
   // tuned so the windshield + side windows leave a generous opening
   // for the world; only ~25% of FOV is interior trim.
 
-  // YELLOW HOOD — far forward + low + narrow. A wedge of yellow
-  // suggesting "cab" without claiming the lower 40% of the screen.
-  const hood = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 0.85), yellowMat);
-  hood.rotation.x = -Math.PI / 2;
-  hood.position.set(0, -1.45, -4.2);
+  // YELLOW HOOD — sits low and recedes toward the bumper. A textured
+  // gradient (back = bright cab yellow, front = darker amber, hint of
+  // a center-line bead crease) makes it read as a curving sheet-metal
+  // panel catching light, instead of the flat-slab "yellow rectangle
+  // on the road" look from before. Sized to occupy ~12% of vertical
+  // FOV so it grounds the view without dominating it.
+  const hoodTex = makeHoodGradient();
+  const hood = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.4, 1.6),
+    new THREE.MeshBasicMaterial({ map: hoodTex, fog: false, transparent: true }),
+  );
+  hood.rotation.x = -Math.PI / 2 + 0.10;   // tilt up slightly toward camera
+  hood.position.set(0, -1.55, -3.10);
   g.add(hood);
+  // Chrome bumper strip at the leading edge of the hood — narrow band
+  // that reads as the front-edge highlight.
+  const bumper = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.4, 0.05),
+    new THREE.MeshBasicMaterial({ color: CAB_CHROME, fog: false }),
+  );
+  bumper.position.set(0, -1.46, -3.86);
+  bumper.rotation.x = -0.03;
+  g.add(bumper);
+  // Hood ornament — tiny chrome silhouette dead-center, just above
+  // the leading edge. Reads as "cab", not "rectangle".
+  const ornament = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.05, 0.13),
+    new THREE.MeshBasicMaterial({ color: CAB_CHROME, fog: false }),
+  );
+  ornament.position.set(0, -1.36, -3.84);
+  g.add(ornament);
+  // Tiny "checker" medallion under the ornament — three black/yellow
+  // squares forming the iconic taxi checker. Reinforces "this is a
+  // cab" at a glance.
+  const checkerTex = makeCheckerMedallion();
+  const medallion = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.18, 0.05),
+    new THREE.MeshBasicMaterial({ map: checkerTex, fog: false, transparent: true }),
+  );
+  medallion.position.set(0, -1.43, -3.83);
+  medallion.rotation.x = -0.04;
+  g.add(medallion);
 
   // WINDSHIELD FRAME — top crossbar high, A-pillars at the actual frame
   // edges so they read as "windshield border", not "view-blocker".
@@ -446,37 +482,22 @@ function buildTaxiCab(scene: THREE.Scene): CabRig {
   mirrorStalk.position.set(-0.22, 0.65, -0.96);
   g.add(mirrorStalk);
 
-  // TAXIMETER — small chrome fare meter mounted on the dashboard surface,
-  // positioned just inside the lower FOV. Sits ON the dashboard so it
-  // doesn't read as a floating box.
-  const dashSurface = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.42, 0.16),
-    new THREE.MeshBasicMaterial({ color: CAB_DASH, fog: false }),
-  );
-  dashSurface.position.set(0.36, -0.46, -0.95);
-  dashSurface.rotation.x = -0.40;
-  g.add(dashSurface);
+  // TAXIMETER — single canvas-textured plate showing a 1940s Gamewell
+  // mechanical fare meter (chrome bezel, "TAXIMETER / NYC" cartouche,
+  // illuminated numeric display reading the fare). Replaces the previous
+  // chrome+yellow primitive stack which read as "test cube" on the dash.
+  // Sized smaller and pushed further off-center so it doesn't compete
+  // with the forward view. The face is a single quad with the chrome
+  // body, dial face, and numerals all painted into the texture.
+  const meterTex = makeTaximeterTexture();
   const meter = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.13, 0.09),
-    new THREE.MeshBasicMaterial({ color: CAB_CHROME, fog: false }),
+    new THREE.PlaneGeometry(0.30, 0.18),
+    new THREE.MeshBasicMaterial({ map: meterTex, fog: false, transparent: true }),
   );
-  meter.position.set(0.36, -0.45, -0.948);
-  meter.rotation.x = -0.40;
+  meter.position.set(0.55, -0.50, -0.94);
+  meter.rotation.x = -0.42;
+  meter.rotation.y = -0.18;   // angled toward the back-seat passenger
   g.add(meter);
-  const meterFace = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.10, 0.06),
-    new THREE.MeshBasicMaterial({ color: 0x2a1a08, fog: false }),
-  );
-  meterFace.position.set(0.36, -0.45, -0.946);
-  meterFace.rotation.x = -0.40;
-  g.add(meterFace);
-  const meterDigit = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.07, 0.02),
-    new THREE.MeshBasicMaterial({ color: 0xffce40, fog: false }),
-  );
-  meterDigit.position.set(0.36, -0.445, -0.944);
-  meterDigit.rotation.x = -0.40;
-  g.add(meterDigit);
 
   scene.add(g);
 
@@ -487,6 +508,190 @@ function buildTaxiCab(scene: THREE.Scene): CabRig {
       g.quaternion.copy(camera.quaternion);
     },
   };
+}
+
+// Canvas texture for the cab hood — vertical gradient from saturated
+// CAB_YELLOW at the back (near windshield) to a darker amber at the
+// front (near bumper). Implies a curving sheet-metal panel catching
+// horizon light, instead of the previous flat-slab "yellow rectangle
+// on the road" look. A faint center-line crease running back-to-front
+// adds period-correct hood detail (Crown Vics had a raised center bead).
+function makeHoodGradient(): THREE.CanvasTexture {
+  const W = 256, H = 256;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d')!;
+  // Plane UVs: V=0 bottom of plane (= front of hood, far from driver),
+  // V=1 top (= back of hood, near windshield). CanvasTexture default
+  // flipY=true → canvas Y=0 maps to V=1. So:
+  //   canvas top    (Y=0)   → back of hood (closest to windshield)   → bright
+  //   canvas bottom (Y=H)   → front of hood (closest to bumper)      → darker
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0.00, '#ffd417');   // back edge — full cab yellow
+  grad.addColorStop(0.40, '#ffc312');
+  grad.addColorStop(0.80, '#c98a08');   // front edge — darker amber
+  grad.addColorStop(1.00, '#7a4f04');   // shadow under bumper
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  // Soft horizon highlight — single warm band near the back of the
+  // hood implying the windshield reflecting in the paint. Subtle.
+  ctx.globalAlpha = 0.18;
+  const horizonGrad = ctx.createLinearGradient(0, 0, 0, H * 0.30);
+  horizonGrad.addColorStop(0, 'rgba(255,245,200,0.6)');
+  horizonGrad.addColorStop(1, 'rgba(255,245,200,0)');
+  ctx.fillStyle = horizonGrad;
+  ctx.fillRect(0, 0, W, H * 0.30);
+  // Center-line crease (raised hood bead) — thin vertical highlight
+  // tapered so it doesn't read as a print-line.
+  ctx.globalAlpha = 0.14;
+  const creaseGrad = ctx.createLinearGradient(0, 0, 0, H);
+  creaseGrad.addColorStop(0, 'rgba(255,245,176,0.0)');
+  creaseGrad.addColorStop(0.5, 'rgba(255,245,176,1)');
+  creaseGrad.addColorStop(1, 'rgba(255,245,176,0.0)');
+  ctx.fillStyle = creaseGrad;
+  ctx.fillRect(W / 2 - 1.0, 0, 2.0, H);
+  // Tiny darker corner shadows so the panel reads as inset under the
+  // windshield + door overhang
+  ctx.globalAlpha = 0.25;
+  for (const x of [0, W - 60]) {
+    const g3 = ctx.createLinearGradient(x, 0, x + 60, 0);
+    if (x === 0) {
+      g3.addColorStop(0, 'rgba(0,0,0,1)');
+      g3.addColorStop(1, 'rgba(0,0,0,0)');
+    } else {
+      g3.addColorStop(0, 'rgba(0,0,0,0)');
+      g3.addColorStop(1, 'rgba(0,0,0,1)');
+    }
+    ctx.fillStyle = g3;
+    ctx.fillRect(x, 0, 60, H);
+  }
+  ctx.globalAlpha = 1;
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  return tex;
+}
+
+// Canvas texture for the dashboard taximeter face. Paints the chrome
+// bezel, dark dial face, "TAXIMETER" cartouche, brand mark, and an
+// illuminated 5-digit fare display all into a single quad. Much higher
+// information density per polygon than the original 4-mesh primitive
+// stack, and it actually reads as a 1940s mechanical meter at the
+// resolution it occupies on screen (~5% of viewport).
+function makeTaximeterTexture(): THREE.CanvasTexture {
+  const W = 512, H = 320;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d')!;
+  // Transparent background so the dashboard surface shows through the
+  // rounded-rect corners.
+  ctx.clearRect(0, 0, W, H);
+  // Chrome bezel — rounded outer plate with subtle vertical gradient
+  const bezelGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bezelGrad.addColorStop(0, '#d6cfbe');
+  bezelGrad.addColorStop(0.5, '#9d9685');
+  bezelGrad.addColorStop(1, '#5e5648');
+  ctx.fillStyle = bezelGrad;
+  roundRect(ctx, 8, 8, W - 16, H - 16, 28);
+  ctx.fill();
+  // Inner bezel ring — slightly darker
+  ctx.fillStyle = '#3a3326';
+  roundRect(ctx, 24, 24, W - 48, H - 48, 22);
+  ctx.fill();
+  // Dial face — warm dark amber under glass
+  const dialGrad = ctx.createRadialGradient(W / 2, H / 2 - 20, 20, W / 2, H / 2, 220);
+  dialGrad.addColorStop(0, '#3a2208');
+  dialGrad.addColorStop(1, '#1a1004');
+  ctx.fillStyle = dialGrad;
+  roundRect(ctx, 36, 36, W - 72, H - 72, 16);
+  ctx.fill();
+  // "TAXIMETER" cartouche at the top
+  ctx.fillStyle = '#e6c98a';
+  ctx.font = 'bold 26px ui-serif, Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('TAXIMETER', W / 2, 70);
+  // Maker mark sub-line
+  ctx.fillStyle = '#9a7d4a';
+  ctx.font = '14px ui-serif, Georgia, serif';
+  ctx.fillText('GAMEWELL · NYC', W / 2, 100);
+  // Numeric fare display window — recessed black slot
+  const wx = W * 0.18, wy = H * 0.42, ww = W * 0.64, wh = H * 0.30;
+  ctx.fillStyle = '#0a0604';
+  roundRect(ctx, wx, wy, ww, wh, 8);
+  ctx.fill();
+  // Illuminated digits — warm amber 7-segment style. Pre-bake "0.20"
+  // as the resting fare (1940 NYC cab drop was $0.20).
+  ctx.fillStyle = '#ffce40';
+  ctx.shadowColor = '#ff9020';
+  ctx.shadowBlur = 18;
+  ctx.font = 'bold 78px ui-monospace, "Courier New", monospace';
+  ctx.fillText('$0.20', W / 2, wy + wh / 2 + 4);
+  ctx.shadowBlur = 0;
+  // FARE label below the window
+  ctx.fillStyle = '#9a7d4a';
+  ctx.font = '13px ui-monospace, monospace';
+  ctx.fillText('FARE', W / 2, H - 50);
+  // Small "ON DUTY" pip — green dot top-left of the display
+  ctx.fillStyle = '#5be055';
+  ctx.beginPath();
+  ctx.arc(wx + 12, wy - 14, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#e6c98a';
+  ctx.font = '11px ui-monospace, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('ON DUTY', wx + 22, wy - 11);
+  // Tiny crank handle silhouette right side
+  ctx.fillStyle = '#5e5648';
+  roundRect(ctx, W - 56, H / 2 - 8, 22, 16, 3);
+  ctx.fill();
+  ctx.fillStyle = '#3a3326';
+  ctx.beginPath();
+  ctx.arc(W - 30, H / 2, 6, 0, Math.PI * 2);
+  ctx.fill();
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  return tex;
+}
+
+// Tiny black/yellow checker medallion painted on a strip — sits below
+// the hood ornament as a "TAXI CHECKER" badge. Two-row checkerboard.
+function makeCheckerMedallion(): THREE.CanvasTexture {
+  const W = 256, H = 64;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d')!;
+  ctx.clearRect(0, 0, W, H);
+  // Two rows × eight squares
+  const cols = 12, rows = 2;
+  const sw = W / cols, sh = H / rows;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      ctx.fillStyle = ((r + c) % 2 === 0) ? '#0d0d0e' : '#ffd417';
+      ctx.fillRect(c * sw, r * sh, sw, sh);
+    }
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  return tex;
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 // Vertical alpha gradient: opaque in the bottom ~85%, fading to 0 at top.
@@ -632,6 +837,22 @@ export default function World1940() {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<Building | null>(null);
   const [walking, setWalking] = useState(false);
+  // Treat narrow viewports as "mobile" for HUD layout. Tracked in state
+  // (not just CSS) because we want to also collapse the description
+  // text + swap controls hint, not just resize the panel.
+  const [isCompact, setIsCompact] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < 640,
+  );
+  useEffect(() => {
+    const onResize = () => setIsCompact(window.innerWidth < 640);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  // Live position along the block (0..1). Driven by the render loop via
+  // ref → minimap dot CSS, so we don't trigger React re-renders every
+  // frame.
+  const minimapDotRef = useRef<HTMLDivElement>(null);
+  const streetLengthRef = useRef<number>(1);
 
   useEffect(() => {
     fetch(DATA_URL)
@@ -682,6 +903,7 @@ export default function World1940() {
       allSides = [rightLayout.placed, leftLayout.placed];
       streetLength = Math.max(rightLayout.totalLength, leftLayout.totalLength) + 30;
     }
+    streetLengthRef.current = Math.max(1, streetLength);
 
     const container = containerRef.current;
 
@@ -1420,6 +1642,19 @@ export default function World1940() {
         car.visible = Math.abs(dx) > 4.5;
       }
 
+      // Drive the minimap dot via direct DOM write — avoids one React
+      // re-render per frame. Position is the cab's progress along the
+      // block, mapped 0..1 so the SVG can place the marker.
+      const dot = minimapDotRef.current;
+      if (dot) {
+        const t = Math.max(0, Math.min(1, cx / streetLength));
+        // Heading in the minimap plane: yaw=0 → +X (east, right). Negate
+        // because CSS rotates clockwise but yaw rotates counter-clockwise.
+        const headingDeg = (-yaw * 180) / Math.PI;
+        dot.style.left = `${(t * 100).toFixed(2)}%`;
+        dot.style.transform = `translate(-50%, -50%) rotate(${headingDeg.toFixed(1)}deg)`;
+      }
+
       renderer.render(scene, camera);
     };
     loop();
@@ -1536,22 +1771,30 @@ export default function World1940() {
         </div>
       )}
 
-      {/* Header */}
+      {/* Header — compact on narrow screens (just title + meta count),
+          full chrome on desktop (controls hint + seam stats). The full
+          version was eating ~60% of mobile viewports. */}
       {manifest && (
         <div style={{
-          position: 'absolute', left: 14, top: 14, padding: '10px 14px',
+          position: 'absolute', left: isCompact ? 8 : 14, top: isCompact ? 8 : 14,
+          padding: isCompact ? '7px 10px' : '10px 14px',
           background: 'rgba(20,15,10,0.78)', backdropFilter: 'blur(6px)',
           borderRadius: 8, fontFamily: 'ui-monospace, monospace',
-          fontSize: 12, lineHeight: 1.4, maxWidth: 360, zIndex: 5,
+          fontSize: isCompact ? 10 : 12, lineHeight: 1.4,
+          maxWidth: isCompact ? 'calc(100vw - 90px)' : 360, zIndex: 5,
           pointerEvents: 'none',
         }}>
-          <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>
-            1940 · West Village walk
+          <div style={{
+            fontSize: isCompact ? 13 : 17, fontWeight: 700,
+            letterSpacing: 1, marginBottom: isCompact ? 1 : 4,
+          }}>
+            1940 · {isCompact ? 'W Village' : 'West Village walk'}
           </div>
           <div style={{ color: '#cdbfa6' }}>
             {buildingCount} buildings · block 1-585
-            {analysis ? ` · ${Object.keys(analysis.buildings).length} ai-cropped via ollama` : ''}<br />
-            {stitch?.blocks?.['1-585']?.summary && (() => {
+            {!isCompact && analysis ? ` · ${Object.keys(analysis.buildings).length} ai-cropped via ollama` : ''}
+            {!isCompact && <br />}
+            {!isCompact && stitch?.blocks?.['1-585']?.summary && (() => {
               const s = stitch.blocks['1-585'].summary;
               return (
                 <>
@@ -1562,18 +1805,81 @@ export default function World1940() {
                 </>
               );
             })()}
-            {walking
+            {!isCompact && (walking
               ? 'mouse to look · W/S to brake/accelerate · F to step out · esc to release'
-              : 'click the canvas to ride along · F to swap walk/drive · click any building to inspect'}
+              : 'click the canvas to ride along · F to swap walk/drive · click any building to inspect')}
           </div>
         </div>
       )}
 
       <a href="/" style={{
-        position: 'absolute', right: 12, top: 12, background: 'rgba(20,15,10,0.78)',
-        padding: '6px 12px', borderRadius: 6, color: '#f6e9d6', fontSize: 12, textDecoration: 'none',
+        position: 'absolute', right: isCompact ? 8 : 12, top: isCompact ? 8 : 12,
+        background: 'rgba(20,15,10,0.85)',
+        padding: isCompact ? '8px 12px' : '6px 12px',
+        borderRadius: 6, color: '#f6e9d6',
+        fontSize: isCompact ? 13 : 12, textDecoration: 'none',
         fontFamily: 'ui-monospace, monospace', zIndex: 5,
+        // Bigger tap target on touch devices
+        minWidth: isCompact ? 56 : undefined,
+        textAlign: 'center',
       }}>← back</a>
+
+      {/* MINIMAP — bird-eye view of the 5-block stretch with a yellow
+          dot showing the cab's current x-progress along the street.
+          Sits in the bottom-left so it doesn't compete with the
+          taximeter on the dashboard. The dot's CSS rotation tracks
+          the camera yaw → little arrow points where you're facing.
+          Hidden when the photo modal is open. */}
+      {manifest && !open && (
+        <div style={{
+          position: 'absolute',
+          left: isCompact ? 8 : 14,
+          bottom: isCompact ? 8 : 14,
+          padding: '8px 10px 10px 10px',
+          background: 'rgba(20,15,10,0.78)', backdropFilter: 'blur(6px)',
+          borderRadius: 8, fontFamily: 'ui-monospace, monospace',
+          fontSize: 10, color: '#cdbfa6', zIndex: 5,
+          pointerEvents: 'none',
+          width: isCompact ? 160 : 220,
+        }}>
+          <div style={{ marginBottom: 5, letterSpacing: 1 }}>BLOCK 1-585 · WEST ↣ EAST</div>
+          <div style={{
+            position: 'relative', height: 12,
+            background: 'rgba(246,233,214,0.08)',
+            borderRadius: 4,
+            border: '1px solid rgba(246,233,214,0.18)',
+          }}>
+            {/* Side-A / side-C tick marks at quartiles */}
+            {[0.25, 0.5, 0.75].map(t => (
+              <div key={t} style={{
+                position: 'absolute', left: `${t * 100}%`, top: 2, bottom: 2,
+                width: 1, background: 'rgba(246,233,214,0.18)',
+              }} />
+            ))}
+            {/* Cab dot — driven by minimapDotRef in the render loop */}
+            <div
+              ref={minimapDotRef}
+              style={{
+                position: 'absolute', top: '50%', left: '0%',
+                width: 0, height: 0,
+                borderLeft: '5px solid transparent',
+                borderRight: '5px solid transparent',
+                borderBottom: '9px solid #ffd417',
+                transform: 'translate(-50%, -50%)',
+                transformOrigin: 'center',
+                filter: 'drop-shadow(0 0 3px rgba(255,212,23,0.6))',
+              }}
+            />
+          </div>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            marginTop: 4, fontSize: 9, opacity: 0.75,
+          }}>
+            <span>HUDSON</span>
+            <span>WEST 4TH</span>
+          </div>
+        </div>
+      )}
 
       {/* Crosshair when walking — tiny dot in the center for click target */}
       {walking && (

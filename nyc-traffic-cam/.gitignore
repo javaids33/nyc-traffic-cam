@@ -13,10 +13,23 @@ tsconfig.tsbuildinfo
 
 # 1940 walk diagnostic artifacts (regeneratable, not needed at runtime)
 public/photo-stitch-contact/
-public/photo-stitched/*-canvas.png
-public/photo-stitched/*-coverage.png
+
+# 1940 image assets — too heavy to bundle on Cloudflare Pages.
+# These live on disk for local dev + Python pipelines, served from
+# Cloudflare R2 in production. See server/diffuse_seams.py for the
+# panorama bake; copy results to R2 with `wrangler r2 object put`.
+public/photo-stitched/
+public/photos_1940s/
 
 # Local research scratch
 public/lot48_inspect.jpg
 retry.jpg
 sample.jpg
+
+# DuckDB metadata index (regeneratable from sources)
+data/photos.duckdb
+
+# /rewind MASH foreground extracts — regeneratable, stale fast.
+# Run server/extract_foreground.py locally to refresh, or wire to a
+# scheduled job + R2 in prod.
+public/cam_foreground/

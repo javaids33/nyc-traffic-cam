@@ -1,0 +1,359 @@
+{
+  "version": 1,
+  "generated_at": 1777756296,
+  "model": "clip-ViT-B-32",
+  "summary": {
+    "cams_lit": 4,
+    "total_matches": 12
+  },
+  "pairs": [
+    {
+      "bin": "1010015",
+      "lot": 17,
+      "block": 588,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00588_0017.jpg",
+      "centroid": [
+        -74.00443416666667,
+        40.73261191666666
+      ],
+      "cam": {
+        "id": "04589f46-2429-4e26-ad46-12a1198e9a9c",
+        "name": "6 Ave @ West Houston St",
+        "lat": 40.728348,
+        "lng": -74.002878,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 492.6,
+      "rank": 1,
+      "similarity": 0.5528,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": true,
+        "has_vehicles": true,
+        "what_we_see": "NYC street scene with buildings and pedestrians"
+      }
+    },
+    {
+      "bin": "1010008",
+      "lot": 9,
+      "block": 588,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00588_0009.jpg",
+      "centroid": [
+        -74.00498333333333,
+        40.73242111111111
+      ],
+      "cam": {
+        "id": "04589f46-2429-4e26-ad46-12a1198e9a9c",
+        "name": "6 Ave @ West Houston St",
+        "lat": 40.728348,
+        "lng": -74.002878,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 487.1,
+      "rank": 2,
+      "similarity": 0.5389,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": true,
+        "has_vehicles": true,
+        "what_we_see": "NYC street scene with buildings and pedestrians"
+      }
+    },
+    {
+      "bin": "1010156",
+      "lot": 53,
+      "block": 590,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00590_0053.jpg",
+      "centroid": [
+        -74.00328528571428,
+        40.73216228571429
+      ],
+      "cam": {
+        "id": "04589f46-2429-4e26-ad46-12a1198e9a9c",
+        "name": "6 Ave @ West Houston St",
+        "lat": 40.728348,
+        "lng": -74.002878,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 426.1,
+      "rank": 3,
+      "similarity": 0.5322,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": true,
+        "has_vehicles": true,
+        "what_we_see": "NYC street scene with buildings and pedestrians"
+      }
+    },
+    {
+      "bin": "1010052",
+      "lot": 75,
+      "block": 588,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00588_0075.jpg",
+      "centroid": [
+        -74.004943875,
+        40.732815
+      ],
+      "cam": {
+        "id": "0ff11926-fcf0-4e3b-8aea-ffc0ea4f2228",
+        "name": "West Houston @ Hudson St",
+        "lat": 40.728739,
+        "lng": -74.007137,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 489.7,
+      "rank": 1,
+      "similarity": 0.5442,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": false,
+        "has_vehicles": true,
+        "what_we_see": "Urban street scene with buildings and cars"
+      }
+    },
+    {
+      "bin": "1010026",
+      "lot": 34,
+      "block": 588,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00588_0034.jpg",
+      "centroid": [
+        -74.0043835,
+        40.73222633333334
+      ],
+      "cam": {
+        "id": "0ff11926-fcf0-4e3b-8aea-ffc0ea4f2228",
+        "name": "West Houston @ Hudson St",
+        "lat": 40.728739,
+        "lng": -74.007137,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 452.0,
+      "rank": 2,
+      "similarity": 0.5436,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": false,
+        "has_vehicles": true,
+        "what_we_see": "Urban street scene with buildings and cars"
+      }
+    },
+    {
+      "bin": "1076896",
+      "lot": 38,
+      "block": 588,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00588_0038.jpg",
+      "centroid": [
+        -74.00476983333333,
+        40.7322575
+      ],
+      "cam": {
+        "id": "0ff11926-fcf0-4e3b-8aea-ffc0ea4f2228",
+        "name": "West Houston @ Hudson St",
+        "lat": 40.728739,
+        "lng": -74.007137,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 439.4,
+      "rank": 3,
+      "similarity": 0.5393,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": false,
+        "has_vehicles": true,
+        "what_we_see": "Urban street scene with buildings and cars"
+      }
+    },
+    {
+      "bin": "1067305",
+      "lot": 31,
+      "block": 605,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00605_0031.jpg",
+      "centroid": [
+        -74.006835,
+        40.73261786666667
+      ],
+      "cam": {
+        "id": "67a4769b-dfb2-4a0d-9605-114df107646c",
+        "name": "West St @ West Houston St",
+        "lat": 40.729104,
+        "lng": -74.010528,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 500.0,
+      "rank": 1,
+      "similarity": 0.3671,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": false,
+        "has_vehicles": true,
+        "what_we_see": "A street-level urban scene with buildings and sidewalks visible, showing cars on the road."
+      }
+    },
+    {
+      "bin": "1067306",
+      "lot": 38,
+      "block": 605,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00605_0038.jpg",
+      "centroid": [
+        -74.006797375,
+        40.732171375
+      ],
+      "cam": {
+        "id": "67a4769b-dfb2-4a0d-9605-114df107646c",
+        "name": "West St @ West Houston St",
+        "lat": 40.729104,
+        "lng": -74.010528,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 464.3,
+      "rank": 2,
+      "similarity": 0.3661,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": false,
+        "has_vehicles": true,
+        "what_we_see": "A street-level urban scene with buildings and sidewalks visible, showing cars on the road."
+      }
+    },
+    {
+      "bin": "1078234",
+      "lot": 24,
+      "block": 630,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00630_0024.jpg",
+      "centroid": [
+        -74.007845,
+        40.732976666666666
+      ],
+      "cam": {
+        "id": "67a4769b-dfb2-4a0d-9605-114df107646c",
+        "name": "West St @ West Houston St",
+        "lat": 40.729104,
+        "lng": -74.010528,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 486.9,
+      "rank": 3,
+      "similarity": 0.3657,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": false,
+        "has_vehicles": true,
+        "what_we_see": "A street-level urban scene with buildings and sidewalks visible, showing cars on the road."
+      }
+    },
+    {
+      "bin": "1010035",
+      "lot": 47,
+      "block": 588,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00588_0047.jpg",
+      "centroid": [
+        -74.00542920000001,
+        40.7330544
+      ],
+      "cam": {
+        "id": "db84e6bd-1436-4213-bbfb-f6e0ceab38c7",
+        "name": "West Houston @ Varick St",
+        "lat": 40.7286,
+        "lng": -74.005356,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 496.0,
+      "rank": 1,
+      "similarity": 0.4987,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": true,
+        "has_vehicles": true,
+        "what_we_see": "NYC street scene with buildings and vehicles"
+      }
+    },
+    {
+      "bin": "1010008",
+      "lot": 9,
+      "block": 588,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00588_0009.jpg",
+      "centroid": [
+        -74.00498333333333,
+        40.73242111111111
+      ],
+      "cam": {
+        "id": "db84e6bd-1436-4213-bbfb-f6e0ceab38c7",
+        "name": "West Houston @ Varick St",
+        "lat": 40.7286,
+        "lng": -74.005356,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 426.7,
+      "rank": 2,
+      "similarity": 0.4769,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": true,
+        "has_vehicles": true,
+        "what_we_see": "NYC street scene with buildings and vehicles"
+      }
+    },
+    {
+      "bin": "1076891",
+      "lot": 30,
+      "block": 588,
+      "boro": 1,
+      "photo_url": "/photos_1940s/nynyma_rec0040_1_00588_0030.jpg",
+      "centroid": [
+        -74.004162,
+        40.732454714285716
+      ],
+      "cam": {
+        "id": "db84e6bd-1436-4213-bbfb-f6e0ceab38c7",
+        "name": "West Houston @ Varick St",
+        "lat": 40.7286,
+        "lng": -74.005356,
+        "borough": "MANHATTAN"
+      },
+      "distance_m": 440.9,
+      "rank": 3,
+      "similarity": 0.4764,
+      "validation": {
+        "usable": true,
+        "confidence": 0.9,
+        "scene_kind": "rowhouse_street",
+        "has_pedestrians": true,
+        "has_vehicles": true,
+        "what_we_see": "NYC street scene with buildings and vehicles"
+      }
+    }
+  ]
+}
