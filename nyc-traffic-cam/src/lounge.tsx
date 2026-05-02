@@ -1011,6 +1011,15 @@ const MODES: Mode[] = [
     upcoming: true,
   },
   {
+    href: '/rewind',
+    badge: '◀◀',
+    badgeBg: '#1a1a2a',
+    title: 'Rewind',
+    sub: '1940 WPA tax photo ↔ live cam · same corner · 86 yrs apart',
+    accent: '#FFD600',
+    cta: '★ NEW',
+  },
+  {
     href: '/sewer',
     badge: '🐀',
     badgeBg: '#3a4a1a',

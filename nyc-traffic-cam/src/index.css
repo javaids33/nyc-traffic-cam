@@ -675,14 +675,26 @@ body::after {
   100% { transform: translateY(-40px); opacity: 0; }
 }
 
-/* Fullscreen TV — fill viewport when in fullscreen */
+/* Fullscreen TV — fill viewport when in fullscreen.
+   Center the chassis but let it use the full available width. The
+   1500px cap and 4vh/2vw padding earlier left empty bands on wide
+   monitors; now we let the cabinet stretch to whatever the viewport
+   allows, capped only by 100vh so the chassis can never exceed the
+   actual screen height. */
 .bodega-tv-fullscreen:fullscreen {
   background: #06080a;
   display: grid;
   place-items: center;
-  padding: 4vh 2vw;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
 }
 .bodega-tv-fullscreen:fullscreen > div {
-  max-width: 1500px;
-  width: 96vw;
+  max-width: none;
+  width: 100vw;
+  max-height: 100vh;
+  /* Slight inner breathing room so the antenna/rabbit-ears don't
+     clip against the screen edge on TVs that have them. */
+  padding: 1.5vh 1.5vw;
+  box-sizing: border-box;
 }

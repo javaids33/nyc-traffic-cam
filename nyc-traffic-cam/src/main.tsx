@@ -12,6 +12,7 @@ import Shrine from './shrine';
 import Poi from './poi';
 import Cab from './cab';
 import World1940 from './world-1940';
+import Rewind from './rewind';
 import { AudioPanel } from './audio-panel';
 import { BodegaCat } from './bodega-cat';
 
@@ -36,12 +37,15 @@ const Page = path.startsWith('/about')
                   ? Cab
                   : path.startsWith('/world1940') || path.startsWith('/1940')
                     ? World1940
-                    : Lounge;
+                    : path.startsWith('/rewind') || path.startsWith('/mashup')
+                      ? Rewind
+                      : Lounge;
 
-// /world1940 is a full-bleed first-person street walk — hide the
+// /world1940 + /rewind are full-bleed immersive routes — hide the
 // AudioPanel + BodegaCat (which live at app root for every other route)
-// so they don't sit on top of the immersive canvas.
-const IS_FULL_BLEED = path.startsWith('/world1940') || path.startsWith('/1940');
+// so they don't sit on top of the canvas.
+const IS_FULL_BLEED = path.startsWith('/world1940') || path.startsWith('/1940')
+  || path.startsWith('/rewind') || path.startsWith('/mashup');
 const Tree = (
   <>
     <Page />

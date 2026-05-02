@@ -180,52 +180,133 @@ export function AudioPanel(_props: { inline?: boolean } = {}) {
 
   return (
     <>
-      {/* Quiet launcher — small flush-left tab, no animation when
-          idle. The previous version (180px antenna tower with a
-          blinking red aviation light) jumped out at every visitor.
-          Now: low-key vertical "RADIO" badge that only signals when
-          something is actively playing, via a single pulse dot. */}
+      {/* Launcher — desktop and mobile get different treatments.
+          Desktop (≥lg, 1024px+): full antenna-tower badge with a
+          blinking aviation light + concentric broadcast rings while
+          playing. The user explicitly likes this on desktop.
+          Mobile (<lg): a quiet flush-left "radio" tab with no
+          animation — keeps phones from feeling shouty. */}
       {collapsed && (
-        <button
-          type="button"
-          onClick={() => setCollapsed(false)}
-          className="fixed left-0 z-40 pointer-events-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
-          style={{
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'rgba(10,10,18,0.65)',
-            border: '1px solid rgba(255,214,0,0.32)',
-            borderLeft: 'none',
-            borderRadius: '0 4px 4px 0',
-            padding: '8px 4px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 6,
-            color: 'rgba(255,214,0,0.72)',
-          }}
-          title={playing && label ? `On air: ${label} — open the boombox` : 'Open the radio'}
-          aria-label={playing ? `Boombox playing ${label} — click to expand` : 'Open boombox radio'}
-        >
-          <span
-            className="font-typewriter"
-            style={{
-              writingMode: 'vertical-rl',
-              fontSize: 9,
-              letterSpacing: '0.22em',
-              textTransform: 'uppercase',
-            }}
+        <>
+          {/* DESKTOP launcher (lg breakpoint and above) — antenna tower */}
+          <button
+            type="button"
+            onClick={() => setCollapsed(false)}
+            className="hidden lg:flex fixed left-0 z-50 pointer-events-auto items-stretch hover:left-[2px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600] transition-all"
+            style={{ top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', padding: 0 }}
+            title="Open the boombox · radio + ambience"
+            aria-label={playing ? `Boombox playing ${label} — click to expand` : 'Open boombox radio'}
           >
-            {playing && label ? label : 'radio'}
-          </span>
-          {playing && (
-            <span
-              className="w-1.5 h-1.5 rounded-full bg-[#FFD600]"
+            <div
+              className="bg-black border-y-2 border-r-2 border-[#FFD600] flex flex-col items-center justify-center gap-2 px-1.5 py-3"
+              style={{ minHeight: 180, boxShadow: '3px 3px 0 #d11a2a' }}
+            >
+              <span
+                className="font-bungee text-[#FFD600] text-[11px] tracking-[0.18em] uppercase"
+                style={{ writingMode: 'vertical-rl' }}
+              >
+                {playing && label ? label : 'BODEGA-FM'}
+              </span>
+              {playing && (
+                <span
+                  className="w-2 h-2 rounded-full bg-[#FFD600]"
+                  aria-hidden
+                  style={{ boxShadow: '0 0 6px #FFD600', animation: 'tip-bounce 1.2s ease-in-out infinite' }}
+                />
+              )}
+              <span
+                className="font-typewriter text-[8px] tracking-[0.2em] uppercase text-[#FFD600]/55"
+                style={{ writingMode: 'vertical-rl' }}
+              >
+                tap · open
+              </span>
+            </div>
+            <svg
+              width="38"
+              height="180"
+              viewBox="0 0 38 180"
               aria-hidden
-              style={{ boxShadow: '0 0 4px #FFD600', opacity: 0.85 }}
-            />
-          )}
-        </button>
+              style={{ filter: 'drop-shadow(2px 0 0 #d11a2a)' }}
+            >
+              <circle cx="19" cy="6" r="4" fill="#ff3a3a" style={{ filter: 'drop-shadow(0 0 6px #ff3a3a)' }}>
+                <animate attributeName="opacity" values="1;0.4;1" dur="1.2s" repeatCount="indefinite" />
+              </circle>
+              <line x1="19" y1="10" x2="19" y2="22" stroke="#c9ccd2" strokeWidth="1.5" />
+              <line x1="19" y1="22" x2="9" y2="170" stroke="#c9ccd2" strokeWidth="2" />
+              <line x1="19" y1="22" x2="29" y2="170" stroke="#c9ccd2" strokeWidth="2" />
+              {[40, 60, 80, 100, 120, 140, 160].map((y, i) => {
+                const t = (y - 22) / (170 - 22);
+                const half = 1 + t * 9;
+                return (
+                  <g key={i}>
+                    <line x1={19 - half} y1={y} x2={19 + half} y2={y} stroke="#c9ccd2" strokeWidth="1.4" />
+                    <line x1={19 - half} y1={y - 6} x2={19 + half} y2={y + 6} stroke="#7a7c80" strokeWidth="0.9" />
+                  </g>
+                );
+              })}
+              {playing && (
+                <g>
+                  {[16, 24, 32].map((r, i) => (
+                    <circle
+                      key={r}
+                      cx="19"
+                      cy="40"
+                      r={r}
+                      fill="none"
+                      stroke="#FFD600"
+                      strokeWidth="0.8"
+                      opacity="0.65"
+                    >
+                      <animate attributeName="r" from={r} to={r + 18} dur="1.6s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+                      <animate attributeName="opacity" from="0.65" to="0" dur="1.6s" begin={`${i * 0.4}s`} repeatCount="indefinite" />
+                    </circle>
+                  ))}
+                </g>
+              )}
+            </svg>
+          </button>
+
+          {/* MOBILE launcher (<lg) — quiet flush-left badge */}
+          <button
+            type="button"
+            onClick={() => setCollapsed(false)}
+            className="flex lg:hidden fixed left-0 z-40 pointer-events-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FFD600]"
+            style={{
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(10,10,18,0.65)',
+              border: '1px solid rgba(255,214,0,0.32)',
+              borderLeft: 'none',
+              borderRadius: '0 4px 4px 0',
+              padding: '8px 4px',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 6,
+              color: 'rgba(255,214,0,0.72)',
+            }}
+            title={playing && label ? `On air: ${label} — open the boombox` : 'Open the radio'}
+            aria-label={playing ? `Boombox playing ${label} — click to expand` : 'Open boombox radio'}
+          >
+            <span
+              className="font-typewriter"
+              style={{
+                writingMode: 'vertical-rl',
+                fontSize: 9,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+              }}
+            >
+              {playing && label ? label : 'radio'}
+            </span>
+            {playing && (
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-[#FFD600]"
+                aria-hidden
+                style={{ boxShadow: '0 0 4px #FFD600', opacity: 0.85 }}
+              />
+            )}
+          </button>
+        </>
       )}
 
       <aside
