@@ -13,6 +13,7 @@ import Poi from './poi';
 import Cab from './cab';
 import World1940 from './world-1940';
 import Rewind from './rewind';
+import RewindMap from './rewind-map';
 import { AudioPanel } from './audio-panel';
 import { BodegaCat } from './bodega-cat';
 
@@ -37,15 +38,18 @@ const Page = path.startsWith('/about')
                   ? Cab
                   : path.startsWith('/world1940') || path.startsWith('/1940')
                     ? World1940
-                    : path.startsWith('/rewind') || path.startsWith('/mashup')
-                      ? Rewind
-                      : Lounge;
+                    : path.startsWith('/rewind-map') || path.startsWith('/cam-map')
+                      ? RewindMap
+                      : path.startsWith('/rewind') || path.startsWith('/mashup')
+                        ? Rewind
+                        : Lounge;
 
-// /world1940 + /rewind are full-bleed immersive routes — hide the
+// /world1940 + /rewind* are full-bleed immersive routes — hide the
 // AudioPanel + BodegaCat (which live at app root for every other route)
 // so they don't sit on top of the canvas.
 const IS_FULL_BLEED = path.startsWith('/world1940') || path.startsWith('/1940')
-  || path.startsWith('/rewind') || path.startsWith('/mashup');
+  || path.startsWith('/rewind') || path.startsWith('/mashup')
+  || path.startsWith('/cam-map');
 const Tree = (
   <>
     <Page />
