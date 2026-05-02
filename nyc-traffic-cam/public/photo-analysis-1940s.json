@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "model": "llava:7b",
+  "generated_at": 1777666371,
+  "buildings": {
+    "1009852": {
+      "facade_top": 0.15,
+      "facade_bottom": 0.84,
+      "dominant_color": "#79564b",
+      "style": "apartment",
+      "has_signage": false,
+      "has_vehicles": false,
+      "has_people": false,
+      "notes": "3-storey brick apartment building with ground-floor storefront"
+    },
+    "1009853": {
+      "facade_top": 0.15,
+      "facade_bottom": 0.84,
+      "dominant_color": "#79564b",
+      "style": "townhouse",
+      "has_signage": false,
+      "has_vehicles": false,
+      "has_people": false,
+      "notes": "3-storey brick townhouse with ground-floor storefront"
+    },
+    "1009854": {
+      "facade_top": 0.15,
+      "facade_bottom": 0.84,
+      "dominant_color": "#79564b",
+      "style": "townhouse",
+      "has_signage": false,
+      "has_vehicles": false,
+      "has_people": false,
+      "notes": "3-storey brick townhouse with ground-floor storefront"
+    },
+    "1009855": {
+      "facade_top": 0.15,
+      "facade_bottom": 0.83,
+      "dominant_color": "#79564b",
+      "style": "townhouse",
+      "has_signage": false,
+      "has_vehicles": false,
+      "has_people": false,
+      "notes": "2-storey brick townhouse with ground-floor storefront"
+    },
+    "1009856": {
+      "facade_top": 0.15,
+      "facade_bottom": 0.82,
+      "dominant_color": "#79564b",
+      "style": "townhouse",
+      "has_signage": false,
+      "has_vehicles": true,
+      "has_people": false,
+      "notes": "3-storey brick townhouse with ground-floor storefront"
+    }
+  }
+}

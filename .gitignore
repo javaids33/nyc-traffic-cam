@@ -1,0 +1,7 @@
+# Local research scratch — outside the app folder, never goes in CI.
+.venv/
+.claude/
+Screenshot*.png
+*.html
+*.xml
+sample.jpg

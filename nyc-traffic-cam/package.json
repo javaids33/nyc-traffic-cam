@@ -24,10 +24,13 @@
     "@deck.gl/layers": "^9.3.1",
     "@deck.gl/mapbox": "^9.3.1",
     "@deck.gl/react": "^9.3.1",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.9.1",
     "@types/canvas-confetti": "^1.9.0",
+    "@types/three": "^0.184.0",
     "@use-gesture/react": "^10.3.1",
     "canvas-confetti": "^1.9.4",
     "lottie-react": "^2.4.1",
@@ -37,6 +40,7 @@
     "react-dom": "^18.3.1",
     "react-map-gl": "^8.1.1",
     "react-rough-notation": "^1.0.8",
+    "three": "^0.184.0",
     "tone": "^15.1.22"
   },
   "devDependencies": {

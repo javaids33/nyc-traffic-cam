@@ -10,3 +10,13 @@ __pycache__/
 *.pyc
 tsconfig.tsbuildinfo
 .claude/
+
+# 1940 walk diagnostic artifacts (regeneratable, not needed at runtime)
+public/photo-stitch-contact/
+public/photo-stitched/*-canvas.png
+public/photo-stitched/*-coverage.png
+
+# Local research scratch
+public/lot48_inspect.jpg
+retry.jpg
+sample.jpg

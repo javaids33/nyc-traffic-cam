@@ -11,6 +11,7 @@ import Scratch from './scratch';
 import Shrine from './shrine';
 import Poi from './poi';
 import Cab from './cab';
+import World1940 from './world-1940';
 import { AudioPanel } from './audio-panel';
 import { BodegaCat } from './bodega-cat';
 
@@ -33,16 +34,22 @@ const Page = path.startsWith('/about')
                 ? Poi
                 : path.startsWith('/cab') || path.startsWith('/taxi')
                   ? Cab
-                  : Lounge;
+                  : path.startsWith('/world1940') || path.startsWith('/1940')
+                    ? World1940
+                    : Lounge;
+
+// /world1940 is a full-bleed first-person street walk — hide the
+// AudioPanel + BodegaCat (which live at app root for every other route)
+// so they don't sit on top of the immersive canvas.
+const IS_FULL_BLEED = path.startsWith('/world1940') || path.startsWith('/1940');
+const Tree = (
+  <>
+    <Page />
+    {!IS_FULL_BLEED && <AudioPanel />}
+    {!IS_FULL_BLEED && <BodegaCat />}
+  </>
+);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    {/* Page is the route component; AudioPanel + BodegaCat live at
-        the app root so they appear on every route, with their
-        position + state restored from localStorage on each
-        navigation (each anchor is a real reload — no router). */}
-    <Page />
-    <AudioPanel />
-    <BodegaCat />
-  </React.StrictMode>,
+  <React.StrictMode>{Tree}</React.StrictMode>,
 );
