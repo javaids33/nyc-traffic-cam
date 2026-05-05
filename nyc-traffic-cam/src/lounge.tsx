@@ -472,6 +472,7 @@ export default function Lounge() {
             </div>
 
             <ModesRack />
+            <TripzPromo />
           </div>
 
           <CityServicesRail alerts={alerts} cameras={cameras} />
@@ -1017,7 +1018,7 @@ const MODES: Mode[] = [
     title: 'Rewind',
     sub: '1940 WPA tax photo ↔ live cam · same corner · 86 yrs apart',
     accent: '#FFD600',
-    cta: '★ NEW',
+    upcoming: true,
   },
   {
     href: '/sewer',
@@ -1030,6 +1031,76 @@ const MODES: Mode[] = [
     funMode: 'rat',
   },
 ];
+
+/* Newsstand-style sponsored insert promoting Tripz, our companion iOS
+   walking/social app. Same crew, same instinct: NYC on foot. Sits
+   directly under the deli "More modes" rack so first-time visitors see
+   it once they've finished orienting on the cam roulette. The card is
+   a single <a> targeting the App Store with rel="noopener" so it opens
+   in a fresh tab without leaking opener context. */
+function TripzPromo() {
+  return (
+    <a
+      href="https://apps.apple.com/us/app/tripz-walk-share/id6760124596"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Download Tripz — Walk & Share — on the App Store"
+      className="group block mt-4 px-3 py-3 border-2 border-[#B5F500]/55 bg-black/65 hover:border-[#B5F500] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#B5F500]"
+      style={{ boxShadow: '4px 4px 0 #1a73e8' }}
+    >
+      <div className="flex items-baseline justify-between mb-2">
+        <span className="font-bungee text-[14px] uppercase tracking-[0.04em] text-[#B5F500]">
+          ☆ Sponsored Insert · iOS App
+        </span>
+        <span className="font-typewriter text-[9px] uppercase tracking-[0.22em] text-white/55">
+          from the same kitchen
+        </span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr_auto] gap-3 items-center">
+        <div
+          className="grid place-items-center w-14 h-14 rounded-2xl shrink-0 mx-auto sm:mx-0"
+          style={{
+            background: 'linear-gradient(135deg,#1a73e8 0%,#7b3ff2 60%,#ff5582 100%)',
+            boxShadow: '2px 2px 0 #000',
+          }}
+          aria-hidden
+        >
+          <span className="font-bungee text-white text-[26px] leading-none select-none">T</span>
+        </div>
+        <div className="min-w-0 text-center sm:text-left">
+          <div className="font-bungee text-[18px] sm:text-[20px] uppercase tracking-[0.02em] leading-tight text-white group-hover:text-[#B5F500] transition-colors">
+            TRIPZ <span className="text-white/55 text-[14px]">— Walk &amp; Share</span>
+          </div>
+          <div className="font-typewriter text-[10px] sm:text-[11px] uppercase tracking-[0.16em] text-white/75 mt-1.5 leading-snug">
+            Track walks with friends in real time · group trips with
+            color-coded routes · drop photos on a shared map · scrub-slider
+            trip replay · push-to-talk walkie-talkie · auto-detects walking,
+            running, cycling · iCloud sync.
+          </div>
+        </div>
+        <div className="flex items-center justify-center sm:justify-end shrink-0">
+          <span
+            className="inline-flex items-center gap-2 px-3 py-2 bg-black border border-white/30 group-hover:border-[#B5F500] transition-colors"
+            style={{ boxShadow: '2px 2px 0 #B5F500' }}
+          >
+            <span aria-hidden className="text-[18px] leading-none"></span>
+            <span className="text-left leading-tight">
+              <span className="block font-typewriter text-[7.5px] uppercase tracking-[0.22em] text-white/65">
+                Download on the
+              </span>
+              <span className="block font-bungee text-[13px] tracking-[0.02em] text-white">
+                App Store
+              </span>
+            </span>
+          </span>
+        </div>
+      </div>
+      <div className="font-typewriter text-[9px] uppercase tracking-[0.22em] text-white/45 mt-2 text-center sm:text-left">
+        requires iOS 17 · free · no ads · by syed javaid
+      </div>
+    </a>
+  );
+}
 
 function ModesRack() {
   return (
