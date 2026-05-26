@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://borough-blitz.pages.dev/sitemap.xml

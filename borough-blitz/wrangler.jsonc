@@ -1,0 +1,21 @@
+{
+  // BOROUGH BLITZ — Cloudflare Pages config.
+  //
+  // Used by `wrangler pages dev` to serve the functions/ directory locally
+  // with a KV binding, and by `wrangler pages deploy` to ship dist/.
+  //
+  // One-time setup before the first deploy (see README):
+  //   wrangler kv namespace create BB_CHALLENGES
+  // then paste the returned id into the `id` field below, replacing the
+  // REPLACE_WITH_KV_ID placeholder.
+  "$schema": "https://json.schemastore.org/wrangler.json",
+  "name": "borough-blitz",
+  "compatibility_date": "2026-04-27",
+  "pages_build_output_dir": "./dist",
+  "kv_namespaces": [
+    {
+      "binding": "CHALLENGES",
+      "id": "42ec211cefd64f9b881ebe81bef7ed7e"
+    }
+  ]
+}

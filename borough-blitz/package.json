@@ -1,0 +1,37 @@
+{
+  "name": "borough-blitz",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BOROUGH BLITZ — spot the NYC traffic cam. A GeoGuessr-style game on the public NYC DOT camera network.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "bake": "node scripts/build-cams.mjs",
+    "pages:dev": "wrangler pages dev dist --kv CHALLENGES",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name borough-blitz"
+  },
+  "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "maplibre-gl": "^5.24.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-map-gl": "^8.1.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260426.1",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.14",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "wrangler": "^4.86.0"
+  }
+}

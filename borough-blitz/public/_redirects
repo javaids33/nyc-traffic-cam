@@ -1,0 +1,6 @@
+# SPA fallback — every unmatched path renders the app shell, which reads the
+# query string (?h=, ?seed=, ?d=, ?daily=) to set up the game.
+#
+# Pages Functions (functions/api/*) are matched BEFORE _redirects, so the
+# catch-all below does NOT shadow the /api/challenges endpoints.
+/*  /index.html  200

@@ -1,0 +1,5 @@
+# Google AdSense authorized sellers.
+# TODO: replace pub-0000000000000000 with your real AdSense publisher ID
+# (the digits after "ca-pub-" in your account). Until then AdSense will not
+# serve and this file is inert.
+google.com, pub-0000000000000000, DIRECT, f08c47fec0942fa0
