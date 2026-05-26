@@ -11,20 +11,20 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { NYC_CENTER, NYC_START_ZOOM } from '../scoring';
 import type { LngLat } from '../game-types';
 
-/* CartoDB "dark matter" raster — reads like a radar / dispatch console on
- * the near-black UI, with the major streets, parks and water that a city-
- * scale guess actually relies on. A small brightness lift keeps the labels
- * legible. */
+/* CartoDB "Voyager" raster — a light, cream-paper basemap with crisp,
+ * high-contrast street + neighborhood labels. Much easier to read (and guess
+ * on) than the moody dark tiles, and the bright map inset still pops against
+ * the near-black game chrome. */
 const MAP_STYLE: StyleSpecification = {
   version: 8,
   sources: {
     carto: {
       type: 'raster',
       tiles: [
-        'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-        'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
       ],
       tileSize: 256,
       attribution: '© OpenStreetMap © CARTO',
@@ -32,13 +32,8 @@ const MAP_STYLE: StyleSpecification = {
     },
   },
   layers: [
-    { id: 'bg', type: 'background', paint: { 'background-color': '#0b0d10' } },
-    {
-      id: 'carto',
-      type: 'raster',
-      source: 'carto',
-      paint: { 'raster-brightness-min': 0.06, 'raster-contrast': 0.12, 'raster-saturation': -0.1 },
-    },
+    { id: 'bg', type: 'background', paint: { 'background-color': '#e8e2d0' } },
+    { id: 'carto', type: 'raster', source: 'carto', paint: { 'raster-contrast': 0.05 } },
   ],
 };
 
@@ -176,14 +171,21 @@ export function GuessMap({
         )}
         {lineGeo && (
           <Source id="guess-line" type="geojson" data={lineGeo}>
+            {/* white casing under a dark dashed line so it stays legible over
+                both light streets and dark parks/water on the Voyager map */}
+            <Layer
+              id="guess-line-casing"
+              type="line"
+              paint={{ 'line-color': '#ffffff', 'line-width': 5, 'line-opacity': 0.9 }}
+            />
             <Layer
               id="guess-line-layer"
               type="line"
               paint={{
-                'line-color': '#ffffff',
+                'line-color': '#0b0d10',
                 'line-width': 2.5,
-                'line-dasharray': [2, 2],
-                'line-opacity': 0.9,
+                'line-dasharray': [2, 1.6],
+                'line-opacity': 0.95,
               }}
             />
           </Source>

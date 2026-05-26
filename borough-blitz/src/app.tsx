@@ -6,7 +6,6 @@ import { Summary } from './summary';
 import {
   camsByIds,
   dailySeed,
-  nycDateStr,
   pickCams,
   randomSeed,
   type Cam,
@@ -15,10 +14,10 @@ import {
 } from './cams';
 import { haversine, scoreFor, ROUNDS, MAX_SCORE } from './scoring';
 import { fetchChallenge, DEFAULT_MODIFIERS, type FetchedChallenge, type Modifiers } from './share';
+import { loadStats, recordDailyResult, dailyView, type DailyView } from './stats';
 import type { LngLat, RoundState } from './game-types';
 
 type Phase = 'start' | 'playing' | 'summary';
-type DailyStatus = { playedDate: string | null; best: number | null };
 
 const freshRounds = (): RoundState[] =>
   Array.from({ length: ROUNDS }, () => ({ guess: null, distance: null, score: null, timedOut: false }));
@@ -48,7 +47,10 @@ function parseInitial() {
   const hash = url.searchParams.get('h');
   const seed = url.searchParams.get('seed') ?? '';
   const dRaw = url.searchParams.get('d');
-  const daily = url.searchParams.get('daily') === '1';
+  // Bare landing (no challenge hash, no seed) drops you straight into today's
+  // daily — the game leads with play, Wordle-style. The menu / free play is
+  // one tap away (the home button mid-game, or "play more" on the summary).
+  const daily = url.searchParams.get('daily') === '1' || (!hash && !seed);
   const scoreP = url.searchParams.get('score');
   const t = parseInt(url.searchParams.get('t') ?? '0', 10);
   const mods: Modifiers = {
@@ -59,28 +61,6 @@ function parseInitial() {
   const mode: Mode = dRaw && MODE_SET.has(dRaw as Mode) ? (dRaw as Mode) : 'medium';
   const friendScore = scoreP ? parseInt(scoreP, 10) || null : null;
   return { hash, seed, mode, mods, friendScore, daily, play: !!(hash || seed || daily) };
-}
-
-function readDaily(): DailyStatus {
-  try {
-    const j = JSON.parse(localStorage.getItem('bb-daily') ?? 'null') as { date: string; best: number } | null;
-    if (j && j.date === nycDateStr()) return { playedDate: j.date, best: j.best };
-  } catch {
-    /* ignore */
-  }
-  return { playedDate: null, best: null };
-}
-
-function recordDaily(score: number) {
-  const date = nycDateStr();
-  let best = score;
-  try {
-    const j = JSON.parse(localStorage.getItem('bb-daily') ?? 'null') as { date: string; best: number } | null;
-    if (j && j.date === date) best = Math.max(best, j.best ?? 0);
-    localStorage.setItem('bb-daily', JSON.stringify({ date, best }));
-  } catch {
-    /* ignore */
-  }
 }
 
 function setUrl(params: Record<string, string | number | null | undefined>) {
@@ -107,7 +87,8 @@ export function App() {
   const [rounds, setRounds] = useState<RoundState[]>(freshRounds);
   const [roundIdx, setRoundIdx] = useState(0);
   const [tick, setTick] = useState(() => Date.now());
-  const [dailyStatus, setDailyStatus] = useState<DailyStatus>(() => readDaily());
+  const [stats, setStats] = useState(() => loadStats());
+  const daily = useMemo<DailyView>(() => dailyView(stats), [stats]);
 
   // Resolve a shared challenge link (?h=) into its pinned 5 cameras.
   useEffect(() => {
@@ -191,14 +172,13 @@ export function App() {
   const nextRound = useCallback(() => {
     if (roundIdx >= ROUNDS - 1) {
       if (mode === 'daily') {
-        recordDaily(totalScore);
-        setDailyStatus(readDaily());
+        setStats(recordDailyResult(totalScore, rounds.map((r) => r.score ?? 0)));
       }
       setPhase('summary');
     } else {
       setRoundIdx((i) => i + 1);
     }
-  }, [roundIdx, mode, totalScore]);
+  }, [roundIdx, mode, totalScore, rounds]);
 
   const beginRun = useCallback((nextMode: Mode, nextMods: Modifiers, nextSeed: string, daily: boolean) => {
     setMode(nextMode);
@@ -236,7 +216,7 @@ export function App() {
     setChallenge(null);
     setChallengeError(null);
     setFriendScore(null);
-    setDailyStatus(readDaily());
+    setStats(loadStats());
     setUrl({});
   }, []);
 
@@ -249,7 +229,7 @@ export function App() {
         : null);
 
   if (phase === 'start') {
-    return <Start onStart={startGame} onDaily={startDaily} daily={dailyStatus} />;
+    return <Start onStart={startGame} onDaily={startDaily} daily={daily} />;
   }
 
   if (phase === 'summary') {
@@ -263,6 +243,11 @@ export function App() {
         seed={seed}
         challenge={challenge}
         friendScore={friendScore}
+        daily={
+          mode === 'daily'
+            ? { number: daily.number, streak: daily.streak, rounds: rounds.map((r) => r.score ?? 0) }
+            : null
+        }
         onNewGame={newGame}
         onHome={goHome}
       />

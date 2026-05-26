@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ALL_CAMS, CAMERA_LIST_DATE, NYCTMC_IMG, TIER_COUNTS, type Tier } from './cams';
 import { DEFAULT_MODIFIERS, type Modifiers } from './share';
-import { ROUNDS } from './scoring';
+import { ROUNDS, MAX_SCORE } from './scoring';
 import { AdSlot } from './ads';
+import { StatsModal } from './stats-modal';
+import type { DailyView } from './stats';
 
 const TIERS: { id: Tier; sub: string; color: string }[] = [
   { id: 'easy', sub: 'landmarks & the core · you know these', color: '#37c46b' },
   { id: 'medium', sub: 'bridges, arterials, commercial corners', color: '#FFD400' },
   { id: 'hard', sub: 'anonymous blocks · could be anywhere', color: '#FF4D2E' },
 ];
-
-type DailyStatus = { playedDate: string | null; best: number | null };
 
 export function Start({
   onStart,
@@ -19,10 +19,11 @@ export function Start({
 }: {
   onStart: (tier: Tier, mods: Modifiers) => void;
   onDaily: () => void;
-  daily: DailyStatus;
+  daily: DailyView;
 }) {
   const [tier, setTier] = useState<Tier>('medium');
   const [mods, setMods] = useState<Modifiers>(DEFAULT_MODIFIERS);
+  const [showStats, setShowStats] = useState(false);
 
   // Rotating hero teaser — a recognizable cam frame under the CCTV overlay.
   const heroPool = useMemo(() => ALL_CAMS.filter((c) => c.tier === 'easy'), []);
@@ -40,57 +41,91 @@ export function Start({
   const cycleTimer = () =>
     setMods((m) => ({ ...m, timerSec: m.timerSec === 0 ? 60 : m.timerSec === 60 ? 30 : 0 }));
 
+  const playedToday = daily.todayScore != null;
+
   return (
     <div className="scroll-area h-full w-full">
       <div className="mx-auto flex min-h-full w-full max-w-[680px] flex-col px-4 py-6 safe-t safe-b">
-        {/* checker bar + wordmark */}
+        {/* checker bar + wordmark + stats */}
         <header className="mb-5">
           <div
             className="mb-3 h-3 w-full"
-            style={{
-              backgroundImage:
-                'repeating-linear-gradient(90deg,#FFD400 0 18px,#070809 18px 36px)',
-            }}
+            style={{ backgroundImage: 'repeating-linear-gradient(90deg,#FFD400 0 18px,#070809 18px 36px)' }}
           />
-          <h1 className="font-bungee text-[42px] leading-[0.9] tracking-tight text-taxi sm:text-[58px]">
-            BOROUGH
-            <br />
-            <span className="text-blitz">BLITZ</span>
-          </h1>
+          <div className="flex items-end justify-between gap-3">
+            <h1 className="font-bungee text-[42px] leading-[0.9] tracking-tight text-taxi sm:text-[58px]">
+              BOROUGH
+              <br />
+              <span className="text-blitz">BLITZ</span>
+            </h1>
+            <button
+              type="button"
+              onClick={() => setShowStats(true)}
+              className="btn-ghost mb-1 shrink-0 px-3 py-1.5 font-bungee text-[12px] uppercase tracking-[0.08em]"
+            >
+              {daily.streak > 0 ? `🔥 ${daily.streak}` : '★'} stats
+            </button>
+          </div>
           <p className="mt-2 font-mono text-[12px] uppercase tracking-[0.18em] text-white/70">
-            spot the nyc traffic cam · {ROUNDS} rounds · drop a pin · closer = more points
+            spot the nyc traffic cam · drop a pin · closer = more points
           </p>
         </header>
 
-        {/* hero feed teaser */}
-        <div className="relative mb-6 aspect-video w-full overflow-hidden border-2 border-taxi/35 bg-black cctv-scanlines cctv-vignette cctv-corners grain">
-          {hero && (
-            <img
-              key={hero.id + beat}
-              src={NYCTMC_IMG(hero.id, beat)}
-              alt="live NYC traffic camera"
-              referrerPolicy="no-referrer"
-              decoding="async"
-              className="h-full w-full object-cover opacity-90"
-              style={{ filter: 'contrast(1.05) saturate(1.05)' }}
-            />
-          )}
-          <div className="absolute left-3 top-3 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-white">
-            <span className="h-2 w-2 animate-rec-blink rounded-full bg-blitz" />
-            <span className="text-blitz">rec</span>
-            <span className="text-white/70">· live nyc dot feed</span>
+        {/* ── TODAY'S BLITZ — the daily, front and center ───────────────── */}
+        <section className="relative mb-6 overflow-hidden border-2 border-taxi shadow-hard-blitz">
+          <div className="relative aspect-[16/7] w-full bg-black cctv-scanlines grain">
+            {hero && (
+              <img
+                key={hero.id + beat}
+                src={NYCTMC_IMG(hero.id, beat)}
+                alt="live NYC traffic camera"
+                referrerPolicy="no-referrer"
+                decoding="async"
+                className="h-full w-full object-cover opacity-70"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-night-950 via-night-950/55 to-transparent" />
+            <div className="absolute left-3 top-3 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.18em]">
+              <span className="h-2 w-2 animate-rec-blink rounded-full bg-blitz" />
+              <span className="text-blitz">live</span>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 p-4">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.28em] text-white/60">
+                    today's blitz
+                  </div>
+                  <div className="font-bungee text-[26px] uppercase leading-none text-taxi sm:text-[32px]">
+                    daily #{daily.number}
+                  </div>
+                  <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-white/75">
+                    {daily.streak > 0 ? (
+                      <span className="text-blitz">🔥 {daily.streak}-day streak</span>
+                    ) : (
+                      'start your streak today'
+                    )}
+                    {playedToday && (
+                      <span className="text-white/55">
+                        {' · '}✓ best {daily.todayScore}/{MAX_SCORE}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onDaily}
+                className="btn-blitz mt-3 w-full px-4 py-3 font-bungee text-[18px] uppercase tracking-[0.04em]"
+              >
+                {playedToday ? '↻ replay today' : "▶ play today's 5"}
+              </button>
+            </div>
           </div>
-          <div className="absolute bottom-3 left-3 z-10 bg-black/80 px-2 py-1 font-bungee text-[13px] uppercase tracking-[0.08em] text-taxi">
-            ★ where in nyc is this?
-          </div>
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-            <div className="scan-beam absolute inset-x-0 top-0 animate-scan" />
-          </div>
-        </div>
+        </section>
 
-        {/* difficulty bullets */}
+        {/* ── FREE PLAY ─────────────────────────────────────────────────── */}
         <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.28em] text-white/55">
-          choose your line
+          or free play · pick a line
         </div>
         <div className="mb-5 grid gap-2">
           {TIERS.map((t) => {
@@ -129,11 +164,8 @@ export function Start({
           })}
         </div>
 
-        {/* modifiers */}
-        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.28em] text-white/55">
-          modifiers
-        </div>
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-2 font-mono text-[11px] uppercase tracking-[0.28em] text-white/55">modifiers</div>
+        <div className="mb-5 flex flex-wrap gap-2">
           <Chip on={mods.grayscale} onClick={() => setMods((m) => ({ ...m, grayscale: !m.grayscale }))}>
             ◐ grayscale
           </Chip>
@@ -145,27 +177,12 @@ export function Start({
           </Chip>
         </div>
 
-        {/* play */}
         <button
           type="button"
           onClick={() => onStart(tier, mods)}
-          className="btn-blitz mb-3 w-full px-4 py-4 font-bungee text-[22px] uppercase tracking-[0.04em]"
+          className="btn-ghost mb-6 w-full px-4 py-3 font-bungee text-[16px] uppercase tracking-[0.04em]"
         >
-          ▶ play {tier}
-        </button>
-
-        {/* daily */}
-        <button
-          type="button"
-          onClick={onDaily}
-          className="btn-ghost mb-6 flex w-full items-center justify-between px-4 py-3 font-bungee text-[14px] uppercase tracking-[0.06em]"
-        >
-          <span>★ daily challenge</span>
-          <span className="font-mono text-[10px] tracking-[0.12em] text-white/55">
-            {daily.playedDate
-              ? `played · best ${daily.best ?? 0}`
-              : 'same 5 cams citywide · today'}
-          </span>
+          ▶ free play · {tier} · {ROUNDS} rounds
         </button>
 
         <AdSlot name="start" className="mb-6" />
@@ -175,11 +192,11 @@ export function Start({
             live frames © nyc dot traffic management center · public feed · camera list as of{' '}
             {CAMERA_LIST_DATE.toISOString().slice(0, 10)}
           </p>
-          <p className="mt-1">
-            a borough blitz joint · made in nyc · not affiliated with nyc dot or geoguessr
-          </p>
+          <p className="mt-1">a borough blitz joint · made in nyc · not affiliated with nyc dot or geoguessr</p>
         </footer>
       </div>
+
+      {showStats && <StatsModal view={daily} onClose={() => setShowStats(false)} />}
     </div>
   );
 }

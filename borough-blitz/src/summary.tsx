@@ -4,7 +4,10 @@ import type { Cam, Mode } from './cams';
 import type { RoundState } from './game-types';
 import { bandFor, fmtDist, gradeFor, MAX_SCORE } from './scoring';
 import { mintChallenge, type FetchedChallenge, type Modifiers } from './share';
+import { buildDailyShare, squaresFor } from './stats';
 import { AdSlot } from './ads';
+
+export type DailyShareData = { number: number; streak: number; rounds: number[] };
 
 function fireConfetti(big: boolean) {
   const opts = {
@@ -42,6 +45,7 @@ export function Summary({
   seed,
   challenge,
   friendScore,
+  daily,
   onNewGame,
   onHome,
 }: {
@@ -53,6 +57,7 @@ export function Summary({
   seed: string;
   challenge: FetchedChallenge | null;
   friendScore: number | null;
+  daily: DailyShareData | null;
   onNewGame: () => void;
   onHome: () => void;
 }) {
@@ -61,6 +66,7 @@ export function Summary({
   const [minting, setMinting] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const [copied, setCopied] = useState<'url' | 'text' | null>(null);
+  const [copiedDaily, setCopiedDaily] = useState(false);
 
   useEffect(() => {
     const pct = totalScore / MAX_SCORE;
@@ -143,6 +149,36 @@ export function Summary({
     doCopy('text');
   };
 
+  // Daily mode: a Wordle-style shareable result instead of a minted link.
+  const dailyUrl =
+    (typeof window !== 'undefined' ? window.location.origin : 'https://borough-blitz.pages.dev') + '/?daily=1';
+  const dailyText = daily
+    ? buildDailyShare({ number: daily.number, total: totalScore, streak: daily.streak, rounds: daily.rounds, url: dailyUrl })
+    : '';
+  const copyDaily = async () => {
+    try {
+      await navigator.clipboard.writeText(dailyText);
+      setCopiedDaily(true);
+      setTimeout(() => setCopiedDaily(false), 1700);
+    } catch {
+      /* clipboard blocked */
+    }
+  };
+  const shareDaily = async () => {
+    if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      try {
+        await (navigator as Navigator & { share: (d: { title: string; text: string }) => Promise<void> }).share({
+          title: 'Borough Blitz',
+          text: dailyText,
+        });
+        return;
+      } catch {
+        /* cancelled */
+      }
+    }
+    copyDaily();
+  };
+
   const beatFriend =
     friendScore != null
       ? totalScore > friendScore
@@ -217,7 +253,34 @@ export function Summary({
           })}
         </div>
 
-        {/* share */}
+        {/* share — daily gets a Wordle-style result grid; everything else
+            mints a pinned-challenge link */}
+        {daily ? (
+          <div className="mb-5 border-2 border-taxi bg-night-900 p-4 shadow-hard-blitz">
+            <div className="flex items-baseline justify-between">
+              <div className="font-bungee text-[16px] uppercase tracking-[0.04em] text-taxi">
+                ★ daily #{daily.number}
+              </div>
+              {daily.streak > 1 && (
+                <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-blitz">🔥 {daily.streak}-day</div>
+              )}
+            </div>
+            <div className="my-3 text-center text-[30px] leading-none tracking-[0.12em]" aria-label="round results">
+              {squaresFor(daily.rounds)}
+            </div>
+            <div className="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-white/60">
+              copy your result — friends tap the link to play the same daily
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={shareDaily} className="btn-blitz px-3 py-2 font-bungee text-[13px] uppercase tracking-[0.04em]">
+                ★ share
+              </button>
+              <button onClick={copyDaily} className="btn-ghost px-3 py-2 font-bungee text-[13px] uppercase tracking-[0.04em]">
+                {copiedDaily ? '✓ copied' : 'copy result'}
+              </button>
+            </div>
+          </div>
+        ) : (
         <div className="mb-5 border-2 border-taxi bg-night-900 p-4 shadow-hard-blitz">
           <div className="font-bungee text-[16px] uppercase tracking-[0.04em] text-taxi">★ challenge a friend</div>
           <div className="mb-3 mt-1 font-mono text-[10px] uppercase leading-relaxed tracking-[0.12em] text-white/60">
@@ -251,19 +314,34 @@ export function Summary({
             <div className="mt-1 font-mono text-[9px] uppercase tracking-[0.16em] text-blitz">★ {shareError}</div>
           )}
         </div>
+        )}
 
         {/* actions */}
-        <div className="mb-6 flex gap-2">
-          <button
-            onClick={onNewGame}
-            className="flex-1 border-2 border-night-950 bg-blitz px-3 py-3 font-bungee text-[15px] uppercase tracking-[0.04em] text-white shadow-hard"
-          >
-            ↻ new game
-          </button>
-          <button onClick={onHome} className="btn-ghost px-4 py-3 font-bungee text-[15px] uppercase tracking-[0.04em]">
-            ⌂ menu
-          </button>
-        </div>
+        {daily ? (
+          <div className="mb-6">
+            <button
+              onClick={onHome}
+              className="btn-blitz w-full px-3 py-3.5 font-bungee text-[17px] uppercase tracking-[0.04em]"
+            >
+              ▶ play more · free play &amp; modes
+            </button>
+            <div className="mt-2 text-center font-mono text-[9px] uppercase tracking-[0.18em] text-white/40">
+              easy · medium · hard · modifiers · come back tomorrow for daily #{daily.number + 1}
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 flex gap-2">
+            <button
+              onClick={onNewGame}
+              className="flex-1 border-2 border-night-950 bg-blitz px-3 py-3 font-bungee text-[15px] uppercase tracking-[0.04em] text-white shadow-hard"
+            >
+              ↻ new game
+            </button>
+            <button onClick={onHome} className="btn-ghost px-4 py-3 font-bungee text-[15px] uppercase tracking-[0.04em]">
+              ⌂ menu
+            </button>
+          </div>
+        )}
 
         <AdSlot name="summary" className="mb-4" />
 
