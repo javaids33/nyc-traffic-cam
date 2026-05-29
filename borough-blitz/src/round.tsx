@@ -48,11 +48,28 @@ export function RoundView({
 }) {
   const guess = round?.guess ?? null;
   const [open, setOpen] = useState(false);
-  const isOpen = open || revealed;
   const canHover = useRef(false);
   useEffect(() => {
     canHover.current = window.matchMedia?.('(hover:hover) and (pointer:fine)').matches ?? false;
   }, []);
+
+  // On phones the full-bleed cam + corner-map overlay is unusable: a wide
+  // (≈3:2) cam scaled to cover a tall portrait viewport gets sliced to a
+  // zoomed-in centre strip. Below 640px we switch to a stacked layout —
+  // the cam in its own landscape strip up top (shown whole, not cropped)
+  // and the map filling the space beneath it.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
+  // Mobile keeps the map permanently expanded (it owns the bottom half);
+  // desktop preserves the hover/tap-to-expand corner behaviour.
+  const isOpen = isMobile ? true : open || revealed;
 
   // collapse the map at the start of each fresh round
   useEffect(() => {
@@ -78,134 +95,150 @@ export function RoundView({
   const band = round?.distance != null && Number.isFinite(round.distance) ? bandFor(round.distance) : null;
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-black">
-      {/* live feed */}
-      {cam ? (
-        <ZoomableCam
-          src={NYCTMC_IMG(cam.id, tick)}
-          alt="guess where this NYC camera is"
-          grayscale={mods.grayscale}
-          noZoom={mods.noZoom}
-          resetKey={cam.id}
-        />
-      ) : (
-        <div className="absolute inset-0 grid place-items-center">
-          <span className="animate-pulse font-mono text-[12px] uppercase tracking-[0.3em] text-taxi/60">
-            loading camera pool…
-          </span>
+    <div className={`absolute inset-0 overflow-hidden bg-black ${isMobile ? 'flex flex-col' : ''}`}>
+      {/* CAM REGION — on mobile a fixed landscape strip up top; on desktop
+          `contents` dissolves the wrapper so the cam + overlays fill the
+          whole screen exactly as before. */}
+      <div
+        className={isMobile ? 'relative w-full shrink-0 bg-black' : 'contents'}
+        style={isMobile ? { aspectRatio: '22 / 15' } : undefined}
+      >
+        {/* live feed */}
+        {cam ? (
+          <ZoomableCam
+            src={NYCTMC_IMG(cam.id, tick)}
+            alt="guess where this NYC camera is"
+            grayscale={mods.grayscale}
+            noZoom={mods.noZoom}
+            resetKey={cam.id}
+            fit={isMobile ? 'contain' : 'cover'}
+          />
+        ) : (
+          <div className="absolute inset-0 grid place-items-center">
+            <span className="animate-pulse font-mono text-[12px] uppercase tracking-[0.3em] text-taxi/60">
+              loading camera pool…
+            </span>
+          </div>
+        )}
+
+        {/* surveillance overlay (purely decorative, never blocks input) */}
+        <div className="pointer-events-none absolute inset-0 z-10 cctv-scanlines cctv-vignette cctv-corners grain">
+          <div className="scan-beam absolute inset-x-0 top-0 animate-scan" />
         </div>
-      )}
 
-      {/* surveillance overlay (purely decorative, never blocks input) */}
-      <div className="pointer-events-none absolute inset-0 z-10 cctv-scanlines cctv-vignette cctv-corners grain">
-        <div className="scan-beam absolute inset-x-0 top-0 animate-scan" />
-      </div>
+        {/* ── top HUD ──────────────────────────────────────────────────── */}
+        <div className="safe-t absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 px-3 pt-3">
+          <div className="flex items-center gap-2">
+            <span className="grid h-7 w-7 place-items-center bg-taxi font-bungee text-[12px] text-night-950">
+              BB
+            </span>
+            <div className="leading-none">
+              <div className="font-bungee text-[13px] uppercase tracking-[0.04em] text-taxi sm:text-[15px]">
+                borough blitz
+              </div>
+              <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-white/55">
+                <span className="h-2 w-2 rounded-full" style={{ background: MODE_COLOR[mode] }} />
+                {mode}
+              </div>
+            </div>
+          </div>
 
-      {/* ── top HUD ──────────────────────────────────────────────────── */}
-      <div className="safe-t absolute inset-x-0 top-0 z-30 flex items-start justify-between gap-2 px-3 pt-3">
-        <div className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center bg-taxi font-bungee text-[12px] text-night-950">
-            BB
-          </span>
-          <div className="leading-none">
-            <div className="font-bungee text-[13px] uppercase tracking-[0.04em] text-taxi sm:text-[15px]">
-              borough blitz
+          <div className="flex items-center gap-2">
+            {timed && !revealed && (
+              <div
+                className="bg-black/75 px-2 py-1 font-mono text-[14px] tabular"
+                style={{ color: remain <= 10 ? '#FF4D2E' : '#FFD400' }}
+              >
+                {String(remain).padStart(2, '0')}s
+              </div>
+            )}
+            <div className="bg-black/75 px-2.5 py-1 text-right leading-none">
+              <div className="font-bungee text-[16px] text-taxi tabular sm:text-[18px]">{totalScore}</div>
+              <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-white/45">score</div>
             </div>
-            <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-white/55">
-              <span className="h-2 w-2 rounded-full" style={{ background: MODE_COLOR[mode] }} />
-              {mode}
-            </div>
+            <button
+              type="button"
+              onClick={onHome}
+              title="back to menu"
+              className="grid h-8 w-8 place-items-center border border-white/20 bg-black/60 font-mono text-[14px] text-white/70 hover:border-taxi hover:text-taxi"
+            >
+              ✕
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {timed && !revealed && (
-            <div
-              className="bg-black/75 px-2 py-1 font-mono text-[14px] tabular"
-              style={{ color: remain <= 10 ? '#FF4D2E' : '#FFD400' }}
-            >
-              {String(remain).padStart(2, '0')}s
+        {/* round dots */}
+        <div className="absolute left-1/2 top-[58px] z-30 flex -translate-x-1/2 items-center gap-1.5">
+          {rounds.map((r, i) => {
+            const done = r.score != null;
+            const here = i === roundIdx;
+            return (
+              <span
+                key={i}
+                className="block rounded-full transition-all"
+                style={{
+                  width: here ? 11 : 7,
+                  height: here ? 11 : 7,
+                  background: done ? '#FFD400' : here ? '#fff' : 'rgba(255,255,255,0.22)',
+                  boxShadow: here ? '0 0 8px #FFD400' : 'none',
+                }}
+                title={done ? `round ${i + 1}: +${r.score}` : `round ${i + 1}`}
+              />
+            );
+          })}
+        </div>
+
+        {/* banner (challenge / fallback notice) */}
+        {banner && !revealed && (
+          <div className="absolute left-1/2 top-[86px] z-30 max-w-[92vw] -translate-x-1/2 border border-taxi bg-black/85 px-3 py-1.5 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-taxi">
+            ★ {banner}
+          </div>
+        )}
+
+        {/* ── cam OSD (bottom-left) ────────────────────────────────────── */}
+        <div className="safe-b pointer-events-none absolute bottom-0 left-0 z-20 max-w-[60vw] p-3">
+          <div className="inline-flex items-center gap-2 bg-black/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em]">
+            <span className="h-2 w-2 animate-rec-blink rounded-full bg-blitz" />
+            <span className="text-blitz">rec</span>
+            <span className="text-white/65 tabular">{new Date(tick).toLocaleTimeString('en-US', { hour12: false })}</span>
+          </div>
+          <div className="mt-1.5 font-bungee text-[15px] uppercase leading-tight tracking-[0.04em] text-taxi sm:text-[18px]">
+            round {roundIdx + 1}/{ROUNDS} · where in nyc?
+          </div>
+          {revealed && cam && (
+            <div className="mt-1 max-w-full truncate bg-black/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-white">
+              ✓ {cam.name ?? cam.id}
             </div>
           )}
-          <div className="bg-black/75 px-2.5 py-1 text-right leading-none">
-            <div className="font-bungee text-[16px] text-taxi tabular sm:text-[18px]">{totalScore}</div>
-            <div className="font-mono text-[8px] uppercase tracking-[0.2em] text-white/45">score</div>
-          </div>
-          <button
-            type="button"
-            onClick={onHome}
-            title="back to menu"
-            className="grid h-8 w-8 place-items-center border border-white/20 bg-black/60 font-mono text-[14px] text-white/70 hover:border-taxi hover:text-taxi"
-          >
-            ✕
-          </button>
+          {!revealed && !mods.noZoom && cam && (
+            <div className="mt-1 font-mono text-[9px] uppercase tracking-[0.16em] text-white/40">
+              {isMobile ? 'double-tap or pinch to zoom the feed' : 'scroll / double-tap to zoom the feed'}
+            </div>
+          )}
         </div>
       </div>
+      {/* ── END cam region ───────────────────────────────────────────── */}
 
-      {/* round dots */}
-      <div className="absolute left-1/2 top-[58px] z-30 flex -translate-x-1/2 items-center gap-1.5">
-        {rounds.map((r, i) => {
-          const done = r.score != null;
-          const here = i === roundIdx;
-          return (
-            <span
-              key={i}
-              className="block rounded-full transition-all"
-              style={{
-                width: here ? 11 : 7,
-                height: here ? 11 : 7,
-                background: done ? '#FFD400' : here ? '#fff' : 'rgba(255,255,255,0.22)',
-                boxShadow: here ? '0 0 8px #FFD400' : 'none',
-              }}
-              title={done ? `round ${i + 1}: +${r.score}` : `round ${i + 1}`}
-            />
-          );
-        })}
-      </div>
-
-      {/* banner (challenge / fallback notice) */}
-      {banner && !revealed && (
-        <div className="absolute left-1/2 top-[86px] z-30 max-w-[92vw] -translate-x-1/2 border border-taxi bg-black/85 px-3 py-1.5 text-center font-mono text-[10px] uppercase tracking-[0.12em] text-taxi">
-          ★ {banner}
-        </div>
-      )}
-
-      {/* ── cam OSD (bottom-left) ────────────────────────────────────── */}
-      <div className="safe-b pointer-events-none absolute bottom-0 left-0 z-20 max-w-[60vw] p-3">
-        <div className="inline-flex items-center gap-2 bg-black/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.16em]">
-          <span className="h-2 w-2 animate-rec-blink rounded-full bg-blitz" />
-          <span className="text-blitz">rec</span>
-          <span className="text-white/65 tabular">{new Date(tick).toLocaleTimeString('en-US', { hour12: false })}</span>
-        </div>
-        <div className="mt-1.5 font-bungee text-[15px] uppercase leading-tight tracking-[0.04em] text-taxi sm:text-[18px]">
-          round {roundIdx + 1}/{ROUNDS} · where in nyc?
-        </div>
-        {revealed && cam && (
-          <div className="mt-1 max-w-full truncate bg-black/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-white">
-            ✓ {cam.name ?? cam.id}
-          </div>
-        )}
-        {!revealed && !mods.noZoom && cam && (
-          <div className="mt-1 font-mono text-[9px] uppercase tracking-[0.16em] text-white/40">
-            scroll / double-tap to zoom the feed
-          </div>
-        )}
-      </div>
-
-      {/* ── map panel (bottom-right, expandable) ─────────────────────── */}
+      {/* ── map panel — bottom half on mobile, expandable corner on desktop ── */}
       <div
-        className="safe-b absolute bottom-0 right-0 z-40 p-3"
+        className={isMobile ? 'relative z-40 min-h-0 flex-1' : 'safe-b absolute bottom-0 right-0 z-40 p-3'}
         onMouseEnter={() => canHover.current && !revealed && setOpen(true)}
         onMouseLeave={() => {
           if (canHover.current && !guess && !revealed) setOpen(false);
         }}
       >
         <div
-          className="relative overflow-hidden border-2 border-taxi bg-night-900 shadow-hard transition-[width,height] duration-300 ease-out"
+          className={`relative overflow-hidden border-taxi bg-night-900 ${
+            isMobile
+              ? 'h-full w-full border-t-2'
+              : 'border-2 shadow-hard transition-[width,height] duration-300 ease-out'
+          }`}
           style={
-            isOpen
-              ? { width: 'min(560px, calc(100vw - 24px))', height: 'min(62vh, 440px)' }
-              : { width: 'clamp(128px, 40vw, 220px)', height: 'clamp(94px, 28vw, 150px)' }
+            isMobile
+              ? undefined
+              : isOpen
+                ? { width: 'min(560px, calc(100vw - 24px))', height: 'min(62vh, 440px)' }
+                : { width: 'clamp(128px, 40vw, 220px)', height: 'clamp(94px, 28vw, 150px)' }
           }
         >
           <GuessMap guess={guess} cam={cam} revealed={revealed} onGuess={onGuess} />
@@ -229,14 +262,16 @@ export function RoundView({
               <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-taxi">
                 {guess ? 'drag-free · tap to move pin' : 'tap the map to drop a pin'}
               </span>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                title="peek at the feed"
-                className="font-mono text-[11px] text-white/60 hover:text-taxi"
-              >
-                ⤡
-              </button>
+              {!isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  title="peek at the feed"
+                  className="font-mono text-[11px] text-white/60 hover:text-taxi"
+                >
+                  ⤡
+                </button>
+              )}
             </div>
           )}
 
@@ -266,7 +301,7 @@ export function RoundView({
 
           {/* footer action */}
           {isOpen && (
-            <div className="absolute inset-x-0 bottom-0 z-10 p-2">
+            <div className={`absolute inset-x-0 bottom-0 z-10 p-2 ${isMobile ? 'safe-b' : ''}`}>
               {!revealed ? (
                 <button
                   type="button"

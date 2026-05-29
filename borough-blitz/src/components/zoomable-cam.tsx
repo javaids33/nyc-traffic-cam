@@ -14,12 +14,17 @@ export function ZoomableCam({
   grayscale,
   noZoom,
   resetKey,
+  fit = 'cover',
 }: {
   src: string;
   alt: string;
   grayscale: boolean;
   noZoom: boolean;
   resetKey: string; // changing this (new round) snaps back to 1×
+  // 'cover' fills the frame (desktop, where the viewport ≈ the cam's
+  // landscape ratio). 'contain' shows the whole frame without cropping —
+  // used on mobile so a wide cam isn't sliced to a zoomed-in centre strip.
+  fit?: 'cover' | 'contain';
 }) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
@@ -120,7 +125,9 @@ export function ZoomableCam({
         decoding="async"
         draggable={false}
         onLoad={() => setLoaded(true)}
-        className="absolute inset-0 h-full w-full object-cover will-change-transform"
+        className={`absolute inset-0 h-full w-full will-change-transform ${
+          fit === 'contain' ? 'object-contain' : 'object-cover'
+        }`}
         style={{
           transform: `translate3d(${tx}px,${ty}px,0) scale(${scale})`,
           transition: drag.current ? 'none' : 'transform 0.12s ease-out',
