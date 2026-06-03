@@ -4,10 +4,10 @@ import type { Cam, Mode } from './cams';
 import type { RoundState } from './game-types';
 import { bandFor, fmtDist, gradeFor, MAX_SCORE } from './scoring';
 import { mintChallenge, type FetchedChallenge, type Modifiers } from './share';
-import { buildDailyShare, squaresFor } from './stats';
+import { buildDailyShare, dateLabel, dateLabelFull, squaresFor } from './stats';
 import { AdSlot } from './ads';
 
-export type DailyShareData = { number: number; streak: number; rounds: number[] };
+export type DailyShareData = { date: string; streak: number; rounds: number[] };
 
 function fireConfetti(big: boolean) {
   const opts = {
@@ -153,7 +153,7 @@ export function Summary({
   const dailyUrl =
     (typeof window !== 'undefined' ? window.location.origin : 'https://borough-blitz.pages.dev') + '/?daily=1';
   const dailyText = daily
-    ? buildDailyShare({ number: daily.number, total: totalScore, streak: daily.streak, rounds: daily.rounds, url: dailyUrl })
+    ? buildDailyShare({ dateFull: dateLabelFull(daily.date), total: totalScore, streak: daily.streak, rounds: daily.rounds, url: dailyUrl })
     : '';
   const copyDaily = async () => {
     try {
@@ -259,7 +259,7 @@ export function Summary({
           <div className="mb-5 border-2 border-taxi bg-night-900 p-4 shadow-hard-blitz">
             <div className="flex items-baseline justify-between">
               <div className="font-bungee text-[16px] uppercase tracking-[0.04em] text-taxi">
-                ★ daily #{daily.number}
+                ★ daily · {dateLabel(daily.date)}
               </div>
               {daily.streak > 1 && (
                 <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-blitz">🔥 {daily.streak}-day</div>
@@ -326,7 +326,7 @@ export function Summary({
               ▶ play more · free play &amp; modes
             </button>
             <div className="mt-2 text-center font-mono text-[9px] uppercase tracking-[0.18em] text-white/40">
-              easy · medium · hard · modifiers · come back tomorrow for daily #{daily.number + 1}
+              easy · medium · hard · modifiers · come back tomorrow for the next daily
             </div>
           </div>
         ) : (

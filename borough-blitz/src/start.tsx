@@ -4,7 +4,7 @@ import { DEFAULT_MODIFIERS, type Modifiers } from './share';
 import { ROUNDS, MAX_SCORE } from './scoring';
 import { AdSlot } from './ads';
 import { StatsModal } from './stats-modal';
-import type { DailyView } from './stats';
+import { dateLabel, type DailyView } from './stats';
 
 const TIERS: { id: Tier; sub: string; color: string }[] = [
   { id: 'easy', sub: 'landmarks & the core · you know these', color: '#37c46b' },
@@ -96,7 +96,7 @@ export function Start({
                     today's blitz
                   </div>
                   <div className="font-bungee text-[26px] uppercase leading-none text-taxi sm:text-[32px]">
-                    daily #{daily.number}
+                    daily · {dateLabel(daily.date)}
                   </div>
                   <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.14em] text-white/75">
                     {daily.streak > 0 ? (

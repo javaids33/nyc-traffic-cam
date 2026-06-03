@@ -9,9 +9,21 @@ import { nycDateStr } from './cams';
 import { MAX_SCORE } from './scoring';
 
 const STATS_KEY = 'bb-daily-v2';
-// #1 = launch day. dailyNumber is days-since-epoch + 1.
-const DAILY_EPOCH = '2026-05-26';
 const HISTORY_CAP = 90;
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// The daily is identified by its NYC date, not a sequential count. Format the
+// YYYY-MM-DD seed-date by parts so there's no UTC/local timezone drift.
+// "2026-06-03" → "Jun 3"
+export function dateLabel(iso = nycDateStr()): string {
+  const [, m, d] = iso.split('-').map(Number);
+  return `${MONTHS[m - 1]} ${d}`;
+}
+// "2026-06-03" → "Jun 3, 2026"
+export function dateLabelFull(iso = nycDateStr()): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${MONTHS[m - 1]} ${d}, ${y}`;
+}
 
 export type DailyEntry = { date: string; score: number; rounds: number[] };
 export type Stats = {
@@ -27,10 +39,6 @@ const EMPTY: Stats = { played: 0, streak: 0, maxStreak: 0, lastPlayed: null, his
 // Whole-day difference between two YYYY-MM-DD strings (b - a), tz-agnostic.
 function dayDiff(a: string, b: string): number {
   return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
-}
-
-export function dailyNumber(date = nycDateStr()): number {
-  return Math.max(1, dayDiff(DAILY_EPOCH, date) + 1);
 }
 
 export function loadStats(): Stats {
@@ -74,7 +82,7 @@ export function recordDailyResult(total: number, rounds: number[], today = nycDa
 }
 
 export type DailyView = {
-  number: number;
+  date: string; // YYYY-MM-DD (NYC) — the daily we're on
   streak: number; // 0 if broken (missed a day)
   maxStreak: number;
   played: number;
@@ -92,7 +100,7 @@ export function dailyView(s: Stats, today = nycDateStr()): DailyView {
   const scores = s.history.map((h) => h.score);
   const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
   return {
-    number: dailyNumber(today),
+    date: today,
     streak: alive ? s.streak : 0,
     maxStreak: s.maxStreak,
     played: s.played,
@@ -117,12 +125,12 @@ export function squaresFor(rounds: number[]): string {
 }
 
 export function buildDailyShare(opts: {
-  number: number;
+  dateFull: string;
   total: number;
   streak: number;
   rounds: number[];
   url: string;
 }): string {
   const streakLine = opts.streak > 1 ? ` · 🔥 ${opts.streak}` : '';
-  return `BOROUGH BLITZ #${opts.number}\n${opts.total}/${MAX_SCORE}${streakLine}\n${squaresFor(opts.rounds)}\n${opts.url}`;
+  return `BOROUGH BLITZ · ${opts.dateFull}\n${opts.total}/${MAX_SCORE}${streakLine}\n${squaresFor(opts.rounds)}\n${opts.url}`;
 }

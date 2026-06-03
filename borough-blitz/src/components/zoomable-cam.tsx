@@ -98,6 +98,16 @@ export function ZoomableCam({
 
   const zoomed = scale > 1.01;
 
+  // A hair of blur smooths the upscale aliasing of a low-res JPEG when the
+  // frame is magnified to fill the screen (cover mode, not zoomed). It's
+  // dropped the instant the player zooms in so street signs stay legible —
+  // and so the transform's scale doesn't magnify the blur with it. Contrast
+  // is kept gentle: a heavier boost would amplify the JPEG/sensor noise.
+  const softBlur = fit === 'cover' && !zoomed;
+  const filter = grayscale
+    ? `grayscale(1) contrast(1.06)${softBlur ? ' blur(0.3px)' : ''}`
+    : `contrast(1.02) saturate(1.05)${softBlur ? ' blur(0.3px)' : ''}`;
+
   return (
     <div
       ref={wrapRef}
@@ -131,7 +141,7 @@ export function ZoomableCam({
         style={{
           transform: `translate3d(${tx}px,${ty}px,0) scale(${scale})`,
           transition: drag.current ? 'none' : 'transform 0.12s ease-out',
-          filter: grayscale ? 'grayscale(1) contrast(1.08)' : 'contrast(1.04) saturate(1.05)',
+          filter,
           opacity: loaded ? 1 : 0,
         }}
       />

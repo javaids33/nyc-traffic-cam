@@ -245,7 +245,7 @@ export function App() {
         friendScore={friendScore}
         daily={
           mode === 'daily'
-            ? { number: daily.number, streak: daily.streak, rounds: rounds.map((r) => r.score ?? 0) }
+            ? { date: daily.date, streak: daily.streak, rounds: rounds.map((r) => r.score ?? 0) }
             : null
         }
         onNewGame={newGame}
