@@ -1,6 +1,6 @@
 {
-  "generated_at": 1783335083,
-  "count": 958,
+  "generated_at": 1783944962,
+  "count": 963,
   "cameras": [
     {
       "id": "09afb231-ef10-470f-bf54-0f44fc2dc18f",
@@ -17,31 +17,17 @@
       "is_online": true
     },
     {
+      "id": "c145d543-b5f5-4dec-9bb8-7866eafdf054",
+      "name": "Exterior St @ 3 Ave",
+      "lat": 40.809314,
+      "lng": -73.929538,
+      "is_online": true
+    },
+    {
       "id": "1b3248f9-f26e-4f36-943f-b7a7731595fb",
       "name": "QBB @ Crescent St",
       "lat": 40.750889,
       "lng": -73.940613,
-      "is_online": true
-    },
-    {
-      "id": "8cc75cbc-e050-4947-aee8-639f63fe4ca7",
-      "name": "Canal Street @ Chrystie Street",
-      "lat": 40.715821,
-      "lng": -73.994913,
-      "is_online": true
-    },
-    {
-      "id": "300e0508-3c7e-4ac5-8527-b75bcf8292b8",
-      "name": "Hillside Ave @ Little Neck Pkwy",
-      "lat": 40.736207,
-      "lng": -73.713777,
-      "is_online": true
-    },
-    {
-      "id": "98fc3e41-66be-42d7-8f69-5cc76ae7226f",
-      "name": "BB - Manhattan hub - 156.103",
-      "lat": 40.710977,
-      "lng": -74.003594,
       "is_online": true
     },
     {
@@ -52,17 +38,10 @@
       "is_online": true
     },
     {
-      "id": "c145d543-b5f5-4dec-9bb8-7866eafdf054",
-      "name": "Exterior St @ 3 Ave",
-      "lat": 40.809314,
-      "lng": -73.929538,
-      "is_online": true
-    },
-    {
-      "id": "ec1e7b42-18de-4475-8c89-9e80f21e5b6c",
-      "name": "FDR Drive @ 122 St",
-      "lat": 40.798685,
-      "lng": -73.929148,
+      "id": "300e0508-3c7e-4ac5-8527-b75bcf8292b8",
+      "name": "Hillside Ave @ Little Neck Pkwy",
+      "lat": 40.736207,
+      "lng": -73.713777,
       "is_online": true
     },
     {
@@ -73,17 +52,31 @@
       "is_online": true
     },
     {
-      "id": "ec9eda79-e250-4e6f-a8f6-e51021fb054f",
-      "name": "Amsterdam Ave @ 60 St",
-      "lat": 40.771057,
-      "lng": -73.987139,
-      "is_online": true
-    },
-    {
       "id": "8afc5cd6-f735-47e8-bd57-6e6d3b81b442",
       "name": "WBB-20 @ Above Bedford Ave ( Berry St )",
       "lat": 40.711356,
       "lng": -73.96519,
+      "is_online": true
+    },
+    {
+      "id": "98fc3e41-66be-42d7-8f69-5cc76ae7226f",
+      "name": "BB - Manhattan hub - 156.103",
+      "lat": 40.710977,
+      "lng": -74.003594,
+      "is_online": true
+    },
+    {
+      "id": "ec1e7b42-18de-4475-8c89-9e80f21e5b6c",
+      "name": "FDR Drive @ 122 St",
+      "lat": 40.798685,
+      "lng": -73.929148,
+      "is_online": true
+    },
+    {
+      "id": "ec9eda79-e250-4e6f-a8f6-e51021fb054f",
+      "name": "Amsterdam Ave @ 60 St",
+      "lat": 40.771057,
+      "lng": -73.987139,
       "is_online": true
     },
     {
@@ -136,10 +129,10 @@
       "is_online": true
     },
     {
-      "id": "cbd7c7a6-9bc5-4d6d-baf4-61b648dd589d",
-      "name": "Astoria Blvd N S/R @ 32 St",
-      "lat": 40.770472,
-      "lng": -73.916515,
+      "id": "07c5a9ab-38b0-4176-a932-395cded5858e",
+      "name": "Cadman Plz West @ Tillary St",
+      "lat": 40.696267,
+      "lng": -73.991073,
       "is_online": true
     },
     {
@@ -150,24 +143,10 @@
       "is_online": true
     },
     {
-      "id": "b18d0e36-c053-435d-921e-813ab5f65a0a",
-      "name": "C2-BQE-22-WB_at_Lee_Ave-Ex31",
-      "lat": 40.705248,
-      "lng": -73.959172,
-      "is_online": true
-    },
-    {
-      "id": "0ccf3a51-8981-4e03-92a9-00b1c59f0b9b",
-      "name": "BB-24 South Rdwy @ Above South St",
-      "lat": 40.708186,
-      "lng": -73.999623,
-      "is_online": true
-    },
-    {
-      "id": "2f28f8df-5eb5-4327-ab1f-7feaf2630b34",
-      "name": "Grand Concourse @ Bedford Park Blvd",
-      "lat": 40.872207,
-      "lng": -73.887658,
+      "id": "07f88e60-2b93-4bba-9784-8cac3c9b7f52",
+      "name": "C3-SIE-02-EB_at_WSE_Int-Ex3",
+      "lat": 40.622323,
+      "lng": -74.174917,
       "is_online": true
     },
     {
@@ -178,10 +157,24 @@
       "is_online": true
     },
     {
+      "id": "2f28f8df-5eb5-4327-ab1f-7feaf2630b34",
+      "name": "Grand Concourse @ Bedford Park Blvd",
+      "lat": 40.872207,
+      "lng": -73.887658,
+      "is_online": true
+    },
+    {
       "id": "068461e2-c62f-4ce4-adac-5f9efe92af1d",
       "name": "Bushwick Ave @ De Kalb Ave",
       "lat": 40.695092,
       "lng": -73.928357,
+      "is_online": true
+    },
+    {
+      "id": "ad3df063-d5d6-458c-84e7-1242060649cf",
+      "name": "Ft Washington @ 179 St",
+      "lat": 40.849349,
+      "lng": -73.93894,
       "is_online": true
     },
     {
@@ -206,17 +199,24 @@
       "is_online": true
     },
     {
-      "id": "9cc8495e-aeee-4759-adba-5a6bf5efd4b9",
-      "name": "3 Ave @ 23 St",
-      "lat": 40.7388335617157,
-      "lng": -73.9831563349364,
+      "id": "0ccf3a51-8981-4e03-92a9-00b1c59f0b9b",
+      "name": "BB-24 South Rdwy @ Above South St",
+      "lat": 40.708186,
+      "lng": -73.999623,
       "is_online": true
     },
     {
-      "id": "07f88e60-2b93-4bba-9784-8cac3c9b7f52",
-      "name": "C3-SIE-02-EB_at_WSE_Int-Ex3",
-      "lat": 40.622323,
-      "lng": -74.174917,
+      "id": "cbd7c7a6-9bc5-4d6d-baf4-61b648dd589d",
+      "name": "Astoria Blvd N S/R @ 32 St",
+      "lat": 40.770472,
+      "lng": -73.916515,
+      "is_online": true
+    },
+    {
+      "id": "b18d0e36-c053-435d-921e-813ab5f65a0a",
+      "name": "C2-BQE-22-WB_at_Lee_Ave-Ex31",
+      "lat": 40.705248,
+      "lng": -73.959172,
       "is_online": true
     },
     {
@@ -241,10 +241,10 @@
       "is_online": true
     },
     {
-      "id": "07c5a9ab-38b0-4176-a932-395cded5858e",
-      "name": "Cadman Plz West @ Tillary St",
-      "lat": 40.696267,
-      "lng": -73.991073,
+      "id": "9cc8495e-aeee-4759-adba-5a6bf5efd4b9",
+      "name": "3 Ave @ 23 St",
+      "lat": 40.7388335617157,
+      "lng": -73.9831563349364,
       "is_online": true
     },
     {
@@ -269,31 +269,10 @@
       "is_online": true
     },
     {
-      "id": "1572a83a-0a4f-4a7b-84a0-fec0890a2de3",
-      "name": "C4-WST-03-Med_at_Vestry_St",
-      "lat": 40.723031,
-      "lng": -74.01141,
-      "is_online": true
-    },
-    {
-      "id": "b5d8fe4f-1cf5-4cd8-8211-8353e68da1cb",
-      "name": "Atlantic Ave @ Vanderbilt Ave",
-      "lat": 40.6809634749315,
-      "lng": -73.9670419692993,
-      "is_online": true
-    },
-    {
-      "id": "0ed1503d-23fc-4102-ada3-5d647a7b20cb",
-      "name": "Metropolitan Ave @ Marcy Ave",
-      "lat": 40.714062,
-      "lng": -73.954333,
-      "is_online": true
-    },
-    {
-      "id": "ec9ffb62-e3bf-4352-8bcf-7c9adf5fbe9c",
-      "name": "8th Ave @ 31st St",
-      "lat": 40.750297,
-      "lng": -73.99483,
+      "id": "edb8b647-1abb-4e20-b0e6-e446c17ac9c0",
+      "name": "Jackie Robinson Pkwy @ Forest Pk Dr",
+      "lat": 40.70273,
+      "lng": -73.8624,
       "is_online": true
     },
     {
@@ -301,6 +280,13 @@
       "name": "Beach Channel Dr @B Mott Ave",
       "lat": 40.605347,
       "lng": -73.75518,
+      "is_online": true
+    },
+    {
+      "id": "ec9ffb62-e3bf-4352-8bcf-7c9adf5fbe9c",
+      "name": "8th Ave @ 31st St",
+      "lat": 40.750297,
+      "lng": -73.99483,
       "is_online": true
     },
     {
@@ -318,10 +304,10 @@
       "is_online": true
     },
     {
-      "id": "16d86749-6ec5-4594-8ccc-56c9507fedc3",
-      "name": "Rockaway Blvd @ S. Conduit Ave",
-      "lat": 40.6668,
-      "lng": -73.779833,
+      "id": "0ed1503d-23fc-4102-ada3-5d647a7b20cb",
+      "name": "Metropolitan Ave @ Marcy Ave",
+      "lat": 40.714062,
+      "lng": -73.954333,
       "is_online": true
     },
     {
@@ -332,6 +318,13 @@
       "is_online": true
     },
     {
+      "id": "16d86749-6ec5-4594-8ccc-56c9507fedc3",
+      "name": "Rockaway Blvd @ S. Conduit Ave",
+      "lat": 40.6668,
+      "lng": -73.779833,
+      "is_online": true
+    },
+    {
       "id": "ed8fac76-2128-4099-8dfd-80144bd059d4",
       "name": "Kissena Blvd @ Holly Ave",
       "lat": 40.750627,
@@ -339,10 +332,17 @@
       "is_online": true
     },
     {
-      "id": "0ff541bf-1be1-4bbf-88c5-3a570541e7d2",
-      "name": "Father Capodanno Blvd @ Sands LN",
-      "lat": 40.590366,
-      "lng": -74.066659,
+      "id": "171d87f4-033f-4769-ae00-7819baa8034e",
+      "name": "SIE @ Fingerboard Rd",
+      "lat": 40.603841,
+      "lng": -74.069281,
+      "is_online": true
+    },
+    {
+      "id": "1572a83a-0a4f-4a7b-84a0-fec0890a2de3",
+      "name": "C4-WST-03-Med_at_Vestry_St",
+      "lat": 40.723031,
+      "lng": -74.01141,
       "is_online": true
     },
     {
@@ -353,10 +353,17 @@
       "is_online": true
     },
     {
-      "id": "171d87f4-033f-4769-ae00-7819baa8034e",
-      "name": "SIE @ Fingerboard Rd",
-      "lat": 40.603841,
-      "lng": -74.069281,
+      "id": "0ff541bf-1be1-4bbf-88c5-3a570541e7d2",
+      "name": "Father Capodanno Blvd @ Sands LN",
+      "lat": 40.590366,
+      "lng": -74.066659,
+      "is_online": true
+    },
+    {
+      "id": "b5d8fe4f-1cf5-4cd8-8211-8353e68da1cb",
+      "name": "Atlantic Ave @ Vanderbilt Ave",
+      "lat": 40.6809634749315,
+      "lng": -73.9670419692993,
       "is_online": true
     },
     {
@@ -395,17 +402,24 @@
       "is_online": true
     },
     {
-      "id": "0951f345-28ef-447c-af7f-1cb4e0e16aa8",
-      "name": "Bruckner Blvd E / White Plains Rd- Camera 1",
-      "lat": 40.825717,
-      "lng": -73.859182,
-      "is_online": true
-    },
-    {
       "id": "3095997f-dd41-4e71-a810-9290576c17a6",
       "name": "12 Ave @ 57 St",
       "lat": 40.7715319506809,
       "lng": -73.9942101957323,
+      "is_online": true
+    },
+    {
+      "id": "6847c104-0117-4e3f-b30e-e1a859bc8107",
+      "name": "FDR Dr @ 101 St ",
+      "lat": 40.785502,
+      "lng": -73.94032,
+      "is_online": true
+    },
+    {
+      "id": "0951f345-28ef-447c-af7f-1cb4e0e16aa8",
+      "name": "Bruckner Blvd E / White Plains Rd- Camera 1",
+      "lat": 40.825717,
+      "lng": -73.859182,
       "is_online": true
     },
     {
@@ -423,10 +437,10 @@
       "is_online": true
     },
     {
-      "id": "6847c104-0117-4e3f-b30e-e1a859bc8107",
-      "name": "FDR Dr @ 101 St ",
-      "lat": 40.785502,
-      "lng": -73.94032,
+      "id": "1817f0b6-148f-4105-a5d6-2a53079aad39",
+      "name": "C5-CVE-01-SB_at_Union_Turnpike",
+      "lat": 40.732235,
+      "lng": -73.765665,
       "is_online": true
     },
     {
@@ -486,24 +500,24 @@
       "is_online": true
     },
     {
-      "id": "0f657445-4729-4c98-8f3a-9591c1879b92",
-      "name": "Bruckner Blvd E / White Plains Rd- Camera 2",
-      "lat": 40.825717,
-      "lng": -73.859182,
+      "id": "09cc9eed-0732-4199-a6ca-b3d0bbbad860",
+      "name": "C1-MDE-06-NB_at_Macombs_Dam_Br-Ex5",
+      "lat": 40.828221,
+      "lng": -73.930969,
       "is_online": true
     },
     {
-      "id": "83655dbc-7902-4fdb-926c-15fee4396b83",
-      "name": "Broadway @ 38 St",
-      "lat": 40.752453,
-      "lng": -73.987123,
+      "id": "13064b49-6f97-43a2-9cf8-947767afaa12",
+      "name": "C5-BQE-42-WB_at_30th_Ave-Ex43",
+      "lat": 40.759356,
+      "lng": -73.901707,
       "is_online": true
     },
     {
-      "id": "29aaea67-bf67-4d6f-b572-f810f48f5b48",
-      "name": "Drumgoogle Rd E @ Vernon Ave",
-      "lat": 40.532779,
-      "lng": -74.200233,
+      "id": "243e945a-b872-4bac-9898-94ce8963ef44",
+      "name": "Flatbush Ave @ DeKalb Ave",
+      "lat": 40.689993,
+      "lng": -73.98163,
       "is_online": true
     },
     {
@@ -521,13 +535,6 @@
       "is_online": true
     },
     {
-      "id": "13064b49-6f97-43a2-9cf8-947767afaa12",
-      "name": "C5-BQE-42-WB_at_30th_Ave-Ex43",
-      "lat": 40.759356,
-      "lng": -73.901707,
-      "is_online": true
-    },
-    {
       "id": "ecba28cb-ac70-4d25-abcb-6506111ea120",
       "name": "FDR Dr @ Brooklyn Bridge ",
       "lat": 40.708414,
@@ -542,10 +549,17 @@
       "is_online": true
     },
     {
-      "id": "9b923606-16ba-45ad-a105-aabcc98ef1fa",
-      "name": "12 Ave @ 22 St",
-      "lat": 40.748276,
-      "lng": -74.007636,
+      "id": "2e70dd1f-b21f-4215-bc22-237a1d79eb71",
+      "name": "C3-KWV-02-NB_at_Bloomngdale_Rd-Ex2",
+      "lat": 40.52806,
+      "lng": -74.216696,
+      "is_online": true
+    },
+    {
+      "id": "5d055599-875a-4010-991f-e7e454889052",
+      "name": "7 Ave @ 40 St",
+      "lat": 40.754746,
+      "lng": -73.987894,
       "is_online": true
     },
     {
@@ -556,10 +570,10 @@
       "is_online": true
     },
     {
-      "id": "243e945a-b872-4bac-9898-94ce8963ef44",
-      "name": "Flatbush Ave @ DeKalb Ave",
-      "lat": 40.689993,
-      "lng": -73.98163,
+      "id": "9b923606-16ba-45ad-a105-aabcc98ef1fa",
+      "name": "12 Ave @ 22 St",
+      "lat": 40.748276,
+      "lng": -74.007636,
       "is_online": true
     },
     {
@@ -570,6 +584,13 @@
       "is_online": true
     },
     {
+      "id": "29aaea67-bf67-4d6f-b572-f810f48f5b48",
+      "name": "Drumgoogle Rd E @ Vernon Ave",
+      "lat": 40.532779,
+      "lng": -74.200233,
+      "is_online": true
+    },
+    {
       "id": "9c4c2657-6796-4953-bbe6-c50f24bb5820",
       "name": "5 Ave @ 57 St",
       "lat": 40.7629820055328,
@@ -577,24 +598,24 @@
       "is_online": true
     },
     {
-      "id": "09cc9eed-0732-4199-a6ca-b3d0bbbad860",
-      "name": "C1-MDE-06-NB_at_Macombs_Dam_Br-Ex5",
-      "lat": 40.828221,
-      "lng": -73.930969,
+      "id": "0f657445-4729-4c98-8f3a-9591c1879b92",
+      "name": "Bruckner Blvd E / White Plains Rd- Camera 2",
+      "lat": 40.825717,
+      "lng": -73.859182,
       "is_online": true
     },
     {
-      "id": "2e70dd1f-b21f-4215-bc22-237a1d79eb71",
-      "name": "C3-KWV-02-NB_at_Bloomngdale_Rd-Ex2",
-      "lat": 40.52806,
-      "lng": -74.216696,
+      "id": "83655dbc-7902-4fdb-926c-15fee4396b83",
+      "name": "Broadway @ 38 St",
+      "lat": 40.752453,
+      "lng": -73.987123,
       "is_online": true
     },
     {
-      "id": "a454105b-8f59-4d96-a656-9a2d29f1353d",
-      "name": "WBB-1 @ Bklyn Plaza",
-      "lat": 40.710341,
-      "lng": -73.961088,
+      "id": "053afe02-e1b3-4bea-9995-787e72c7fff4",
+      "name": "Atlantic Ave @ Barclays Center",
+      "lat": 40.683572,
+      "lng": -73.976083,
       "is_online": true
     },
     {
@@ -605,10 +626,10 @@
       "is_online": true
     },
     {
-      "id": "a0d4d925-37f5-45f4-b25a-a65c6577c008",
-      "name": "BB-47 North Rdwy @ West of Bklyn Twr",
-      "lat": 40.705446,
-      "lng": -73.9959166,
+      "id": "9955d671-39ad-4fb7-b63e-4e78cf6ac157",
+      "name": "Flatbush Ave and 4 Ave",
+      "lat": 40.6838924508798,
+      "lng": -73.9779424667358,
       "is_online": true
     },
     {
@@ -626,13 +647,6 @@
       "is_online": true
     },
     {
-      "id": "1e60ade7-c760-48cf-acd9-d9d6cbfa9420",
-      "name": "7 Ave @ 32 St",
-      "lat": 40.749508,
-      "lng": -73.991493,
-      "is_online": true
-    },
-    {
       "id": "152e384f-7d80-4240-8995-bd75b78b582f",
       "name": "2 Ave @ E 128 Street",
       "lat": 40.804468,
@@ -640,10 +654,17 @@
       "is_online": true
     },
     {
-      "id": "f1912436-d91e-407e-b4a3-d163090f226f",
-      "name": "Prospect St @ Old Fulton St -156.63",
-      "lat": 40.700815,
-      "lng": -73.99039,
+      "id": "1e60ade7-c760-48cf-acd9-d9d6cbfa9420",
+      "name": "7 Ave @ 32 St",
+      "lat": 40.749508,
+      "lng": -73.991493,
+      "is_online": true
+    },
+    {
+      "id": "a454105b-8f59-4d96-a656-9a2d29f1353d",
+      "name": "WBB-1 @ Bklyn Plaza",
+      "lat": 40.710341,
+      "lng": -73.961088,
       "is_online": true
     },
     {
@@ -654,13 +675,6 @@
       "is_online": true
     },
     {
-      "id": "053afe02-e1b3-4bea-9995-787e72c7fff4",
-      "name": "Atlantic Ave @ Barclays Center",
-      "lat": 40.683572,
-      "lng": -73.976083,
-      "is_online": true
-    },
-    {
       "id": "5adef8a1-5ad0-4a73-8d87-e1e545ba8cbb",
       "name": "FDR Dr @ 73 St",
       "lat": 40.766599,
@@ -668,10 +682,10 @@
       "is_online": true
     },
     {
-      "id": "8df73045-61fd-4394-b21a-dfa3f440d6e7",
-      "name": "C3-MLK-01-SB_at_Watchogue_Rd-Ex10",
-      "lat": 40.618503,
-      "lng": -74.151462,
+      "id": "1dc7794b-62bb-4cb7-93ee-df87e5ac671d",
+      "name": "Clearview Expy @ 56 Ave",
+      "lat": 40.751323,
+      "lng": -73.775287,
       "is_online": true
     },
     {
@@ -679,6 +693,13 @@
       "name": "Lexington Ave @ E 128 Street",
       "lat": 40.806312,
       "lng": -73.935957,
+      "is_online": true
+    },
+    {
+      "id": "a0d4d925-37f5-45f4-b25a-a65c6577c008",
+      "name": "BB-47 North Rdwy @ West of Bklyn Twr",
+      "lat": 40.705446,
+      "lng": -73.9959166,
       "is_online": true
     },
     {
@@ -696,17 +717,17 @@
       "is_online": true
     },
     {
-      "id": "9955d671-39ad-4fb7-b63e-4e78cf6ac157",
-      "name": "Flatbush Ave and 4 Ave",
-      "lat": 40.6838924508798,
-      "lng": -73.9779424667358,
+      "id": "f1912436-d91e-407e-b4a3-d163090f226f",
+      "name": "Prospect St @ Old Fulton St -156.63",
+      "lat": 40.700815,
+      "lng": -73.99039,
       "is_online": true
     },
     {
-      "id": "b19c9130-3a2d-4f7a-94a5-495eeea219ef",
-      "name": "C1-BRE-11-SB_at_Buhre_Ave-Ex8A",
-      "lat": 40.84897,
-      "lng": -73.827533,
+      "id": "8df73045-61fd-4394-b21a-dfa3f440d6e7",
+      "name": "C3-MLK-01-SB_at_Watchogue_Rd-Ex10",
+      "lat": 40.618503,
+      "lng": -74.151462,
       "is_online": true
     },
     {
@@ -724,17 +745,17 @@
       "is_online": true
     },
     {
-      "id": "1dc7794b-62bb-4cb7-93ee-df87e5ac671d",
-      "name": "Clearview Expy @ 56 Ave",
-      "lat": 40.751323,
-      "lng": -73.775287,
+      "id": "b19c9130-3a2d-4f7a-94a5-495eeea219ef",
+      "name": "C1-BRE-11-SB_at_Buhre_Ave-Ex8A",
+      "lat": 40.84897,
+      "lng": -73.827533,
       "is_online": true
     },
     {
-      "id": "34af619f-c745-4f09-a81c-e3635dd764c6",
-      "name": "Richmond Ave @ Forest Ave",
-      "lat": 40.625094,
-      "lng": -74.148789,
+      "id": "41610046-fbab-40be-b824-4afa48119bec",
+      "name": "C2-BQE-28-WB_at_Manhattan_Ave-Ex33",
+      "lat": 40.718992,
+      "lng": -73.946421,
       "is_online": true
     },
     {
@@ -745,10 +766,10 @@
       "is_online": true
     },
     {
-      "id": "330e2a88-3cea-4ce5-b1a2-ae8440de9b1a",
-      "name": "1 Ave @ 84 St",
-      "lat": 40.7755,
-      "lng": -73.9502,
+      "id": "6a841f4c-93ef-4f51-b38d-80e70053ff8d",
+      "name": " WEBSTER AVE @ NEREID AVE",
+      "lat": 40.9011,
+      "lng": -73.8616,
       "is_online": true
     },
     {
@@ -773,6 +794,13 @@
       "is_online": true
     },
     {
+      "id": "0cef143f-b3d8-4066-84ee-6114fa6e76e0",
+      "name": "Lexington Ave @ E 110 Street",
+      "lat": 40.795015,
+      "lng": -73.944542,
+      "is_online": true
+    },
+    {
       "id": "2f504422-66f8-4ddc-805f-8744279a1a6e",
       "name": "Northern Blvd @ 68 St",
       "lat": 40.753662,
@@ -787,17 +815,10 @@
       "is_online": true
     },
     {
-      "id": "1e88b34b-2058-402e-9a3d-aca1c57696bf",
-      "name": "GCP @ 31 ST",
-      "lat": 40.770109,
-      "lng": -73.917131,
-      "is_online": true
-    },
-    {
-      "id": "0cef143f-b3d8-4066-84ee-6114fa6e76e0",
-      "name": "Lexington Ave @ E 110 Street",
-      "lat": 40.795015,
-      "lng": -73.944542,
+      "id": "330e2a88-3cea-4ce5-b1a2-ae8440de9b1a",
+      "name": "1 Ave @ 84 St",
+      "lat": 40.7755,
+      "lng": -73.9502,
       "is_online": true
     },
     {
@@ -836,10 +857,10 @@
       "is_online": true
     },
     {
-      "id": "f1acca9b-0030-49c5-b589-33ab6ac24657",
-      "name": "C1-TNE-01-SB_at_Otis-Ave",
-      "lat": 40.835488,
-      "lng": -73.824394,
+      "id": "138a0bcb-15af-46a4-baf0-8724016c73fa",
+      "name": "GCP @ Astoria Blvd @ 49 St",
+      "lat": 40.767003,
+      "lng": -73.901191,
       "is_online": true
     },
     {
@@ -850,24 +871,24 @@
       "is_online": true
     },
     {
-      "id": "41610046-fbab-40be-b824-4afa48119bec",
-      "name": "C2-BQE-28-WB_at_Manhattan_Ave-Ex33",
-      "lat": 40.718992,
-      "lng": -73.946421,
+      "id": "f1acca9b-0030-49c5-b589-33ab6ac24657",
+      "name": "C1-TNE-01-SB_at_Otis-Ave",
+      "lat": 40.835488,
+      "lng": -73.824394,
       "is_online": true
     },
     {
-      "id": "6a841f4c-93ef-4f51-b38d-80e70053ff8d",
-      "name": " WEBSTER AVE @ NEREID AVE",
-      "lat": 40.9011,
-      "lng": -73.8616,
+      "id": "1e88b34b-2058-402e-9a3d-aca1c57696bf",
+      "name": "GCP @ 31 ST",
+      "lat": 40.770109,
+      "lng": -73.917131,
       "is_online": true
     },
     {
-      "id": "138a0bcb-15af-46a4-baf0-8724016c73fa",
-      "name": "GCP @ Astoria Blvd @ 49 St",
-      "lat": 40.767003,
-      "lng": -73.901191,
+      "id": "34af619f-c745-4f09-a81c-e3635dd764c6",
+      "name": "Richmond Ave @ Forest Ave",
+      "lat": 40.625094,
+      "lng": -74.148789,
       "is_online": true
     },
     {
@@ -885,10 +906,10 @@
       "is_online": true
     },
     {
-      "id": "351d3d12-fd9e-4e4c-b279-cd8f3f1f194c",
-      "name": "C1-MDE-01-Cntr_at_E.135th_St-Ex1",
-      "lat": 40.803545,
-      "lng": -73.916135,
+      "id": "74915f83-bee1-46f3-be10-24e121eda081",
+      "name": "Lexington Ave @ E 125 St",
+      "lat": 40.80451,
+      "lng": -73.937495,
       "is_online": true
     },
     {
@@ -899,10 +920,10 @@
       "is_online": true
     },
     {
-      "id": "3793f20a-28ce-411d-b09b-f7baa2b6d55b",
-      "name": "Grand Central Pkwy @ Midland Pkwy - 62.138",
-      "lat": 40.719913,
-      "lng": -73.785009,
+      "id": "83404149-7deb-43ee-81b5-66fe804c0feb",
+      "name": "BB-63 North Rdwy@ Bklyn Twr East",
+      "lat": 40.703912,
+      "lng": -73.994062,
       "is_online": true
     },
     {
@@ -920,10 +941,10 @@
       "is_online": true
     },
     {
-      "id": "74915f83-bee1-46f3-be10-24e121eda081",
-      "name": "Lexington Ave @ E 125 St",
-      "lat": 40.80451,
-      "lng": -73.937495,
+      "id": "abda729c-9f02-4ecf-b164-228b1528cfac",
+      "name": "Queens Blvd @ Skillman",
+      "lat": 40.7460324,
+      "lng": -73.9344491,
       "is_online": true
     },
     {
@@ -948,10 +969,10 @@
       "is_online": true
     },
     {
-      "id": "abda729c-9f02-4ecf-b164-228b1528cfac",
-      "name": "Queens Blvd @ Skillman",
-      "lat": 40.7460324,
-      "lng": -73.9344491,
+      "id": "351d3d12-fd9e-4e4c-b279-cd8f3f1f194c",
+      "name": "C1-MDE-01-Cntr_at_E.135th_St-Ex1",
+      "lat": 40.803545,
+      "lng": -73.916135,
       "is_online": true
     },
     {
@@ -969,24 +990,10 @@
       "is_online": true
     },
     {
-      "id": "83404149-7deb-43ee-81b5-66fe804c0feb",
-      "name": "BB-63 North Rdwy@ Bklyn Twr East",
-      "lat": 40.703912,
-      "lng": -73.994062,
-      "is_online": true
-    },
-    {
       "id": "0bf496dc-36dd-4311-808e-84ab6acec605",
       "name": "Queens Blvd @ 63 Dr",
       "lat": 40.730072,
       "lng": -73.86235,
-      "is_online": true
-    },
-    {
-      "id": "17b6c7dd-2aa7-442a-8832-d39051a47d1b",
-      "name": "Park Ave @ 34 St",
-      "lat": 40.747084,
-      "lng": -73.981357,
       "is_online": true
     },
     {
@@ -997,20 +1004,6 @@
       "is_online": true
     },
     {
-      "id": "ae2f7e1a-e781-4d24-9434-12f4f4ef4f2b",
-      "name": "WBB -17  SOR - 2  @ Delancey St/FDR",
-      "lat": 40.71481,
-      "lng": -73.976595,
-      "is_online": true
-    },
-    {
-      "id": "1222cb4f-2ed6-44f6-9550-29dd2cd6b839",
-      "name": "C3-WSE-07-NB_at_Frsh_Kills_Crk-Ex5",
-      "lat": 40.578916,
-      "lng": -74.190673,
-      "is_online": true
-    },
-    {
       "id": "8ea73365-6c7b-423a-87fc-4b6fc279dafa",
       "name": "BQE @ Sands St",
       "lat": 40.700185,
@@ -1018,10 +1011,17 @@
       "is_online": true
     },
     {
-      "id": "38a9cb68-6d0c-4171-a809-344c581dfcb0",
-      "name": "C5-BQE-44-Med_at_31st_Ave-Ex41",
-      "lat": 40.758099,
-      "lng": -73.899761,
+      "id": "0ee4eb1e-77ce-47a1-a145-0cb115656aad",
+      "name": "Marmion Av. @ Cross Bronx Expwy",
+      "lat": 40.841586,
+      "lng": -73.888508,
+      "is_online": true
+    },
+    {
+      "id": "1222cb4f-2ed6-44f6-9550-29dd2cd6b839",
+      "name": "C3-WSE-07-NB_at_Frsh_Kills_Crk-Ex5",
+      "lat": 40.578916,
+      "lng": -74.190673,
       "is_online": true
     },
     {
@@ -1039,6 +1039,13 @@
       "is_online": true
     },
     {
+      "id": "09d9335c-097e-47ef-af1d-122eb3206f7c",
+      "name": "Rockefeller Plaza @ W 49 St",
+      "lat": 40.75836,
+      "lng": -73.978867,
+      "is_online": true
+    },
+    {
       "id": "21ca79e4-eec6-4073-914d-117409a7e677",
       "name": "Kissena Blvd @ LIE N S/R",
       "lat": 40.739234,
@@ -1053,17 +1060,17 @@
       "is_online": true
     },
     {
-      "id": "09d9335c-097e-47ef-af1d-122eb3206f7c",
-      "name": "Rockefeller Plaza @ W 49 St",
-      "lat": 40.75836,
-      "lng": -73.978867,
+      "id": "38a9cb68-6d0c-4171-a809-344c581dfcb0",
+      "name": "C5-BQE-44-Med_at_31st_Ave-Ex41",
+      "lat": 40.758099,
+      "lng": -73.899761,
       "is_online": true
     },
     {
-      "id": "0ee4eb1e-77ce-47a1-a145-0cb115656aad",
-      "name": "Marmion Av. @ Cross Bronx Expwy",
-      "lat": 40.841586,
-      "lng": -73.888508,
+      "id": "ae2f7e1a-e781-4d24-9434-12f4f4ef4f2b",
+      "name": "WBB -17  SOR - 2  @ Delancey St/FDR",
+      "lat": 40.71481,
+      "lng": -73.976595,
       "is_online": true
     },
     {
@@ -1071,6 +1078,13 @@
       "name": "Lexington Ave @ E 120 St",
       "lat": 40.80105,
       "lng": -73.939747,
+      "is_online": true
+    },
+    {
+      "id": "3809d95f-f99e-4eca-9121-9c7db73f8cbd",
+      "name": "12 Ave @ 34 St",
+      "lat": 40.75697,
+      "lng": -74.004812,
       "is_online": true
     },
     {
@@ -1095,17 +1109,17 @@
       "is_online": true
     },
     {
-      "id": "54d81029-7015-4c05-941b-94688c5aae85",
-      "name": "BB-45 South Rdwy @ 350Ft West of Bklyn Twr",
-      "lat": 40.704726,
-      "lng": -73.9953,
+      "id": "32bf4789-4142-4484-b110-88343799a40b",
+      "name": "C1-MDE-15-NB_at_Jerome_Ave-Ex13",
+      "lat": 40.897282,
+      "lng": -73.879845,
       "is_online": true
     },
     {
-      "id": "efea49ae-8d39-4ebd-b2a9-9259361d4233",
-      "name": "C1-CBE-10-SB_at_Brx.Rvr_Pkwy-Ex4A",
-      "lat": 40.836506,
-      "lng": -73.873027,
+      "id": "ae67eb8d-0aed-4204-b7a1-3621ed9eef65",
+      "name": "Tillary St EB @ Jay St",
+      "lat": 40.696002,
+      "lng": -73.987094,
       "is_online": true
     },
     {
@@ -1123,20 +1137,6 @@
       "is_online": true
     },
     {
-      "id": "08ad39a9-300a-47f7-a708-2670843e6add",
-      "name": "2 Ave @ E 116 St",
-      "lat": 40.79688,
-      "lng": -73.937698,
-      "is_online": true
-    },
-    {
-      "id": "32bf4789-4142-4484-b110-88343799a40b",
-      "name": "C1-MDE-15-NB_at_Jerome_Ave-Ex13",
-      "lat": 40.897282,
-      "lng": -73.879845,
-      "is_online": true
-    },
-    {
       "id": "af741eca-a192-41be-890a-22c7ae7d159a",
       "name": "WBB-10 NIR-4 @ FDR RD",
       "lat": 40.714971,
@@ -1144,10 +1144,24 @@
       "is_online": true
     },
     {
-      "id": "3809d95f-f99e-4eca-9121-9c7db73f8cbd",
-      "name": "12 Ave @ 34 St",
-      "lat": 40.75697,
-      "lng": -74.004812,
+      "id": "08ad39a9-300a-47f7-a708-2670843e6add",
+      "name": "2 Ave @ E 116 St",
+      "lat": 40.79688,
+      "lng": -73.937698,
+      "is_online": true
+    },
+    {
+      "id": "efea49ae-8d39-4ebd-b2a9-9259361d4233",
+      "name": "C1-CBE-10-SB_at_Brx.Rvr_Pkwy-Ex4A",
+      "lat": 40.836506,
+      "lng": -73.873027,
+      "is_online": true
+    },
+    {
+      "id": "54d81029-7015-4c05-941b-94688c5aae85",
+      "name": "BB-45 South Rdwy @ 350Ft West of Bklyn Twr",
+      "lat": 40.704726,
+      "lng": -73.9953,
       "is_online": true
     },
     {
@@ -1155,13 +1169,6 @@
       "name": "Park Ave @ 72 St",
       "lat": 40.77114,
       "lng": -73.963907,
-      "is_online": true
-    },
-    {
-      "id": "ae67eb8d-0aed-4204-b7a1-3621ed9eef65",
-      "name": "Tillary St EB @ Jay St",
-      "lat": 40.696002,
-      "lng": -73.987094,
       "is_online": true
     },
     {
@@ -1186,27 +1193,6 @@
       "is_online": true
     },
     {
-      "id": "4302c1d7-48aa-45a8-a9cc-93e3132c1530",
-      "name": "C1-CBE-03_N_NB_at_Nelson_Ave-Ex02A",
-      "lat": 40.844781,
-      "lng": -73.920574,
-      "is_online": true
-    },
-    {
-      "id": "6cc9b754-096d-4c5c-94b7-64f6b69523d5",
-      "name": "C3-WSE-12-NB_at_Bloomfield_Ave_Ex9",
-      "lat": 40.612239,
-      "lng": -74.180319,
-      "is_online": true
-    },
-    {
-      "id": "f7c4d5d5-f4d4-4590-9459-6491507ae9f9",
-      "name": "1 Ave @ 59 St",
-      "lat": 40.759615,
-      "lng": -73.961967,
-      "is_online": true
-    },
-    {
       "id": "6d1bd95a-307b-4067-a31c-f28d48c578b1",
       "name": "Metropolitan Ave @ Grand St",
       "lat": 40.714251,
@@ -1214,10 +1200,24 @@
       "is_online": true
     },
     {
-      "id": "7305c9dc-a6c3-4eab-83df-fd42296efbea",
-      "name": "Southern Bl. @ Cross Bronx Expwy",
-      "lat": 40.840532,
-      "lng": -73.886229,
+      "id": "5c505897-b475-4359-897d-b064bdb9feef",
+      "name": "8 AVE @ 44 St",
+      "lat": 40.75851,
+      "lng": -73.9888,
+      "is_online": true
+    },
+    {
+      "id": "9010e3c3-c888-43d4-9c26-59e9b802dbcb",
+      "name": "Old Fulton St @ Furman St",
+      "lat": 40.702956,
+      "lng": -73.994687,
+      "is_online": true
+    },
+    {
+      "id": "5920b7ab-9e05-429f-971a-b235f3ea8dd9",
+      "name": "Amboy Rd @ Nelson Ave",
+      "lat": 40.549932,
+      "lng": -74.150849,
       "is_online": true
     },
     {
@@ -1235,10 +1235,10 @@
       "is_online": true
     },
     {
-      "id": "5c505897-b475-4359-897d-b064bdb9feef",
-      "name": "8 AVE @ 44 St",
-      "lat": 40.75851,
-      "lng": -73.9888,
+      "id": "4302c1d7-48aa-45a8-a9cc-93e3132c1530",
+      "name": "C1-CBE-03_N_NB_at_Nelson_Ave-Ex02A",
+      "lat": 40.844781,
+      "lng": -73.920574,
       "is_online": true
     },
     {
@@ -1263,13 +1263,6 @@
       "is_online": true
     },
     {
-      "id": "5920b7ab-9e05-429f-971a-b235f3ea8dd9",
-      "name": "Amboy Rd @ Nelson Ave",
-      "lat": 40.549932,
-      "lng": -74.150849,
-      "is_online": true
-    },
-    {
       "id": "56b99f9c-1f5c-47e2-8c85-d34de045a4ce",
       "name": "Varick St @ Beach St ",
       "lat": 40.720434,
@@ -1277,10 +1270,10 @@
       "is_online": true
     },
     {
-      "id": "9010e3c3-c888-43d4-9c26-59e9b802dbcb",
-      "name": "Old Fulton St @ Furman St",
-      "lat": 40.702956,
-      "lng": -73.994687,
+      "id": "f7c4d5d5-f4d4-4590-9459-6491507ae9f9",
+      "name": "1 Ave @ 59 St",
+      "lat": 40.759615,
+      "lng": -73.961967,
       "is_online": true
     },
     {
@@ -1291,17 +1284,24 @@
       "is_online": true
     },
     {
+      "id": "7305c9dc-a6c3-4eab-83df-fd42296efbea",
+      "name": "Southern Bl. @ Cross Bronx Expwy",
+      "lat": 40.840532,
+      "lng": -73.886229,
+      "is_online": true
+    },
+    {
+      "id": "6cc9b754-096d-4c5c-94b7-64f6b69523d5",
+      "name": "C3-WSE-12-NB_at_Bloomfield_Ave_Ex9",
+      "lat": 40.612239,
+      "lng": -74.180319,
+      "is_online": true
+    },
+    {
       "id": "8c1ea3b6-0db6-4222-ba50-2545f8f82d71",
       "name": "Hudson St @ Erickson Pl/Beach",
       "lat": 40.720694,
       "lng": -74.008455,
-      "is_online": true
-    },
-    {
-      "id": "0a49d947-2a5b-498d-a386-2cef5ce883fa",
-      "name": "50 St Btwn\u00a08 Ave & Broadway",
-      "lat": 40.761861,
-      "lng": -73.985123,
       "is_online": true
     },
     {
@@ -1312,10 +1312,10 @@
       "is_online": true
     },
     {
-      "id": "52b1ec32-8603-41e1-af1f-b1e1e33752cb",
-      "name": "Drumgoole Rd E @ Arden Ave - quad - Ptz - 1.130",
-      "lat": 40.54655,
-      "lng": -74.18044,
+      "id": "1f0cfaad-4c0a-46e8-a5e3-f206d83a875d",
+      "name": "Delancy St @ Essex St",
+      "lat": 40.718557,
+      "lng": -73.988199,
       "is_online": true
     },
     {
@@ -1347,31 +1347,10 @@
       "is_online": true
     },
     {
-      "id": "1f0cfaad-4c0a-46e8-a5e3-f206d83a875d",
-      "name": "Delancy St @ Essex St",
-      "lat": 40.718557,
-      "lng": -73.988199,
-      "is_online": true
-    },
-    {
-      "id": "1b2c9e6b-8c35-47a2-aa60-fdd688cb61bf",
-      "name": "Woodhaven Blvd @ Union Tpke",
-      "lat": 40.70561,
-      "lng": -73.8582,
-      "is_online": true
-    },
-    {
-      "id": "1927b469-e2dc-4943-a70c-e6e52fd4c48c",
-      "name": "Broadway @ 46 St- Quad South",
-      "lat": 40.758692,
-      "lng": -73.985371,
-      "is_online": true
-    },
-    {
-      "id": "57e5f44a-4515-4bc2-877b-e6373fce5a66",
-      "name": "Queens Blvd @ Union TPKE",
-      "lat": 40.714316,
-      "lng": -73.830834,
+      "id": "7384e16f-2921-4b14-b5a8-15cf58ef7ef0",
+      "name": "C5-BQE-31-EB_at_54th_Ave",
+      "lat": 40.732548,
+      "lng": -73.924803,
       "is_online": true
     },
     {
@@ -1382,10 +1361,24 @@
       "is_online": true
     },
     {
-      "id": "7384e16f-2921-4b14-b5a8-15cf58ef7ef0",
-      "name": "C5-BQE-31-EB_at_54th_Ave",
-      "lat": 40.732548,
-      "lng": -73.924803,
+      "id": "1927b469-e2dc-4943-a70c-e6e52fd4c48c",
+      "name": "Broadway @ 46 St- Quad South",
+      "lat": 40.758692,
+      "lng": -73.985371,
+      "is_online": true
+    },
+    {
+      "id": "1b2c9e6b-8c35-47a2-aa60-fdd688cb61bf",
+      "name": "Woodhaven Blvd @ Union Tpke",
+      "lat": 40.70561,
+      "lng": -73.8582,
+      "is_online": true
+    },
+    {
+      "id": "57e5f44a-4515-4bc2-877b-e6373fce5a66",
+      "name": "Queens Blvd @ Union TPKE",
+      "lat": 40.714316,
+      "lng": -73.830834,
       "is_online": true
     },
     {
@@ -1396,24 +1389,24 @@
       "is_online": true
     },
     {
-      "id": "10299e9d-efa0-4b1c-8b25-ce6e1657bc1b",
-      "name": "C2-GE-06-WB_at_63rd_St",
-      "lat": 40.64076393,
-      "lng": -74.02182574,
+      "id": "0a49d947-2a5b-498d-a386-2cef5ce883fa",
+      "name": "50 St Btwn\u00a08 Ave & Broadway",
+      "lat": 40.761861,
+      "lng": -73.985123,
       "is_online": true
     },
     {
-      "id": "dce301aa-b937-4041-b9fc-960abcd79178",
-      "name": "Varick St @ Laight St",
-      "lat": 40.721808,
-      "lng": -74.006436,
+      "id": "52b1ec32-8603-41e1-af1f-b1e1e33752cb",
+      "name": "Drumgoole Rd E @ Arden Ave - quad - Ptz - 1.130",
+      "lat": 40.54655,
+      "lng": -74.18044,
       "is_online": true
     },
     {
-      "id": "e38fd7b8-c074-4b6e-bc52-4dd932145239",
-      "name": "Rockefeller Plaza @ W 50 St",
-      "lat": 40.75907,
-      "lng": -73.97846,
+      "id": "53295394-387c-4a43-b472-52494ac8122e",
+      "name": "Drumgoole Rd E @ Bloomingdale Rd - quad - ptz - 143.26",
+      "lat": 40.52793,
+      "lng": -74.21655,
       "is_online": true
     },
     {
@@ -1424,10 +1417,17 @@
       "is_online": true
     },
     {
-      "id": "23994d9e-7e59-4808-8d47-405f779d19cf",
-      "name": "1 Ave @ 14 St",
-      "lat": 40.731361,
-      "lng": -73.982486,
+      "id": "dce301aa-b937-4041-b9fc-960abcd79178",
+      "name": "Varick St @ Laight St",
+      "lat": 40.721808,
+      "lng": -74.006436,
+      "is_online": true
+    },
+    {
+      "id": "10299e9d-efa0-4b1c-8b25-ce6e1657bc1b",
+      "name": "C2-GE-06-WB_at_63rd_St",
+      "lat": 40.64076393,
+      "lng": -74.02182574,
       "is_online": true
     },
     {
@@ -1442,13 +1442,6 @@
       "name": "Flatbush Ave @ Aviator Sports & Golf Club",
       "lat": 40.5902,
       "lng": -73.900803,
-      "is_online": true
-    },
-    {
-      "id": "11ce0ee6-349b-4120-a66e-6299d28915f5",
-      "name": "3rd Av. @ E 156 St.",
-      "lat": 40.820143,
-      "lng": -73.913075,
       "is_online": true
     },
     {
@@ -1494,10 +1487,17 @@
       "is_online": true
     },
     {
-      "id": "53295394-387c-4a43-b472-52494ac8122e",
-      "name": "Drumgoole Rd E @ Bloomingdale Rd - quad - ptz - 143.26",
-      "lat": 40.52793,
-      "lng": -74.21655,
+      "id": "e38fd7b8-c074-4b6e-bc52-4dd932145239",
+      "name": "Rockefeller Plaza @ W 50 St",
+      "lat": 40.75907,
+      "lng": -73.97846,
+      "is_online": true
+    },
+    {
+      "id": "11ce0ee6-349b-4120-a66e-6299d28915f5",
+      "name": "3rd Av. @ E 156 St.",
+      "lat": 40.820143,
+      "lng": -73.913075,
       "is_online": true
     },
     {
@@ -1515,17 +1515,10 @@
       "is_online": true
     },
     {
-      "id": "42e78c2b-3c70-47dc-8685-f1b5eca3deb5",
-      "name": "C2-BQE-30B_W_at_Stewart Ave",
-      "lat": 40.725102,
-      "lng": -73.933022,
-      "is_online": true
-    },
-    {
-      "id": "5674d0ea-703a-43c3-bea7-2b372d1eb00b",
-      "name": "2 Ave @ 72 St",
-      "lat": 40.768801,
-      "lng": -73.958427,
+      "id": "482e6d35-2a67-4bbf-b36f-fdf7e031d607",
+      "name": "5 AVE @ 50 St",
+      "lat": 40.75856,
+      "lng": -73.9772,
       "is_online": true
     },
     {
@@ -1543,17 +1536,10 @@
       "is_online": true
     },
     {
-      "id": "482e6d35-2a67-4bbf-b36f-fdf7e031d607",
-      "name": "5 AVE @ 50 St",
-      "lat": 40.75856,
-      "lng": -73.9772,
-      "is_online": true
-    },
-    {
-      "id": "c18f480c-e7a9-494b-b435-26adb0d9f881",
-      "name": "C2-BQE-29_WB_at_Morgan_Street",
-      "lat": 40.722951,
-      "lng": -73.939997,
+      "id": "5674d0ea-703a-43c3-bea7-2b372d1eb00b",
+      "name": "2 Ave @ 72 St",
+      "lat": 40.768801,
+      "lng": -73.958427,
       "is_online": true
     },
     {
@@ -1564,10 +1550,24 @@
       "is_online": true
     },
     {
-      "id": "98c2de4e-fa0c-41d0-b1ea-6d1df833d792",
-      "name": "Allan St (1 Ave) @ Houston St (B)",
-      "lat": 40.72289,
-      "lng": -73.988622,
+      "id": "4d92ff93-b8cd-4bec-a70b-91b4cfb75857",
+      "name": "C3-MLK-03_NB_at_Walkr_St-Bayonne_Br",
+      "lat": 40.630779,
+      "lng": -74.145543,
+      "is_online": true
+    },
+    {
+      "id": "c18f480c-e7a9-494b-b435-26adb0d9f881",
+      "name": "C2-BQE-29_WB_at_Morgan_Street",
+      "lat": 40.722951,
+      "lng": -73.939997,
+      "is_online": true
+    },
+    {
+      "id": "23cb2c44-1a40-4950-a914-ee7f1390553c",
+      "name": "West Shore Expy @ Arden Ave",
+      "lat": 40.559754,
+      "lng": -74.199386,
       "is_online": true
     },
     {
@@ -1578,11 +1578,11 @@
       "is_online": true
     },
     {
-      "id": "23cb2c44-1a40-4950-a914-ee7f1390553c",
-      "name": "West Shore Expy @ Arden Ave",
-      "lat": 40.559754,
-      "lng": -74.199386,
-      "is_online": false
+      "id": "98c2de4e-fa0c-41d0-b1ea-6d1df833d792",
+      "name": "Allan St (1 Ave) @ Houston St (B)",
+      "lat": 40.72289,
+      "lng": -73.988622,
+      "is_online": true
     },
     {
       "id": "38c07664-0329-471e-997f-6a9015a5bcef",
@@ -1599,10 +1599,10 @@
       "is_online": true
     },
     {
-      "id": "4d92ff93-b8cd-4bec-a70b-91b4cfb75857",
-      "name": "C3-MLK-03_NB_at_Walkr_St-Bayonne_Br",
-      "lat": 40.630779,
-      "lng": -74.145543,
+      "id": "42e78c2b-3c70-47dc-8685-f1b5eca3deb5",
+      "name": "C2-BQE-30B_W_at_Stewart Ave",
+      "lat": 40.725102,
+      "lng": -73.933022,
       "is_online": true
     },
     {
@@ -1620,24 +1620,10 @@
       "is_online": true
     },
     {
-      "id": "3c39ff3e-a81c-4f92-9a96-7861aa244fda",
-      "name": "BB-43 North Rdwy @ Center Expansion Jt",
-      "lat": 40.705626,
-      "lng": -73.9962,
-      "is_online": true
-    },
-    {
-      "id": "1a64aa06-3f40-4f0e-b752-09ec44415ac0",
-      "name": "C5-VWE-25-NB_at_GCP-Intr.-Ex14",
-      "lat": 40.715955,
-      "lng": -73.8263,
-      "is_online": true
-    },
-    {
-      "id": "1d799f04-00cb-4ac7-a8bb-f090b750dee1",
-      "name": "Victory Blvd @ Richmond Ave - quad - ptz - 130.146",
-      "lat": 40.60728,
-      "lng": -74.16261,
+      "id": "67a4769b-dfb2-4a0d-9605-114df107646c",
+      "name": "West St @ West Houston St",
+      "lat": 40.729104,
+      "lng": -74.010528,
       "is_online": true
     },
     {
@@ -1648,6 +1634,20 @@
       "is_online": true
     },
     {
+      "id": "28880add-7b37-4d5f-8414-ad32aaab6c13",
+      "name": "Beach Channel Dr @B 101 St",
+      "lat": 40.585808,
+      "lng": -73.823158,
+      "is_online": true
+    },
+    {
+      "id": "5c4582a7-6492-41ac-9bac-fa872878117b",
+      "name": "West st and Fulton",
+      "lat": 40.71303,
+      "lng": -74.014039,
+      "is_online": true
+    },
+    {
       "id": "2a0ec6ff-9284-466a-9785-9f6df84ea4cf",
       "name": "Fordham Rd @ Hughes Ave",
       "lat": 40.858209,
@@ -1655,10 +1655,10 @@
       "is_online": true
     },
     {
-      "id": "28880add-7b37-4d5f-8414-ad32aaab6c13",
-      "name": "Beach Channel Dr @B 101 St",
-      "lat": 40.585808,
-      "lng": -73.823158,
+      "id": "3c39ff3e-a81c-4f92-9a96-7861aa244fda",
+      "name": "BB-43 North Rdwy @ Center Expansion Jt",
+      "lat": 40.705626,
+      "lng": -73.9962,
       "is_online": true
     },
     {
@@ -1673,6 +1673,13 @@
       "name": "Cross Bay Blvd @ N. Conduit Ave",
       "lat": 40.668793,
       "lng": -73.842395,
+      "is_online": true
+    },
+    {
+      "id": "1d799f04-00cb-4ac7-a8bb-f090b750dee1",
+      "name": "Victory Blvd @ Richmond Ave - quad - ptz - 130.146",
+      "lat": 40.60728,
+      "lng": -74.16261,
       "is_online": true
     },
     {
@@ -1704,10 +1711,10 @@
       "is_online": true
     },
     {
-      "id": "3c1e0011-7dbc-4bc9-af2d-e9347754bf91",
-      "name": "Myrtle Ave @ 79 Lane - 73.74",
-      "lat": 40.7029,
-      "lng": -73.8691,
+      "id": "1a64aa06-3f40-4f0e-b752-09ec44415ac0",
+      "name": "C5-VWE-25-NB_at_GCP-Intr.-Ex14",
+      "lat": 40.715955,
+      "lng": -73.8263,
       "is_online": true
     },
     {
@@ -1718,38 +1725,17 @@
       "is_online": true
     },
     {
-      "id": "67a4769b-dfb2-4a0d-9605-114df107646c",
-      "name": "West St @ West Houston St",
-      "lat": 40.729104,
-      "lng": -74.010528,
+      "id": "3c1e0011-7dbc-4bc9-af2d-e9347754bf91",
+      "name": "Myrtle Ave @ 79 Lane - 73.74",
+      "lat": 40.7029,
+      "lng": -73.8691,
       "is_online": true
     },
     {
-      "id": "5c4582a7-6492-41ac-9bac-fa872878117b",
-      "name": "West st and Fulton",
-      "lat": 40.71303,
-      "lng": -74.014039,
-      "is_online": true
-    },
-    {
-      "id": "86d418ab-10bc-4b73-a283-153abffabb0f",
-      "name": "West st and West Thames (Battery tunnel)",
-      "lat": 40.70769,
-      "lng": -74.01565,
-      "is_online": true
-    },
-    {
-      "id": "97ace0b4-fcd2-4c3a-8c05-dbf73639ead3",
-      "name": "Crescent st @ 39 Ave",
-      "lat": 40.7547,
-      "lng": -73.93678,
-      "is_online": true
-    },
-    {
-      "id": "25ad72fe-e74c-49af-b4c0-34c9eac14655",
-      "name": "Canal St @ Greenwich St ( Holland Tunnel )",
-      "lat": 40.725039,
-      "lng": -74.01009,
+      "id": "6316453d-6161-4b98-a8e7-0e36c69d267c",
+      "name": "2 Ave @ 74 St",
+      "lat": 40.770142,
+      "lng": -73.957381,
       "is_online": true
     },
     {
@@ -1760,6 +1746,20 @@
       "is_online": true
     },
     {
+      "id": "86d418ab-10bc-4b73-a283-153abffabb0f",
+      "name": "West st and West Thames (Battery tunnel)",
+      "lat": 40.70769,
+      "lng": -74.01565,
+      "is_online": true
+    },
+    {
+      "id": "7a0d9e49-875c-4c25-a92b-3d239de40d43",
+      "name": "Old Fulton St @ Prospect St",
+      "lat": 40.700757,
+      "lng": -73.991042,
+      "is_online": true
+    },
+    {
       "id": "2e0d5197-6073-411f-9d1a-326b30841679",
       "name": "Flushing Ave @ Williamsburg W St",
       "lat": 40.698104,
@@ -1767,10 +1767,17 @@
       "is_online": true
     },
     {
-      "id": "6316453d-6161-4b98-a8e7-0e36c69d267c",
-      "name": "2 Ave @ 74 St",
-      "lat": 40.770142,
-      "lng": -73.957381,
+      "id": "4678c08d-9b89-4dd4-9fa0-234412822bb7",
+      "name": "C3-MLK-02-NB_at_Forest_Ave-Ex11",
+      "lat": 40.624655,
+      "lng": -74.146146,
+      "is_online": true
+    },
+    {
+      "id": "575d8f33-7923-4ec6-983e-82c58efd8110",
+      "name": "Cross Bronx Expy @ Arthur Ave",
+      "lat": 40.843732,
+      "lng": -73.894798,
       "is_online": true
     },
     {
@@ -1795,17 +1802,24 @@
       "is_online": true
     },
     {
-      "id": "7a0d9e49-875c-4c25-a92b-3d239de40d43",
-      "name": "Old Fulton St @ Prospect St",
-      "lat": 40.700757,
-      "lng": -73.991042,
+      "id": "5654d38e-e305-4119-8cd9-8a7bba65460b",
+      "name": "Pelham Pkwy E/B @ Boston Rd",
+      "lat": 40.855609,
+      "lng": -73.869347,
       "is_online": true
     },
     {
-      "id": "5a9ebe48-fb36-4de7-8666-f50de83c7941",
-      "name": "Flatbush Ave @ Nostrand Ave",
-      "lat": 40.632889,
-      "lng": -73.947672,
+      "id": "25ad72fe-e74c-49af-b4c0-34c9eac14655",
+      "name": "Canal St @ Greenwich St ( Holland Tunnel )",
+      "lat": 40.725039,
+      "lng": -74.01009,
+      "is_online": true
+    },
+    {
+      "id": "97ace0b4-fcd2-4c3a-8c05-dbf73639ead3",
+      "name": "Crescent st @ 39 Ave",
+      "lat": 40.7547,
+      "lng": -73.93678,
       "is_online": true
     },
     {
@@ -1830,13 +1844,6 @@
       "is_online": true
     },
     {
-      "id": "575d8f33-7923-4ec6-983e-82c58efd8110",
-      "name": "Cross Bronx Expy @ Arthur Ave",
-      "lat": 40.843732,
-      "lng": -73.894798,
-      "is_online": true
-    },
-    {
       "id": "4ab788f8-4a07-4604-a1f6-f47ce72ea01e",
       "name": "Major Deegan Expy @ Macombs Dam Bridge",
       "lat": 40.828115,
@@ -1844,10 +1851,17 @@
       "is_online": true
     },
     {
-      "id": "4678c08d-9b89-4dd4-9fa0-234412822bb7",
-      "name": "C3-MLK-02-NB_at_Forest_Ave-Ex11",
-      "lat": 40.624655,
-      "lng": -74.146146,
+      "id": "5a9ebe48-fb36-4de7-8666-f50de83c7941",
+      "name": "Flatbush Ave @ Nostrand Ave",
+      "lat": 40.632889,
+      "lng": -73.947672,
+      "is_online": true
+    },
+    {
+      "id": "02ac2943-68f1-478d-b8d5-148a97e77e27",
+      "name": "C3-KWV-01-NB_at_Tyrllan_Ave-Outrbr",
+      "lat": 40.525433,
+      "lng": -74.230189,
       "is_online": true
     },
     {
@@ -1855,20 +1869,6 @@
       "name": "Sands St @ BQE Ent",
       "lat": 40.699916,
       "lng": -73.98621,
-      "is_online": true
-    },
-    {
-      "id": "4334f995-5cae-4725-b7d2-ccaf72447237",
-      "name": "Washington St @ Prospect St",
-      "lat": 40.700743,
-      "lng": -73.989736,
-      "is_online": true
-    },
-    {
-      "id": "8f692f55-8118-423b-8bcb-1ea49eaf442b",
-      "name": "2 Ave @ 42 St",
-      "lat": 40.7498342023994,
-      "lng": -73.9722170340956,
       "is_online": true
     },
     {
@@ -1886,17 +1886,17 @@
       "is_online": true
     },
     {
-      "id": "401c14c4-516f-48af-ad5d-fc36ddcff149",
-      "name": "C5-VWE-28-SB_at_67th_Rd-Ex11",
-      "lat": 40.733128,
-      "lng": -73.835773,
+      "id": "8ee72946-49e0-4f49-991d-4f52b1206ed7",
+      "name": "Broadway @ 6 Ave / 33 St",
+      "lat": 40.749412,
+      "lng": -73.98806,
       "is_online": true
     },
     {
-      "id": "02ac2943-68f1-478d-b8d5-148a97e77e27",
-      "name": "C3-KWV-01-NB_at_Tyrllan_Ave-Outrbr",
-      "lat": 40.525433,
-      "lng": -74.230189,
+      "id": "5bcf06f4-dbf0-4c7b-b6f3-241aea4e92c6",
+      "name": "Hempstead Ave @ Springfield Ave",
+      "lat": 40.713306,
+      "lng": -73.735855,
       "is_online": true
     },
     {
@@ -1928,10 +1928,17 @@
       "is_online": true
     },
     {
-      "id": "5bcf06f4-dbf0-4c7b-b6f3-241aea4e92c6",
-      "name": "Hempstead Ave @ Springfield Ave",
-      "lat": 40.713306,
-      "lng": -73.735855,
+      "id": "5beee073-18a8-4349-af6b-75eff7a78371",
+      "name": "Church Street @ Vesey",
+      "lat": 40.712078,
+      "lng": -74.010108,
+      "is_online": true
+    },
+    {
+      "id": "401c14c4-516f-48af-ad5d-fc36ddcff149",
+      "name": "C5-VWE-28-SB_at_67th_Rd-Ex11",
+      "lat": 40.733128,
+      "lng": -73.835773,
       "is_online": true
     },
     {
@@ -1942,17 +1949,17 @@
       "is_online": true
     },
     {
-      "id": "5beee073-18a8-4349-af6b-75eff7a78371",
-      "name": "Church Street @ Vesey",
-      "lat": 40.712078,
-      "lng": -74.010108,
+      "id": "557af346-2f9f-4306-8388-3974b7a49e4d",
+      "name": "Crescent st @ 41 Ave",
+      "lat": 40.75224,
+      "lng": -73.9391,
       "is_online": true
     },
     {
-      "id": "8ee72946-49e0-4f49-991d-4f52b1206ed7",
-      "name": "Broadway @ 6 Ave / 33 St",
-      "lat": 40.749412,
-      "lng": -73.98806,
+      "id": "8f692f55-8118-423b-8bcb-1ea49eaf442b",
+      "name": "2 Ave @ 42 St",
+      "lat": 40.7498342023994,
+      "lng": -73.9722170340956,
       "is_online": true
     },
     {
@@ -1960,13 +1967,6 @@
       "name": "Under Cliff Ave @ Boscobe Pl",
       "lat": 40.844403,
       "lng": -73.925012,
-      "is_online": true
-    },
-    {
-      "id": "557af346-2f9f-4306-8388-3974b7a49e4d",
-      "name": "Crescent st @ 41 Ave",
-      "lat": 40.75224,
-      "lng": -73.9391,
       "is_online": true
     },
     {
@@ -1984,17 +1984,17 @@
       "is_online": true
     },
     {
-      "id": "6029af32-7e3c-412f-804e-b34166300799",
-      "name": "Pelham Pkwy @ Stillwell Ave",
-      "lat": 40.856678,
-      "lng": -73.836682,
+      "id": "4334f995-5cae-4725-b7d2-ccaf72447237",
+      "name": "Washington St @ Prospect St",
+      "lat": 40.700743,
+      "lng": -73.989736,
       "is_online": true
     },
     {
-      "id": "6ac8b6d3-62c8-4077-a0a6-f66d922376eb",
-      "name": "Grand St @ Bushwick Ave",
-      "lat": 40.712024,
-      "lng": -73.940835,
+      "id": "5ed9017b-c053-4c5e-b858-752516683ada",
+      "name": "Dyer Ave @ W 36 St",
+      "lat": 40.75516,
+      "lng": -73.996557,
       "is_online": true
     },
     {
@@ -2005,13 +2005,6 @@
       "is_online": true
     },
     {
-      "id": "6a85384f-d82e-4bff-b5f1-15c22cca70e6",
-      "name": "8th Ave @ 33rd St",
-      "lat": 40.751512,
-      "lng": -73.993913,
-      "is_online": true
-    },
-    {
       "id": "9dbb3101-9918-4b61-946f-a34d7c7c662b",
       "name": "East Houston St @ Ave B",
       "lat": 40.721437,
@@ -2019,52 +2012,10 @@
       "is_online": true
     },
     {
-      "id": "db5f8b82-99b1-45f3-a520-7d1f91d0a49a",
-      "name": "1 Ave @ E 14 St",
-      "lat": 40.731331,
-      "lng": -73.982561,
-      "is_online": true
-    },
-    {
-      "id": "1ede87de-aba2-45bb-a792-cadf59eb792e",
-      "name": "C3-WSE-04-SB_at_Rossville_Ave-Ex4",
-      "lat": 40.554843,
-      "lng": -74.213329,
-      "is_online": true
-    },
-    {
-      "id": "69278f3b-9d11-4256-8ef7-70c02a01bfc2",
-      "name": "Pennsylvania Ave @ Flatlands Ave",
-      "lat": 40.652728,
-      "lng": -73.886256,
-      "is_online": true
-    },
-    {
-      "id": "6a5f91d8-042f-4678-a722-2c3c560dedf2",
-      "name": "Wythe Ave @ North 12 St",
-      "lat": 40.72231,
-      "lng": -73.957447,
-      "is_online": true
-    },
-    {
-      "id": "6dd4b946-8704-4690-aa87-017a19e778c5",
-      "name": "Woodhaven Blvd @ Jamaica Ave",
-      "lat": 40.694,
-      "lng": -73.852,
-      "is_online": true
-    },
-    {
-      "id": "a2d92e4b-f041-4bd4-9f13-3ece7451a752",
-      "name": "C3-SIE-05-WB_at_MLK-Int-Ex9",
-      "lat": 40.612621,
-      "lng": -74.153868,
-      "is_online": true
-    },
-    {
-      "id": "0267c1e2-6eaf-49d4-a063-df89e9242993",
-      "name": "FDR Dr @ 79 St",
-      "lat": 40.770256,
-      "lng": -73.947626,
+      "id": "6a85384f-d82e-4bff-b5f1-15c22cca70e6",
+      "name": "8th Ave @ 33rd St",
+      "lat": 40.751512,
+      "lng": -73.993913,
       "is_online": true
     },
     {
@@ -2075,10 +2026,59 @@
       "is_online": true
     },
     {
+      "id": "6ac8b6d3-62c8-4077-a0a6-f66d922376eb",
+      "name": "Grand St @ Bushwick Ave",
+      "lat": 40.712024,
+      "lng": -73.940835,
+      "is_online": true
+    },
+    {
+      "id": "db5f8b82-99b1-45f3-a520-7d1f91d0a49a",
+      "name": "1 Ave @ E 14 St",
+      "lat": 40.731331,
+      "lng": -73.982561,
+      "is_online": true
+    },
+    {
+      "id": "6a5f91d8-042f-4678-a722-2c3c560dedf2",
+      "name": "Wythe Ave @ North 12 St",
+      "lat": 40.72231,
+      "lng": -73.957447,
+      "is_online": true
+    },
+    {
+      "id": "a2d92e4b-f041-4bd4-9f13-3ece7451a752",
+      "name": "C3-SIE-05-WB_at_MLK-Int-Ex9",
+      "lat": 40.612621,
+      "lng": -74.153868,
+      "is_online": true
+    },
+    {
+      "id": "6dd4b946-8704-4690-aa87-017a19e778c5",
+      "name": "Woodhaven Blvd @ Jamaica Ave",
+      "lat": 40.694,
+      "lng": -73.852,
+      "is_online": true
+    },
+    {
       "id": "1da7a29e-9993-4b93-b13a-e29b40c2069d",
       "name": "C2-BQE-04_WB_at_Sackett_St-Ex26",
       "lat": 40.684718,
       "lng": -74.001218,
+      "is_online": true
+    },
+    {
+      "id": "0267c1e2-6eaf-49d4-a063-df89e9242993",
+      "name": "FDR Dr @ 79 St",
+      "lat": 40.770256,
+      "lng": -73.947626,
+      "is_online": true
+    },
+    {
+      "id": "1ede87de-aba2-45bb-a792-cadf59eb792e",
+      "name": "C3-WSE-04-SB_at_Rossville_Ave-Ex4",
+      "lat": 40.554843,
+      "lng": -74.213329,
       "is_online": true
     },
     {
@@ -2117,17 +2117,24 @@
       "is_online": true
     },
     {
-      "id": "5ed9017b-c053-4c5e-b858-752516683ada",
-      "name": "Dyer Ave @ W 36 St",
-      "lat": 40.75516,
-      "lng": -73.996557,
+      "id": "69278f3b-9d11-4256-8ef7-70c02a01bfc2",
+      "name": "Pennsylvania Ave @ Flatlands Ave",
+      "lat": 40.652728,
+      "lng": -73.886256,
       "is_online": true
     },
     {
-      "id": "3f85b7f5-564d-4098-9ffd-580ab6f88ed5",
-      "name": "Hempstead Ave at Jamaica Ave",
-      "lat": 40.716182,
-      "lng": -73.744776,
+      "id": "b5b12361-b5b6-483f-a76e-b6cf98e06694",
+      "name": "C5-BQE-37-EB_at_41st_Ave",
+      "lat": 40.744962,
+      "lng": -73.894487,
+      "is_online": true
+    },
+    {
+      "id": "08e77bd0-c673-4303-b772-243fdee28d6c",
+      "name": "BB-28A Manhattan Tower North",
+      "lat": 40.707365,
+      "lng": -73.998188,
       "is_online": true
     },
     {
@@ -2138,10 +2145,10 @@
       "is_online": true
     },
     {
-      "id": "7a6da464-d347-438c-b599-818760cc218b",
-      "name": "11 Ave @ 49 St",
-      "lat": 40.765188,
-      "lng": -73.99499,
+      "id": "0ff11926-fcf0-4e3b-8aea-ffc0ea4f2228",
+      "name": "West Houston @ Hudson St",
+      "lat": 40.728739,
+      "lng": -74.007137,
       "is_online": true
     },
     {
@@ -2152,17 +2159,10 @@
       "is_online": true
     },
     {
-      "id": "6e9a1a7e-63ad-4cab-b14a-1864040409fb",
-      "name": "Hylan Blvd @ Richmond Ave",
-      "lat": 40.534229,
-      "lng": -74.153896,
-      "is_online": true
-    },
-    {
-      "id": "7cfc551d-403d-46a8-aa74-89f472b7136b",
-      "name": "Broadway @ Battery pl",
-      "lat": 40.70461,
-      "lng": -74.0142,
+      "id": "3f85b7f5-564d-4098-9ffd-580ab6f88ed5",
+      "name": "Hempstead Ave at Jamaica Ave",
+      "lat": 40.716182,
+      "lng": -73.744776,
       "is_online": true
     },
     {
@@ -2173,17 +2173,10 @@
       "is_online": true
     },
     {
-      "id": "0ff11926-fcf0-4e3b-8aea-ffc0ea4f2228",
-      "name": "West Houston @ Hudson St",
-      "lat": 40.728739,
-      "lng": -74.007137,
-      "is_online": true
-    },
-    {
-      "id": "08e77bd0-c673-4303-b772-243fdee28d6c",
-      "name": "BB-28A Manhattan Tower North",
-      "lat": 40.707365,
-      "lng": -73.998188,
+      "id": "7be9623c-4f70-4815-bc54-5f0411491b83",
+      "name": "Narrows Rd South @ Fingerboard Rd",
+      "lat": 40.603647,
+      "lng": -74.069355,
       "is_online": true
     },
     {
@@ -2208,17 +2201,17 @@
       "is_online": true
     },
     {
-      "id": "7be9623c-4f70-4815-bc54-5f0411491b83",
-      "name": "Narrows Rd South @ Fingerboard Rd",
-      "lat": 40.603647,
-      "lng": -74.069355,
+      "id": "6e9a1a7e-63ad-4cab-b14a-1864040409fb",
+      "name": "Hylan Blvd @ Richmond Ave",
+      "lat": 40.534229,
+      "lng": -74.153896,
       "is_online": true
     },
     {
-      "id": "b5b12361-b5b6-483f-a76e-b6cf98e06694",
-      "name": "C5-BQE-37-EB_at_41st_Ave",
-      "lat": 40.744962,
-      "lng": -73.894487,
+      "id": "7cfc551d-403d-46a8-aa74-89f472b7136b",
+      "name": "Broadway @ Battery pl",
+      "lat": 40.70461,
+      "lng": -74.0142,
       "is_online": true
     },
     {
@@ -2226,6 +2219,13 @@
       "name": "Long Island Expy @ Douglaston Pkwy",
       "lat": 40.75692,
       "lng": -73.73928,
+      "is_online": true
+    },
+    {
+      "id": "7d10cfbb-0465-4958-90fc-ddd5349d6635",
+      "name": "West St @ Canal St",
+      "lat": 40.725812,
+      "lng": -74.011063,
       "is_online": true
     },
     {
@@ -2250,13 +2250,6 @@
       "is_online": true
     },
     {
-      "id": "7d10cfbb-0465-4958-90fc-ddd5349d6635",
-      "name": "West St @ Canal St",
-      "lat": 40.725812,
-      "lng": -74.011063,
-      "is_online": true
-    },
-    {
       "id": "4355c2af-b181-4cc2-98ef-cec3b1475c51",
       "name": "Veterans Rd @ Bloomingdale Rd - quad - ptz - 0.130",
       "lat": 40.52869,
@@ -2278,10 +2271,17 @@
       "is_online": true
     },
     {
-      "id": "ccd1abb9-0683-4d93-a62f-b2b121612d28",
-      "name": "9 Ave @ 42 St",
-      "lat": 40.7584430039686,
-      "lng": -73.9926394975013,
+      "id": "7a6da464-d347-438c-b599-818760cc218b",
+      "name": "11 Ave @ 49 St",
+      "lat": 40.765188,
+      "lng": -73.99499,
+      "is_online": true
+    },
+    {
+      "id": "4053642d-dd92-4045-ac55-069110659563",
+      "name": "Crotona Pkwy @ Cross Bronx Expwy",
+      "lat": 40.840259,
+      "lng": -73.885677,
       "is_online": true
     },
     {
@@ -2289,20 +2289,6 @@
       "name": "Queens Blvd @ 48 St - 52.130",
       "lat": 40.742755,
       "lng": -73.916943,
-      "is_online": true
-    },
-    {
-      "id": "9565e94d-66f2-4965-9c13-82d5500d6cfd",
-      "name": "Broadway @ 42 St",
-      "lat": 40.7558094297322,
-      "lng": -73.9864124090652,
-      "is_online": true
-    },
-    {
-      "id": "33dda383-4778-48ee-97e7-abcd68b5d365",
-      "name": "BB-64 South Rdwy @ Bklyn Twr Side Sapn",
-      "lat": 40.703795,
-      "lng": -73.994062,
       "is_online": true
     },
     {
@@ -2320,17 +2306,17 @@
       "is_online": true
     },
     {
+      "id": "ccd1abb9-0683-4d93-a62f-b2b121612d28",
+      "name": "9 Ave @ 42 St",
+      "lat": 40.7584430039686,
+      "lng": -73.9926394975013,
+      "is_online": true
+    },
+    {
       "id": "bfcb2b32-7ae7-4060-a39b-80f71a1db289",
       "name": "QBB UL @ Queens Pier",
       "lat": 40.755254,
       "lng": -73.950939,
-      "is_online": true
-    },
-    {
-      "id": "7efa7790-bbec-4118-bae4-ddb390d0eaa8",
-      "name": "C2-BQE-13_WB_at_Middagh_St-Ex28A",
-      "lat": 40.701206,
-      "lng": -73.994465,
       "is_online": true
     },
     {
@@ -2341,6 +2327,13 @@
       "is_online": true
     },
     {
+      "id": "33dda383-4778-48ee-97e7-abcd68b5d365",
+      "name": "BB-64 South Rdwy @ Bklyn Twr Side Sapn",
+      "lat": 40.703795,
+      "lng": -73.994062,
+      "is_online": true
+    },
+    {
       "id": "bf8404ae-6ab7-47a1-8b3e-2f57f537a71f",
       "name": "5 Ave @ 96 St",
       "lat": 40.787916,
@@ -2348,10 +2341,10 @@
       "is_online": true
     },
     {
-      "id": "3f32e246-a88d-4b87-995f-b9dad6a092b1",
-      "name": "Prospect Expy @ 3rd Ave & 4th Ave",
-      "lat": 40.666,
-      "lng": -73.994,
+      "id": "9565e94d-66f2-4965-9c13-82d5500d6cfd",
+      "name": "Broadway @ 42 St",
+      "lat": 40.7558094297322,
+      "lng": -73.9864124090652,
       "is_online": true
     },
     {
@@ -2359,6 +2352,13 @@
       "name": "FDR Dr @ BPU Entrance",
       "lat": 40.701797,
       "lng": -74.010764,
+      "is_online": true
+    },
+    {
+      "id": "43e3d020-e4f2-4599-a19f-72ae778f1dcd",
+      "name": "C5-LIE-02-EB_at_27th_St-Ex15",
+      "lat": 40.739299,
+      "lng": -73.941697,
       "is_online": true
     },
     {
@@ -2376,31 +2376,10 @@
       "is_online": true
     },
     {
-      "id": "43e3d020-e4f2-4599-a19f-72ae778f1dcd",
-      "name": "C5-LIE-02-EB_at_27th_St-Ex15",
-      "lat": 40.739299,
-      "lng": -73.941697,
-      "is_online": true
-    },
-    {
-      "id": "3546896d-d4c6-4966-8a43-2fe62e26526f",
-      "name": "E 8 St @ Lafayette St",
-      "lat": 40.730175,
-      "lng": -73.991076,
-      "is_online": true
-    },
-    {
-      "id": "4053642d-dd92-4045-ac55-069110659563",
-      "name": "Crotona Pkwy @ Cross Bronx Expwy",
-      "lat": 40.840259,
-      "lng": -73.885677,
-      "is_online": true
-    },
-    {
-      "id": "36b00c79-b2a0-49d3-800a-42b7db1847a8",
-      "name": "Jamaica Ave @ Sutphin Blvd",
-      "lat": 40.701756,
-      "lng": -73.80795,
+      "id": "3f32e246-a88d-4b87-995f-b9dad6a092b1",
+      "name": "Prospect Expy @ 3rd Ave & 4th Ave",
+      "lat": 40.666,
+      "lng": -73.994,
       "is_online": true
     },
     {
@@ -2411,10 +2390,31 @@
       "is_online": true
     },
     {
-      "id": "21add4fd-bf30-404e-a2ff-18b16688fe0d",
-      "name": "C5-GCP-12_WB_at_69th_Rd-Ex11",
-      "lat": 40.726696,
-      "lng": -73.837873,
+      "id": "7efa7790-bbec-4118-bae4-ddb390d0eaa8",
+      "name": "C2-BQE-13_WB_at_Middagh_St-Ex28A",
+      "lat": 40.701206,
+      "lng": -73.994465,
+      "is_online": true
+    },
+    {
+      "id": "36b00c79-b2a0-49d3-800a-42b7db1847a8",
+      "name": "Jamaica Ave @ Sutphin Blvd",
+      "lat": 40.701756,
+      "lng": -73.80795,
+      "is_online": true
+    },
+    {
+      "id": "3546896d-d4c6-4966-8a43-2fe62e26526f",
+      "name": "E 8 St @ Lafayette St",
+      "lat": 40.730175,
+      "lng": -73.991076,
+      "is_online": true
+    },
+    {
+      "id": "6eee8e60-805b-403c-9c82-bac9e60d9cd9",
+      "name": "C1-BRE-09-SB_at_Lasalle_Ave-Ex7C",
+      "lat": 40.840811,
+      "lng": -73.825902,
       "is_online": true
     },
     {
@@ -2422,13 +2422,6 @@
       "name": "GCP @ 166 St",
       "lat": 40.716879,
       "lng": -73.800069,
-      "is_online": true
-    },
-    {
-      "id": "8188de4c-c144-4897-bee4-767022b832e9",
-      "name": "Grand St (Borinquen Pl) @ Union Ave",
-      "lat": 40.71096,
-      "lng": -73.951087,
       "is_online": true
     },
     {
@@ -2446,27 +2439,6 @@
       "is_online": true
     },
     {
-      "id": "bff66919-97a3-47ca-b16d-ca07ff93a546",
-      "name": "Lexington Ave @ 23 St",
-      "lat": 40.7395059171263,
-      "lng": -73.9847405603646,
-      "is_online": true
-    },
-    {
-      "id": "6eee8e60-805b-403c-9c82-bac9e60d9cd9",
-      "name": "C1-BRE-09-SB_at_Lasalle_Ave-Ex7C",
-      "lat": 40.840811,
-      "lng": -73.825902,
-      "is_online": true
-    },
-    {
-      "id": "4ec4d8da-6dcb-444d-b33a-096a7d07bb51",
-      "name": "Metropolitan Ave @ Fresh Pond Rd",
-      "lat": 40.71261,
-      "lng": -73.9004,
-      "is_online": true
-    },
-    {
       "id": "041f8f94-fcf8-4860-9a5d-c81fb5c97501",
       "name": "Major Deegan Expwy @ 230 St",
       "lat": 40.8765141,
@@ -2478,6 +2450,34 @@
       "name": "McGuinness Blvd @ Greenpoint Ave",
       "lat": 40.730514,
       "lng": -73.951543,
+      "is_online": true
+    },
+    {
+      "id": "4ec4d8da-6dcb-444d-b33a-096a7d07bb51",
+      "name": "Metropolitan Ave @ Fresh Pond Rd",
+      "lat": 40.71261,
+      "lng": -73.9004,
+      "is_online": true
+    },
+    {
+      "id": "3fd80992-482b-4e88-ad7f-8c74690a8d37",
+      "name": "BB-26 South Rdwy @ West of Manhattan Twr",
+      "lat": 40.707458,
+      "lng": -73.998712,
+      "is_online": true
+    },
+    {
+      "id": "21add4fd-bf30-404e-a2ff-18b16688fe0d",
+      "name": "C5-GCP-12_WB_at_69th_Rd-Ex11",
+      "lat": 40.726696,
+      "lng": -73.837873,
+      "is_online": true
+    },
+    {
+      "id": "02d7db8e-481d-477e-9cdb-a2b6c6ec1ca3",
+      "name": "2 Ave @ E 14 St",
+      "lat": 40.732373,
+      "lng": -73.984954,
       "is_online": true
     },
     {
@@ -2502,10 +2502,10 @@
       "is_online": true
     },
     {
-      "id": "3fd80992-482b-4e88-ad7f-8c74690a8d37",
-      "name": "BB-26 South Rdwy @ West of Manhattan Twr",
-      "lat": 40.707458,
-      "lng": -73.998712,
+      "id": "89177410-fe37-46fa-8021-5951e3d443c0",
+      "name": "Columbia St & BQE ENT and EXIT",
+      "lat": 40.690405,
+      "lng": -74.00012,
       "is_online": true
     },
     {
@@ -2530,17 +2530,10 @@
       "is_online": true
     },
     {
-      "id": "89177410-fe37-46fa-8021-5951e3d443c0",
-      "name": "Columbia St & BQE ENT and EXIT",
-      "lat": 40.690405,
-      "lng": -74.00012,
-      "is_online": true
-    },
-    {
-      "id": "02d7db8e-481d-477e-9cdb-a2b6c6ec1ca3",
-      "name": "2 Ave @ E 14 St",
-      "lat": 40.732373,
-      "lng": -73.984954,
+      "id": "bff66919-97a3-47ca-b16d-ca07ff93a546",
+      "name": "Lexington Ave @ 23 St",
+      "lat": 40.7395059171263,
+      "lng": -73.9847405603646,
       "is_online": true
     },
     {
@@ -2558,17 +2551,17 @@
       "is_online": true
     },
     {
-      "id": "6d42b7fb-604b-4172-b35d-c0556c5d3fcf",
-      "name": "C2-BQE-20-WB_at_Wythe_Ave-Ex31",
-      "lat": 40.701706,
-      "lng": -73.961222,
+      "id": "8188de4c-c144-4897-bee4-767022b832e9",
+      "name": "Grand St (Borinquen Pl) @ Union Ave",
+      "lat": 40.71096,
+      "lng": -73.951087,
       "is_online": true
     },
     {
-      "id": "4d85c576-4313-4562-8eb5-0d9773ea2bf1",
-      "name": "C1-CBE-06_N_NB_at_Weeks Ave-Ext02B",
-      "lat": 40.84482,
-      "lng": -73.907408,
+      "id": "0b4bd3d3-1741-49b3-87cc-d0960fa5f424",
+      "name": "Lexington Ave @ 34 St",
+      "lat": 40.7464005840423,
+      "lng": -73.9797313879486,
       "is_online": true
     },
     {
@@ -2614,17 +2607,17 @@
       "is_online": true
     },
     {
-      "id": "0b4bd3d3-1741-49b3-87cc-d0960fa5f424",
-      "name": "Lexington Ave @ 34 St",
-      "lat": 40.7464005840423,
-      "lng": -73.9797313879486,
+      "id": "63930c04-926c-4730-821e-95b486513843",
+      "name": "RT. 9A @ N. Moore St",
+      "lat": 40.720319,
+      "lng": -74.012171,
       "is_online": true
     },
     {
-      "id": "5e7535c0-fee4-4989-8481-0addea488020",
-      "name": "Hylan Blvd @ Huguenot Ave",
-      "lat": 40.524067,
-      "lng": -74.186177,
+      "id": "4d85c576-4313-4562-8eb5-0d9773ea2bf1",
+      "name": "C1-CBE-06_N_NB_at_Weeks Ave-Ext02B",
+      "lat": 40.84482,
+      "lng": -73.907408,
       "is_online": true
     },
     {
@@ -2656,13 +2649,6 @@
       "is_online": true
     },
     {
-      "id": "63930c04-926c-4730-821e-95b486513843",
-      "name": "RT. 9A @ N. Moore St",
-      "lat": 40.720319,
-      "lng": -74.012171,
-      "is_online": true
-    },
-    {
       "id": "69cc3528-455a-47a5-85c5-6f6a954d45f6",
       "name": "Woodhaven Blvd @ Hoffman Dr",
       "lat": 40.733178,
@@ -2674,6 +2660,20 @@
       "name": "Grand St @ Allen St",
       "lat": 40.717382,
       "lng": -73.991308,
+      "is_online": true
+    },
+    {
+      "id": "6d42b7fb-604b-4172-b35d-c0556c5d3fcf",
+      "name": "C2-BQE-20-WB_at_Wythe_Ave-Ex31",
+      "lat": 40.701706,
+      "lng": -73.961222,
+      "is_online": true
+    },
+    {
+      "id": "5e7535c0-fee4-4989-8481-0addea488020",
+      "name": "Hylan Blvd @ Huguenot Ave",
+      "lat": 40.524067,
+      "lng": -74.186177,
       "is_online": true
     },
     {
@@ -2698,94 +2698,10 @@
       "is_online": true
     },
     {
-      "id": "9bb33444-d2ec-47bd-952a-174f87013736",
-      "name": "7 AVE / ADAM CLAYTON POWELL BLVD@ 125 St",
-      "lat": 40.80896,
-      "lng": -73.9483,
-      "is_online": true
-    },
-    {
       "id": "22df28bd-413a-4847-9bb7-35a36c914264",
       "name": "1st camera North Bound BPU -148.51",
       "lat": 40.701349,
       "lng": -74.012679,
-      "is_online": true
-    },
-    {
-      "id": "21dd2187-79ff-4cf9-bc11-055a04cdfb3f",
-      "name": "C5-LIE-08-EB_48th_St_LL-Ex16",
-      "lat": 40.731963,
-      "lng": -73.919235,
-      "is_online": true
-    },
-    {
-      "id": "86bdee28-1c05-4ead-900a-f252043e6029",
-      "name": "Grand Central Pkwy @ Parson Blvd - 102.50",
-      "lat": 40.71592,
-      "lng": -73.807822,
-      "is_online": true
-    },
-    {
-      "id": "52399045-4691-4258-8f82-12000f5719a8",
-      "name": "Jamaica Ave @ 168 St",
-      "lat": 40.706371,
-      "lng": -73.792539,
-      "is_online": true
-    },
-    {
-      "id": "894dd92a-90a3-46d5-a996-4ddb2b6091cc",
-      "name": "Soundview Ave @ Lafayette Ave",
-      "lat": 40.820962,
-      "lng": -73.865847,
-      "is_online": true
-    },
-    {
-      "id": "9aeb8a21-e4be-459a-ac9c-9ac282f0f929",
-      "name": "1 Avenue @ East 60 Street",
-      "lat": 40.760204,
-      "lng": -73.961502,
-      "is_online": false
-    },
-    {
-      "id": "30bcfac8-ebd1-40c7-ae4c-1d93113bd465",
-      "name": "BB-21 North Rdwy @ Above South St",
-      "lat": 40.708272,
-      "lng": -73.999488,
-      "is_online": true
-    },
-    {
-      "id": "9fda4742-9a18-4a32-b090-8825b201f0d5",
-      "name": "FDR Drive @ 124 St",
-      "lat": 40.799477,
-      "lng": -73.929293,
-      "is_online": true
-    },
-    {
-      "id": "7e36617c-4210-4371-90df-89cfc2d25df2",
-      "name": "Van Dam St Bet. 48 Ave & Hunter Pt",
-      "lat": 40.740368,
-      "lng": -73.9345,
-      "is_online": true
-    },
-    {
-      "id": "2d59011b-a99e-45a1-85d9-1fe127b19fad",
-      "name": "WBB #25 SIR 4 @ Bklyn Twr",
-      "lat": 40.712875,
-      "lng": -73.9700304,
-      "is_online": true
-    },
-    {
-      "id": "23605598-4eb1-46c2-8b80-8a8c124f020a",
-      "name": "Main St @ Roosevelt Ave",
-      "lat": 40.759565,
-      "lng": -73.830121,
-      "is_online": true
-    },
-    {
-      "id": "6a49e889-4397-4c5a-a942-2225c1f1c5e7",
-      "name": "C4-WST-07-Med_at_W.23rd_St",
-      "lat": 40.749346,
-      "lng": -74.008089,
       "is_online": true
     },
     {
@@ -2796,6 +2712,69 @@
       "is_online": true
     },
     {
+      "id": "86bdee28-1c05-4ead-900a-f252043e6029",
+      "name": "Grand Central Pkwy @ Parson Blvd - 102.50",
+      "lat": 40.71592,
+      "lng": -73.807822,
+      "is_online": true
+    },
+    {
+      "id": "894dd92a-90a3-46d5-a996-4ddb2b6091cc",
+      "name": "Soundview Ave @ Lafayette Ave",
+      "lat": 40.820962,
+      "lng": -73.865847,
+      "is_online": true
+    },
+    {
+      "id": "21dd2187-79ff-4cf9-bc11-055a04cdfb3f",
+      "name": "C5-LIE-08-EB_48th_St_LL-Ex16",
+      "lat": 40.731963,
+      "lng": -73.919235,
+      "is_online": true
+    },
+    {
+      "id": "23605598-4eb1-46c2-8b80-8a8c124f020a",
+      "name": "Main St @ Roosevelt Ave",
+      "lat": 40.759565,
+      "lng": -73.830121,
+      "is_online": true
+    },
+    {
+      "id": "52399045-4691-4258-8f82-12000f5719a8",
+      "name": "Jamaica Ave @ 168 St",
+      "lat": 40.706371,
+      "lng": -73.792539,
+      "is_online": true
+    },
+    {
+      "id": "9fda4742-9a18-4a32-b090-8825b201f0d5",
+      "name": "FDR Drive @ 124 St",
+      "lat": 40.799477,
+      "lng": -73.929293,
+      "is_online": true
+    },
+    {
+      "id": "9bb33444-d2ec-47bd-952a-174f87013736",
+      "name": "7 AVE / ADAM CLAYTON POWELL BLVD@ 125 St",
+      "lat": 40.80896,
+      "lng": -73.9483,
+      "is_online": true
+    },
+    {
+      "id": "7e36617c-4210-4371-90df-89cfc2d25df2",
+      "name": "Van Dam St Bet. 48 Ave & Hunter Pt",
+      "lat": 40.740368,
+      "lng": -73.9345,
+      "is_online": true
+    },
+    {
+      "id": "30bcfac8-ebd1-40c7-ae4c-1d93113bd465",
+      "name": "BB-21 North Rdwy @ Above South St",
+      "lat": 40.708272,
+      "lng": -73.999488,
+      "is_online": true
+    },
+    {
       "id": "2aed4b42-b46e-4f27-9cf9-d1d72ee5f036",
       "name": "C3-WSE-08-SB_at_Victory_Blvd-Ex7",
       "lat": 40.589805,
@@ -2803,17 +2782,24 @@
       "is_online": true
     },
     {
-      "id": "a10cbaf4-ea20-4a01-93a3-b338cd92370b",
-      "name": "Richmond Ave @ Wainwright Ave - quad - ptz - 0.146",
-      "lat": 40.56032,
-      "lng": -74.16981,
+      "id": "6a49e889-4397-4c5a-a942-2225c1f1c5e7",
+      "name": "C4-WST-07-Med_at_W.23rd_St",
+      "lat": 40.749346,
+      "lng": -74.008089,
       "is_online": true
     },
     {
-      "id": "5cc1f365-af4a-48be-8819-8f12e18725a3",
-      "name": "4 Ave @ 38 st - 179.90",
-      "lat": 40.653191,
-      "lng": -74.005389,
+      "id": "2d59011b-a99e-45a1-85d9-1fe127b19fad",
+      "name": "WBB #25 SIR 4 @ Bklyn Twr",
+      "lat": 40.712875,
+      "lng": -73.9700304,
+      "is_online": true
+    },
+    {
+      "id": "88278063-8891-4144-9295-f5dc9a94d2ea",
+      "name": "3 Ave @ 60 St",
+      "lat": 40.642195,
+      "lng": -74.020635,
       "is_online": true
     },
     {
@@ -2821,6 +2807,13 @@
       "name": "C5-LIE-22-WB_at_163rd_St-Ex25",
       "lat": 40.73865138,
       "lng": -73.80595654,
+      "is_online": true
+    },
+    {
+      "id": "90361876-3521-4aa4-a924-701716d5d506",
+      "name": "C2-GE-01-WB_at_92nd_St-Vrrazano_Br",
+      "lat": 40.6163,
+      "lng": -74.026827,
       "is_online": true
     },
     {
@@ -2835,13 +2828,6 @@
       "name": "5 Ave @ 23 St",
       "lat": 40.7415700588724,
       "lng": -73.9895780597063,
-      "is_online": true
-    },
-    {
-      "id": "3a3d7bc0-7f35-46ba-9cca-75fe83aac34d",
-      "name": "5 Ave @ 34 St",
-      "lat": 40.7484435553342,
-      "lng": -73.9845677012874,
       "is_online": true
     },
     {
@@ -2866,45 +2852,10 @@
       "is_online": true
     },
     {
-      "id": "cf034f0c-de3f-44ba-be1b-51f135d7d665",
-      "name": "C2-BQE-26-Cntr_at_Grand_Ave-Ex32",
-      "lat": 40.712792,
-      "lng": -73.954462,
-      "is_online": true
-    },
-    {
-      "id": "88278063-8891-4144-9295-f5dc9a94d2ea",
-      "name": "3 Ave @ 60 St",
-      "lat": 40.642195,
-      "lng": -74.020635,
-      "is_online": true
-    },
-    {
-      "id": "8cd15417-5b79-4065-9165-4b6ff0ff3f53",
-      "name": "Broadway @ 46 St- Quad West",
-      "lat": 40.75872,
-      "lng": -73.98539,
-      "is_online": true
-    },
-    {
-      "id": "523499eb-29b7-4ab9-a2a7-4b7f7836f311",
-      "name": "Rockaway Blvd @ Division St",
-      "lat": 40.637021,
-      "lng": -73.740434,
-      "is_online": true
-    },
-    {
-      "id": "7faf5dd7-7f16-48c2-a35e-fee36f3da7d4",
-      "name": "3 Ave @ 63rd St",
-      "lat": 40.640525,
-      "lng": -74.022404,
-      "is_online": true
-    },
-    {
-      "id": "90361876-3521-4aa4-a924-701716d5d506",
-      "name": "C2-GE-01-WB_at_92nd_St-Vrrazano_Br",
-      "lat": 40.6163,
-      "lng": -74.026827,
+      "id": "36ff050c-ba9c-4920-beaf-ea3b02f2cde5",
+      "name": "Bronx River Pkwy @ East Gun Hill RD (NB)",
+      "lat": 40.878251,
+      "lng": -73.869826,
       "is_online": true
     },
     {
@@ -2915,10 +2866,10 @@
       "is_online": true
     },
     {
-      "id": "36ff050c-ba9c-4920-beaf-ea3b02f2cde5",
-      "name": "Bronx River Pkwy @ East Gun Hill RD (NB)",
-      "lat": 40.878251,
-      "lng": -73.869826,
+      "id": "a10cbaf4-ea20-4a01-93a3-b338cd92370b",
+      "name": "Richmond Ave @ Wainwright Ave - quad - ptz - 0.146",
+      "lat": 40.56032,
+      "lng": -74.16981,
       "is_online": true
     },
     {
@@ -2936,45 +2887,52 @@
       "is_online": true
     },
     {
+      "id": "cf034f0c-de3f-44ba-be1b-51f135d7d665",
+      "name": "C2-BQE-26-Cntr_at_Grand_Ave-Ex32",
+      "lat": 40.712792,
+      "lng": -73.954462,
+      "is_online": true
+    },
+    {
+      "id": "8cd15417-5b79-4065-9165-4b6ff0ff3f53",
+      "name": "Broadway @ 46 St- Quad West",
+      "lat": 40.75872,
+      "lng": -73.98539,
+      "is_online": true
+    },
+    {
+      "id": "523499eb-29b7-4ab9-a2a7-4b7f7836f311",
+      "name": "Rockaway Blvd @ Division St",
+      "lat": 40.637021,
+      "lng": -73.740434,
+      "is_online": true
+    },
+    {
+      "id": "3a3d7bc0-7f35-46ba-9cca-75fe83aac34d",
+      "name": "5 Ave @ 34 St",
+      "lat": 40.7484435553342,
+      "lng": -73.9845677012874,
+      "is_online": true
+    },
+    {
+      "id": "7faf5dd7-7f16-48c2-a35e-fee36f3da7d4",
+      "name": "3 Ave @ 63rd St",
+      "lat": 40.640525,
+      "lng": -74.022404,
+      "is_online": true
+    },
+    {
+      "id": "5cc1f365-af4a-48be-8819-8f12e18725a3",
+      "name": "4 Ave @ 38 st - 179.90",
+      "lat": 40.653191,
+      "lng": -74.005389,
+      "is_online": true
+    },
+    {
       "id": "6a896a3f-45cc-4611-86aa-5ded034217ea",
       "name": "Cadman Plz W @ Prospect St - quad - ptz - 1.2",
       "lat": 40.700756,
       "lng": -73.990942,
-      "is_online": true
-    },
-    {
-      "id": "1d5b7624-9334-4348-8119-4d0221988d24",
-      "name": "Boston Rd @ Claremont Pkwy @ Wilkins Ave",
-      "lat": 40.834938,
-      "lng": -73.894132,
-      "is_online": true
-    },
-    {
-      "id": "3869bbbf-b9ce-4157-a6e6-9040f1540827",
-      "name": "C3-WSE-01-NB_at_Englewood_Ave-Ex2",
-      "lat": 40.532368,
-      "lng": -74.223617,
-      "is_online": true
-    },
-    {
-      "id": "aacb43bf-ed37-44c6-a2fe-8449a7851306",
-      "name": "5 Ave @ 35 St ",
-      "lat": 40.749128,
-      "lng": -73.984083,
-      "is_online": true
-    },
-    {
-      "id": "73b66e92-508f-407c-bada-883ab992fde0",
-      "name": "Broadway @ Vesey St",
-      "lat": 40.711408,
-      "lng": -74.008688,
-      "is_online": true
-    },
-    {
-      "id": "311fa910-d8d6-4dde-acd4-ebaf275eba77",
-      "name": "Atlantic Ave @ Hicks Ave - quad - ptz - 165.202",
-      "lat": 40.691006,
-      "lng": -73.99784,
       "is_online": true
     },
     {
@@ -2985,31 +2943,10 @@
       "is_online": true
     },
     {
-      "id": "a6095c69-aef9-4a64-8091-9a2cb8645ee7",
-      "name": "Main St @ LIE N S/R",
-      "lat": 40.742587,
-      "lng": -73.825432,
-      "is_online": true
-    },
-    {
-      "id": "bfcd953c-3faf-48ea-a49a-848c706399b6",
-      "name": "Narrows Rd South @ Hylan Blvd",
-      "lat": 40.605488,
-      "lng": -74.076704,
-      "is_online": true
-    },
-    {
-      "id": "56fafa1b-3a26-49de-a6c0-1e6f804a1b0c",
-      "name": "C2-GE-14A-WB_at_Cole_St",
-      "lat": 40.67980655,
-      "lng": -74.00432445,
-      "is_online": true
-    },
-    {
-      "id": "38790585-9444-46a7-b85e-2db8f163ecf7",
-      "name": "43 Ave @ 27 St",
-      "lat": 40.748228,
-      "lng": -73.9417,
+      "id": "aacb43bf-ed37-44c6-a2fe-8449a7851306",
+      "name": "5 Ave @ 35 St ",
+      "lat": 40.749128,
+      "lng": -73.984083,
       "is_online": true
     },
     {
@@ -3020,10 +2957,52 @@
       "is_online": true
     },
     {
-      "id": "6b81f2fd-acf3-4af2-adc1-42250156ece8",
-      "name": "Flatbush Ave @ Tillary St",
-      "lat": 40.6955094542638,
-      "lng": -73.9841222763061,
+      "id": "311fa910-d8d6-4dde-acd4-ebaf275eba77",
+      "name": "Atlantic Ave @ Hicks Ave - quad - ptz - 165.202",
+      "lat": 40.691006,
+      "lng": -73.99784,
+      "is_online": true
+    },
+    {
+      "id": "a6095c69-aef9-4a64-8091-9a2cb8645ee7",
+      "name": "Main St @ LIE N S/R",
+      "lat": 40.742587,
+      "lng": -73.825432,
+      "is_online": true
+    },
+    {
+      "id": "15c0758b-5c9a-4841-8514-c04bc7320c70",
+      "name": "NB Cross Brx Expy-Webster Av Exit ramp @ E 174 St & Cater Av",
+      "lat": 40.844531,
+      "lng": -73.903627,
+      "is_online": true
+    },
+    {
+      "id": "bfcd953c-3faf-48ea-a49a-848c706399b6",
+      "name": "Narrows Rd South @ Hylan Blvd",
+      "lat": 40.605488,
+      "lng": -74.076704,
+      "is_online": true
+    },
+    {
+      "id": "38790585-9444-46a7-b85e-2db8f163ecf7",
+      "name": "43 Ave @ 27 St",
+      "lat": 40.748228,
+      "lng": -73.9417,
+      "is_online": true
+    },
+    {
+      "id": "3869bbbf-b9ce-4157-a6e6-9040f1540827",
+      "name": "C3-WSE-01-NB_at_Englewood_Ave-Ex2",
+      "lat": 40.532368,
+      "lng": -74.223617,
+      "is_online": true
+    },
+    {
+      "id": "56fafa1b-3a26-49de-a6c0-1e6f804a1b0c",
+      "name": "C2-GE-14A-WB_at_Cole_St",
+      "lat": 40.67980655,
+      "lng": -74.00432445,
       "is_online": true
     },
     {
@@ -3055,10 +3034,24 @@
       "is_online": true
     },
     {
-      "id": "15c0758b-5c9a-4841-8514-c04bc7320c70",
-      "name": "NB Cross Brx Expy-Webster Av Exit ramp @ E 174 St & Cater Av",
-      "lat": 40.844531,
-      "lng": -73.903627,
+      "id": "1d5b7624-9334-4348-8119-4d0221988d24",
+      "name": "Boston Rd @ Claremont Pkwy @ Wilkins Ave",
+      "lat": 40.834938,
+      "lng": -73.894132,
+      "is_online": true
+    },
+    {
+      "id": "6b81f2fd-acf3-4af2-adc1-42250156ece8",
+      "name": "Flatbush Ave @ Tillary St",
+      "lat": 40.6955094542638,
+      "lng": -73.9841222763061,
+      "is_online": true
+    },
+    {
+      "id": "73b66e92-508f-407c-bada-883ab992fde0",
+      "name": "Broadway @ Vesey St",
+      "lat": 40.711408,
+      "lng": -74.008688,
       "is_online": true
     },
     {
@@ -3076,24 +3069,17 @@
       "is_online": true
     },
     {
+      "id": "6851bbf7-e079-4379-b021-e5c7dafcb8c9",
+      "name": "8 Ave @ 9 St",
+      "lat": 40.665895,
+      "lng": -73.979249,
+      "is_online": true
+    },
+    {
       "id": "ae88c4d8-5638-4f90-bbdb-e15999936d31",
       "name": "Astoria Blvd @ 94 St",
       "lat": 40.762982,
       "lng": -73.875305,
-      "is_online": true
-    },
-    {
-      "id": "2cde9c13-0146-4d4a-8d26-b6e7d34d9eec",
-      "name": "C5-BQE-39-WB_at_Broadway-Ex40",
-      "lat": 40.749296,
-      "lng": -73.896779,
-      "is_online": true
-    },
-    {
-      "id": "b03d3f18-928f-4fcf-b0f5-bbd18314f492",
-      "name": "12 Ave @ W 49 St",
-      "lat": 40.766158,
-      "lng": -73.997147,
       "is_online": true
     },
     {
@@ -3118,17 +3104,17 @@
       "is_online": true
     },
     {
-      "id": "e38e3af7-19e6-4c8d-aa05-a21c8d5a7b29",
-      "name": "C1-BRE-10-NB_at_Middle_Twn_Rd-Ex7C",
-      "lat": 40.84549,
-      "lng": -73.825543,
-      "is_online": true
-    },
-    {
       "id": "0acd4543-183d-40c7-993e-e39eb831de0b",
       "name": "QBB LL CM @ York Ave",
       "lat": 40.759021,
       "lng": -73.959431,
+      "is_online": true
+    },
+    {
+      "id": "42446823-2f5a-4db0-a99e-3766d0822485",
+      "name": "Bronx River Pkwy @ E Gun Hill RD",
+      "lat": 40.8783,
+      "lng": -73.87004,
       "is_online": true
     },
     {
@@ -3146,17 +3132,24 @@
       "is_online": true
     },
     {
-      "id": "6851bbf7-e079-4379-b021-e5c7dafcb8c9",
-      "name": "8 Ave @ 9 St",
-      "lat": 40.665895,
-      "lng": -73.979249,
+      "id": "2cde9c13-0146-4d4a-8d26-b6e7d34d9eec",
+      "name": "C5-BQE-39-WB_at_Broadway-Ex40",
+      "lat": 40.749296,
+      "lng": -73.896779,
       "is_online": true
     },
     {
-      "id": "42446823-2f5a-4db0-a99e-3766d0822485",
-      "name": "Bronx River Pkwy @ E Gun Hill RD",
-      "lat": 40.8783,
-      "lng": -73.87004,
+      "id": "e38e3af7-19e6-4c8d-aa05-a21c8d5a7b29",
+      "name": "C1-BRE-10-NB_at_Middle_Twn_Rd-Ex7C",
+      "lat": 40.84549,
+      "lng": -73.825543,
+      "is_online": true
+    },
+    {
+      "id": "b03d3f18-928f-4fcf-b0f5-bbd18314f492",
+      "name": "12 Ave @ W 49 St",
+      "lat": 40.766158,
+      "lng": -73.997147,
       "is_online": true
     },
     {
@@ -3181,13 +3174,6 @@
       "is_online": true
     },
     {
-      "id": "a65f8b8a-c0ba-4138-81a5-783ba837490d",
-      "name": "Major Deegan Expwy @ 225 St",
-      "lat": 40.8732637,
-      "lng": -73.9058863,
-      "is_online": true
-    },
-    {
       "id": "789b70ea-f0f9-4e61-b72d-e4bf79fd2218",
       "name": "Cross Island Pkwy @ Clearview Expy",
       "lat": 40.786661,
@@ -3195,17 +3181,10 @@
       "is_online": true
     },
     {
-      "id": "aacbd8a1-56b6-4757-b0b0-1bea396469c6",
-      "name": "11 Ave @ 34 ST",
-      "lat": 40.755787,
-      "lng": -74.00198,
-      "is_online": true
-    },
-    {
-      "id": "43d53907-8b02-4793-8b0c-c816c9cf979a",
-      "name": "C3-WSE-10-SB_at_South_Ave-Ex8",
-      "lat": 40.602249,
-      "lng": -74.18798,
+      "id": "03051d28-db9c-4527-97c7-0bb3f35e7cef",
+      "name": "C2-BQE-11-WB_at_Furmn_St_UP-Ex28A",
+      "lat": 40.699951,
+      "lng": -73.996223,
       "is_online": true
     },
     {
@@ -3223,17 +3202,10 @@
       "is_online": true
     },
     {
-      "id": "abdd6b29-6f7b-4662-bb43-078fe2c76199",
-      "name": "Cross Bay Blvd @ North Channel Bridge",
-      "lat": 40.588759,
-      "lng": -73.819342,
-      "is_online": true
-    },
-    {
-      "id": "a4417c97-9878-4b98-902f-58860d63e7cb",
-      "name": "WBB - 11  NIR-5 @ East of Manhattan Tower",
-      "lat": 40.714394,
-      "lng": -73.974648,
+      "id": "a65f8b8a-c0ba-4138-81a5-783ba837490d",
+      "name": "Major Deegan Expwy @ 225 St",
+      "lat": 40.8732637,
+      "lng": -73.9058863,
       "is_online": true
     },
     {
@@ -3241,6 +3213,13 @@
       "name": "C2-BQE-30-EB_at_Stewrt_Ave_Kosc-Br",
       "lat": 40.724979,
       "lng": -73.934058,
+      "is_online": true
+    },
+    {
+      "id": "2334b7bd-a237-4bf5-9224-5241bd4ee29e",
+      "name": "WBB-6 South Rdwy @ Delancy St and Clinton St",
+      "lat": 40.717622,
+      "lng": -73.985843,
       "is_online": true
     },
     {
@@ -3258,17 +3237,17 @@
       "is_online": true
     },
     {
+      "id": "43d53907-8b02-4793-8b0c-c816c9cf979a",
+      "name": "C3-WSE-10-SB_at_South_Ave-Ex8",
+      "lat": 40.602249,
+      "lng": -74.18798,
+      "is_online": true
+    },
+    {
       "id": "b6558fc0-d62b-4b25-b7aa-6b592bde2c44",
       "name": "Flatbush Ave @ Marine Park",
       "lat": 40.601134,
       "lng": -73.913036,
-      "is_online": true
-    },
-    {
-      "id": "b0670166-0aa0-4f93-a6f6-8bf07a9ea663",
-      "name": "Morningstar Rd @ Richmond Terr.",
-      "lat": 40.637939,
-      "lng": -74.144797,
       "is_online": true
     },
     {
@@ -3279,31 +3258,10 @@
       "is_online": true
     },
     {
-      "id": "2334b7bd-a237-4bf5-9224-5241bd4ee29e",
-      "name": "WBB-6 South Rdwy @ Delancy St and Clinton St",
-      "lat": 40.717622,
-      "lng": -73.985843,
-      "is_online": true
-    },
-    {
-      "id": "03051d28-db9c-4527-97c7-0bb3f35e7cef",
-      "name": "C2-BQE-11-WB_at_Furmn_St_UP-Ex28A",
-      "lat": 40.699951,
-      "lng": -73.996223,
-      "is_online": true
-    },
-    {
-      "id": "b6cd1640-fdc3-4525-bbb4-f148699876df",
-      "name": "Major Deegan Expy @Van Cortland Pk S",
-      "lat": 40.885972,
-      "lng": -73.896784,
-      "is_online": true
-    },
-    {
-      "id": "d766db98-8b2c-406a-b0ea-f437e2216157",
-      "name": "Smith St @ 9 St - 170.106",
-      "lat": 40.674746,
-      "lng": -73.997865,
+      "id": "a4417c97-9878-4b98-902f-58860d63e7cb",
+      "name": "WBB - 11  NIR-5 @ East of Manhattan Tower",
+      "lat": 40.714394,
+      "lng": -73.974648,
       "is_online": true
     },
     {
@@ -3314,45 +3272,38 @@
       "is_online": true
     },
     {
+      "id": "abdd6b29-6f7b-4662-bb43-078fe2c76199",
+      "name": "Cross Bay Blvd @ North Channel Bridge",
+      "lat": 40.588759,
+      "lng": -73.819342,
+      "is_online": true
+    },
+    {
+      "id": "b0670166-0aa0-4f93-a6f6-8bf07a9ea663",
+      "name": "Morningstar Rd @ Richmond Terr.",
+      "lat": 40.637939,
+      "lng": -74.144797,
+      "is_online": true
+    },
+    {
+      "id": "d766db98-8b2c-406a-b0ea-f437e2216157",
+      "name": "Smith St @ 9 St - 170.106",
+      "lat": 40.674746,
+      "lng": -73.997865,
+      "is_online": true
+    },
+    {
+      "id": "aacbd8a1-56b6-4757-b0b0-1bea396469c6",
+      "name": "11 Ave @ 34 ST",
+      "lat": 40.755787,
+      "lng": -74.00198,
+      "is_online": true
+    },
+    {
       "id": "b43f6602-fb0f-4eb4-a019-ac7101aab067",
       "name": "Tillary St @ Gold St",
       "lat": 40.6962,
       "lng": -73.9829,
-      "is_online": true
-    },
-    {
-      "id": "46181c0e-f2ae-4daa-8a94-74dd5b2bbc19",
-      "name": "QBB NOR @ York Ave",
-      "lat": 40.759134,
-      "lng": -73.959401,
-      "is_online": true
-    },
-    {
-      "id": "fcd793fc-d600-40a6-949b-b168d96368fd",
-      "name": "LIE @ Oceania St",
-      "lat": 40.7458,
-      "lng": -73.767759,
-      "is_online": true
-    },
-    {
-      "id": "ba3d9734-3871-4d49-b46b-88d88dd96e71",
-      "name": "AVE C @ 23 St",
-      "lat": 40.73545,
-      "lng": -73.9751,
-      "is_online": true
-    },
-    {
-      "id": "a6b2c1c8-1124-4dec-aa22-c8d87f6835ec",
-      "name": "West Shore Expy @ South Ave ",
-      "lat": 40.60214,
-      "lng": -74.18784,
-      "is_online": true
-    },
-    {
-      "id": "cb94f806-6014-496b-960b-9f747109980e",
-      "name": "Rockaway Blvd @ Brookville Blvd",
-      "lat": 40.640648,
-      "lng": -73.743377,
       "is_online": true
     },
     {
@@ -3363,10 +3314,31 @@
       "is_online": true
     },
     {
+      "id": "46181c0e-f2ae-4daa-8a94-74dd5b2bbc19",
+      "name": "QBB NOR @ York Ave",
+      "lat": 40.759134,
+      "lng": -73.959401,
+      "is_online": true
+    },
+    {
       "id": "45756112-04f9-429f-9754-1939e25f4184",
       "name": "BB-68 South Rdwy @ Above Water St/Bklyn",
       "lat": 40.703286,
       "lng": -73.99356,
+      "is_online": true
+    },
+    {
+      "id": "ba3d9734-3871-4d49-b46b-88d88dd96e71",
+      "name": "AVE C @ 23 St",
+      "lat": 40.73545,
+      "lng": -73.9751,
+      "is_online": true
+    },
+    {
+      "id": "cb94f806-6014-496b-960b-9f747109980e",
+      "name": "Rockaway Blvd @ Brookville Blvd",
+      "lat": 40.640648,
+      "lng": -73.743377,
       "is_online": true
     },
     {
@@ -3377,6 +3349,13 @@
       "is_online": true
     },
     {
+      "id": "bb9ce48d-0458-4493-89ad-ae51065b5796",
+      "name": "Lincoln Tun Approach(Bet. 9Av & 10Av) @ W 33 St - 3.50",
+      "lat": 40.753522,
+      "lng": -73.998587,
+      "is_online": true
+    },
+    {
       "id": "454e566c-e3e3-4426-b91a-e0ea709e70f7",
       "name": "C3-SIE-06-EB_at_Victory_Blvd-Ex10",
       "lat": 40.609321,
@@ -3384,17 +3363,17 @@
       "is_online": true
     },
     {
-      "id": "bc2fd2da-1d56-46fa-a1ab-8674fac93877",
-      "name": "7 Ave @ 43 St - 64.186 - PTZ",
-      "lat": 40.756707,
-      "lng": -73.986442,
-      "is_online": true
-    },
-    {
       "id": "494a3907-4cc7-4a77-8d6f-1b6f3ca272c5",
       "name": "C3-WSE-03-SB_at_Bloomngdale_Rd-Ex3",
       "lat": 40.548607,
       "lng": -74.220828,
+      "is_online": true
+    },
+    {
+      "id": "bc2fd2da-1d56-46fa-a1ab-8674fac93877",
+      "name": "7 Ave @ 43 St - 64.186 - PTZ",
+      "lat": 40.756707,
+      "lng": -73.986442,
       "is_online": true
     },
     {
@@ -3412,10 +3391,17 @@
       "is_online": true
     },
     {
-      "id": "bb9ce48d-0458-4493-89ad-ae51065b5796",
-      "name": "Lincoln Tun Approach(Bet. 9Av & 10Av) @ W 33 St - 3.50",
-      "lat": 40.753522,
-      "lng": -73.998587,
+      "id": "a6b2c1c8-1124-4dec-aa22-c8d87f6835ec",
+      "name": "West Shore Expy @ South Ave ",
+      "lat": 40.60214,
+      "lng": -74.18784,
+      "is_online": true
+    },
+    {
+      "id": "fcd793fc-d600-40a6-949b-b168d96368fd",
+      "name": "LIE @ Oceania St",
+      "lat": 40.7458,
+      "lng": -73.767759,
       "is_online": true
     },
     {
@@ -3426,17 +3412,17 @@
       "is_online": true
     },
     {
-      "id": "4be502c3-830e-40d3-8c39-1047d50adc9c",
-      "name": "C2-BQE-16-WB_at_Sands_St-Ex29A",
-      "lat": 40.699385,
-      "lng": -73.983921,
-      "is_online": true
-    },
-    {
       "id": "6232350a-c27c-4964-a6e8-7bd0507b6826",
       "name": "C2-BQE-27-EB_at_Mtrpolitan_Av-Ex32",
       "lat": 40.713701,
       "lng": -73.95327,
+      "is_online": true
+    },
+    {
+      "id": "bca4a4b0-d73f-4937-9301-85ff8293bd94",
+      "name": "7 AVE @ 42 St",
+      "lat": 40.75609,
+      "lng": -73.9869,
       "is_online": true
     },
     {
@@ -3447,17 +3433,10 @@
       "is_online": true
     },
     {
-      "id": "1b874f5c-e1c6-481d-bb85-8d7d92c1793b",
-      "name": "Rogers Ave @ Montgomery St",
-      "lat": 40.6656,
-      "lng": -73.9536,
-      "is_online": true
-    },
-    {
-      "id": "bca4a4b0-d73f-4937-9301-85ff8293bd94",
-      "name": "7 AVE @ 42 St",
-      "lat": 40.75609,
-      "lng": -73.9869,
+      "id": "62174b3a-f453-4108-9eb2-48d833528a7c",
+      "name": "Springfield Blvd @ Merrick Blvd",
+      "lat": 40.680209,
+      "lng": -73.753356,
       "is_online": true
     },
     {
@@ -3475,10 +3454,10 @@
       "is_online": true
     },
     {
-      "id": "62174b3a-f453-4108-9eb2-48d833528a7c",
-      "name": "Springfield Blvd @ Merrick Blvd",
-      "lat": 40.680209,
-      "lng": -73.753356,
+      "id": "4850e464-1111-4b5d-a72d-f54a0e12a789",
+      "name": "8 Ave @ 49 St",
+      "lat": 40.761676,
+      "lng": -73.986581,
       "is_online": true
     },
     {
@@ -3489,31 +3468,10 @@
       "is_online": true
     },
     {
-      "id": "4f688c33-672c-4bac-bf2b-98438d464ccd",
-      "name": "BB-25 North Rdwy @ West of Manhattan Twr",
-      "lat": 40.707558,
-      "lng": -73.998581,
-      "is_online": true
-    },
-    {
       "id": "1a626331-3c36-48bd-91a5-edd930c314c0",
       "name": "C1-MDE-12-SB_at_Heath_Ave-Ex9",
       "lat": 40.867065,
       "lng": -73.908921,
-      "is_online": true
-    },
-    {
-      "id": "4850e464-1111-4b5d-a72d-f54a0e12a789",
-      "name": "8 Ave @ 49 St",
-      "lat": 40.761676,
-      "lng": -73.986581,
-      "is_online": true
-    },
-    {
-      "id": "50725dbd-6e39-4ed0-aa3b-89f9c8feff4e",
-      "name": "FDR Dr @ 135 Street",
-      "lat": 40.8109509339364,
-      "lng": -73.9343833923339,
       "is_online": true
     },
     {
@@ -3524,10 +3482,38 @@
       "is_online": true
     },
     {
+      "id": "50725dbd-6e39-4ed0-aa3b-89f9c8feff4e",
+      "name": "FDR Dr @ 135 Street",
+      "lat": 40.8109509339364,
+      "lng": -73.9343833923339,
+      "is_online": true
+    },
+    {
+      "id": "4f688c33-672c-4bac-bf2b-98438d464ccd",
+      "name": "BB-25 North Rdwy @ West of Manhattan Twr",
+      "lat": 40.707558,
+      "lng": -73.998581,
+      "is_online": true
+    },
+    {
       "id": "be6b6830-b90d-40ab-98ab-9d67eb81e673",
       "name": "3 Ave @ 65 St - Ent. EB BQE/Gowanus",
       "lat": 40.6393,
       "lng": -74.0236,
+      "is_online": true
+    },
+    {
+      "id": "4be502c3-830e-40d3-8c39-1047d50adc9c",
+      "name": "C2-BQE-16-WB_at_Sands_St-Ex29A",
+      "lat": 40.699385,
+      "lng": -73.983921,
+      "is_online": true
+    },
+    {
+      "id": "1b874f5c-e1c6-481d-bb85-8d7d92c1793b",
+      "name": "Rogers Ave @ Montgomery St",
+      "lat": 40.6656,
+      "lng": -73.9536,
       "is_online": true
     },
     {
@@ -3538,80 +3524,10 @@
       "is_online": true
     },
     {
-      "id": "63e79f0b-7dea-4c8e-864c-f3315f9cc62c",
-      "name": "Grand St @ Broadway",
-      "lat": 40.720855,
-      "lng": -74.000655,
-      "is_online": true
-    },
-    {
       "id": "74bdd301-683c-4ea7-abf2-a5715dca8e17",
       "name": "York Ave @ 63 St",
       "lat": 40.761216,
       "lng": -73.957815,
-      "is_online": true
-    },
-    {
-      "id": "66533d67-7fe3-4250-b850-88c2fd7ec0e0",
-      "name": "Father Capodanno Blvd @ Midland Ave",
-      "lat": 40.570789,
-      "lng": -74.090294,
-      "is_online": true
-    },
-    {
-      "id": "b1f2ef94-28b2-4ec6-9e0b-1f938e8c65d0",
-      "name": "C5-GCP-11_EB_at_64th_Ave-Ex10",
-      "lat": 40.734074,
-      "lng": -73.844484,
-      "is_online": true
-    },
-    {
-      "id": "c073c2d9-919f-4ba3-ad13-d331d378e12b",
-      "name": "Columbia St @ Carroll St - 168.202",
-      "lat": 40.683144,
-      "lng": -74.003728,
-      "is_online": true
-    },
-    {
-      "id": "32651453-d9de-4cde-af4b-be42b8de2775",
-      "name": "BB-39 North Rdwy @ Bridge Midspan",
-      "lat": 40.7060356,
-      "lng": -73.9966579,
-      "is_online": true
-    },
-    {
-      "id": "53de1e7c-8443-47fa-8603-4e5ef0466c17",
-      "name": "Queens Blvd @ Sunnyside Br",
-      "lat": 40.747615,
-      "lng": -73.936121,
-      "is_online": true
-    },
-    {
-      "id": "bff9cee2-1513-4af3-9838-ea7a35552049",
-      "name": "Rockefeller Plaza @ W 51 St",
-      "lat": 40.75973,
-      "lng": -73.97807,
-      "is_online": true
-    },
-    {
-      "id": "82ff853c-50e3-403a-855b-5f17708a4f38",
-      "name": "Sands St @ Pearl St - quad - ptz - 1.10",
-      "lat": 40.700056,
-      "lng": -73.987778,
-      "is_online": true
-    },
-    {
-      "id": "fbaafcae-6f48-46ab-b6c7-b8919bcd5986",
-      "name": "Flatbush Ave @ Kings Hwy",
-      "lat": 40.622374,
-      "lng": -73.936664,
-      "is_online": true
-    },
-    {
-      "id": "5214cfe8-ccfc-42e9-8e2a-ff2865c1a518",
-      "name": "Houston St @ Broadway",
-      "lat": 40.725458,
-      "lng": -73.996756,
       "is_online": true
     },
     {
@@ -3622,38 +3538,52 @@
       "is_online": true
     },
     {
-      "id": "7c92c63b-2786-4600-9108-62cea2806345",
-      "name": "Grand Ave @ LIE",
-      "lat": 40.725764,
-      "lng": -73.895635,
+      "id": "c073c2d9-919f-4ba3-ad13-d331d378e12b",
+      "name": "Columbia St @ Carroll St - 168.202",
+      "lat": 40.683144,
+      "lng": -74.003728,
       "is_online": true
     },
     {
-      "id": "50fed16e-8068-4b89-ada4-246fc112b924",
-      "name": "C2-BQE-30A_W_at_Stewrt_Ave_Kosc-Br",
-      "lat": 40.724979,
-      "lng": -73.934058,
+      "id": "fbaafcae-6f48-46ab-b6c7-b8919bcd5986",
+      "name": "Flatbush Ave @ Kings Hwy",
+      "lat": 40.622374,
+      "lng": -73.936664,
       "is_online": true
     },
     {
-      "id": "547cd268-58f9-4a84-a235-dbaa0432d79a",
-      "name": "South Street @ Pike Street",
-      "lat": 40.709853,
-      "lng": -73.991746,
+      "id": "53de1e7c-8443-47fa-8603-4e5ef0466c17",
+      "name": "Queens Blvd @ Sunnyside Br",
+      "lat": 40.747615,
+      "lng": -73.936121,
       "is_online": true
     },
     {
-      "id": "bb362cd8-057b-4538-bdee-cf846a725ea0",
-      "name": "Dyer Ave @ W 40 St",
-      "lat": 40.7577,
-      "lng": -73.9948,
+      "id": "0bcfbc92-d455-4f62-846a-32afbefa3b4b",
+      "name": "Amsterdam @ 72 St",
+      "lat": 40.7786,
+      "lng": -73.9816,
       "is_online": true
     },
     {
-      "id": "513234e1-ea04-47bc-b607-c6ff1bb6a18d",
-      "name": "C5-LIE-29-WB_at_220th_St-Ex29",
-      "lat": 40.74907941,
-      "lng": -73.75828283,
+      "id": "bff9cee2-1513-4af3-9838-ea7a35552049",
+      "name": "Rockefeller Plaza @ W 51 St",
+      "lat": 40.75973,
+      "lng": -73.97807,
+      "is_online": true
+    },
+    {
+      "id": "66533d67-7fe3-4250-b850-88c2fd7ec0e0",
+      "name": "Father Capodanno Blvd @ Midland Ave",
+      "lat": 40.570789,
+      "lng": -74.090294,
+      "is_online": true
+    },
+    {
+      "id": "82ff853c-50e3-403a-855b-5f17708a4f38",
+      "name": "Sands St @ Pearl St - quad - ptz - 1.10",
+      "lat": 40.700056,
+      "lng": -73.987778,
       "is_online": true
     },
     {
@@ -3664,10 +3594,73 @@
       "is_online": true
     },
     {
-      "id": "d1363c77-e061-4414-be82-e6d749254859",
-      "name": "Madison Ave @ 42 St",
-      "lat": 40.7528121596316,
-      "lng": -73.9792838595713,
+      "id": "50fed16e-8068-4b89-ada4-246fc112b924",
+      "name": "C2-BQE-30A_W_at_Stewrt_Ave_Kosc-Br",
+      "lat": 40.724979,
+      "lng": -73.934058,
+      "is_online": true
+    },
+    {
+      "id": "513234e1-ea04-47bc-b607-c6ff1bb6a18d",
+      "name": "C5-LIE-29-WB_at_220th_St-Ex29",
+      "lat": 40.74907941,
+      "lng": -73.75828283,
+      "is_online": true
+    },
+    {
+      "id": "32651453-d9de-4cde-af4b-be42b8de2775",
+      "name": "BB-39 North Rdwy @ Bridge Midspan",
+      "lat": 40.7060356,
+      "lng": -73.9966579,
+      "is_online": true
+    },
+    {
+      "id": "547cd268-58f9-4a84-a235-dbaa0432d79a",
+      "name": "South Street @ Pike Street",
+      "lat": 40.709853,
+      "lng": -73.991746,
+      "is_online": true
+    },
+    {
+      "id": "5214cfe8-ccfc-42e9-8e2a-ff2865c1a518",
+      "name": "Houston St @ Broadway",
+      "lat": 40.725458,
+      "lng": -73.996756,
+      "is_online": true
+    },
+    {
+      "id": "bb362cd8-057b-4538-bdee-cf846a725ea0",
+      "name": "Dyer Ave @ W 40 St",
+      "lat": 40.7577,
+      "lng": -73.9948,
+      "is_online": true
+    },
+    {
+      "id": "b1f2ef94-28b2-4ec6-9e0b-1f938e8c65d0",
+      "name": "C5-GCP-11_EB_at_64th_Ave-Ex10",
+      "lat": 40.734074,
+      "lng": -73.844484,
+      "is_online": true
+    },
+    {
+      "id": "7c92c63b-2786-4600-9108-62cea2806345",
+      "name": "Grand Ave @ LIE",
+      "lat": 40.725764,
+      "lng": -73.895635,
+      "is_online": true
+    },
+    {
+      "id": "63e79f0b-7dea-4c8e-864c-f3315f9cc62c",
+      "name": "Grand St @ Broadway",
+      "lat": 40.720855,
+      "lng": -74.000655,
+      "is_online": true
+    },
+    {
+      "id": "5507fab3-3430-4747-a9ab-ed9f7b5ba959",
+      "name": "Queens Blvd @ Jackson Ave",
+      "lat": 40.7489478,
+      "lng": -73.9373769,
       "is_online": true
     },
     {
@@ -3692,10 +3685,17 @@
       "is_online": true
     },
     {
-      "id": "5507fab3-3430-4747-a9ab-ed9f7b5ba959",
-      "name": "Queens Blvd @ Jackson Ave",
-      "lat": 40.7489478,
-      "lng": -73.9373769,
+      "id": "54b2e31f-d9d7-43bd-b86f-3b15f4881ae8",
+      "name": "C3-WSE-02-SB_at_Woodrow_Rd-Ex3",
+      "lat": 40.540946,
+      "lng": -74.224364,
+      "is_online": true
+    },
+    {
+      "id": "d1363c77-e061-4414-be82-e6d749254859",
+      "name": "Madison Ave @ 42 St",
+      "lat": 40.7528121596316,
+      "lng": -73.9792838595713,
       "is_online": true
     },
     {
@@ -3706,10 +3706,10 @@
       "is_online": true
     },
     {
-      "id": "3df06012-4c10-46e1-81d0-55405342e8df",
-      "name": "3 AVE @ 76 St",
-      "lat": 40.77234,
-      "lng": -73.9587,
+      "id": "d23ec5fd-f956-4283-975a-623514b001a3",
+      "name": "C1-CBE-05_S_SB_at_Walton_Ave-Ex2A",
+      "lat": 40.845346,
+      "lng": -73.911976,
       "is_online": true
     },
     {
@@ -3727,10 +3727,10 @@
       "is_online": true
     },
     {
-      "id": "54b2e31f-d9d7-43bd-b86f-3b15f4881ae8",
-      "name": "C3-WSE-02-SB_at_Woodrow_Rd-Ex3",
-      "lat": 40.540946,
-      "lng": -74.224364,
+      "id": "c173fe45-9067-4582-81ef-cab0aad56afd",
+      "name": "Grand St (Borinquen PL) @ South 4 St",
+      "lat": 40.710405,
+      "lng": -73.958276,
       "is_online": true
     },
     {
@@ -3755,10 +3755,10 @@
       "is_online": true
     },
     {
-      "id": "d3503d31-e652-4618-9442-cf613600ea0b",
-      "name": "C5-GCP-07-EB_at_Ditmars_Blvd-Ex9",
-      "lat": 40.759784,
-      "lng": -73.856583,
+      "id": "3df06012-4c10-46e1-81d0-55405342e8df",
+      "name": "3 AVE @ 76 St",
+      "lat": 40.77234,
+      "lng": -73.9587,
       "is_online": true
     },
     {
@@ -3776,10 +3776,10 @@
       "is_online": true
     },
     {
-      "id": "3d8e276f-b179-414d-a506-679d5e559d3e",
-      "name": "Broadway @ 51 St",
-      "lat": 40.762077539856,
-      "lng": -73.9836422756604,
+      "id": "d3503d31-e652-4618-9442-cf613600ea0b",
+      "name": "C5-GCP-07-EB_at_Ditmars_Blvd-Ex9",
+      "lat": 40.759784,
+      "lng": -73.856583,
       "is_online": true
     },
     {
@@ -3790,17 +3790,10 @@
       "is_online": true
     },
     {
-      "id": "c173fe45-9067-4582-81ef-cab0aad56afd",
-      "name": "Grand St (Borinquen PL) @ South 4 St",
-      "lat": 40.710405,
-      "lng": -73.958276,
-      "is_online": true
-    },
-    {
-      "id": "d23ec5fd-f956-4283-975a-623514b001a3",
-      "name": "C1-CBE-05_S_SB_at_Walton_Ave-Ex2A",
-      "lat": 40.845346,
-      "lng": -73.911976,
+      "id": "3d8e276f-b179-414d-a506-679d5e559d3e",
+      "name": "Broadway @ 51 St",
+      "lat": 40.762077539856,
+      "lng": -73.9836422756604,
       "is_online": true
     },
     {
@@ -3832,10 +3825,17 @@
       "is_online": true
     },
     {
-      "id": "5bb6d7d8-39ce-43b8-b539-376fbcf73927",
-      "name": "3 Ave @ 49 St",
-      "lat": 40.7552116061846,
-      "lng": -73.9712421172846,
+      "id": "c5040f93-f4ec-4803-8370-8b931b0443e2",
+      "name": "FDR Dr @ 64 St",
+      "lat": 40.761186,
+      "lng": -73.955676,
+      "is_online": true
+    },
+    {
+      "id": "d4add2b5-0a3c-43dd-ad8f-edc72b9ab2e5",
+      "name": "WBB-8 NIR Bklyn Anch./Kent Av",
+      "lat": 40.712379,
+      "lng": -73.967807,
       "is_online": true
     },
     {
@@ -3860,6 +3860,13 @@
       "is_online": true
     },
     {
+      "id": "5bd248b9-1dab-4118-b4b2-d3ef3fbd7085",
+      "name": "Adams St @ Tillary St",
+      "lat": 40.696346,
+      "lng": -73.988845,
+      "is_online": true
+    },
+    {
       "id": "5b44d19e-de48-4941-b071-d2a4c08bd230",
       "name": "2 Ave @ 58 St",
       "lat": 40.759333,
@@ -3874,13 +3881,6 @@
       "is_online": true
     },
     {
-      "id": "c880d0c4-db84-44c2-9f00-62f21a83b5d0",
-      "name": "Broadway @ Columbus Circle",
-      "lat": 40.768532,
-      "lng": -73.98209,
-      "is_online": true
-    },
-    {
       "id": "9750737e-90f5-4681-9fef-a396f9992540",
       "name": "Woodhaven Blvd @ Metropolitan Ave",
       "lat": 40.711848,
@@ -3888,17 +3888,17 @@
       "is_online": true
     },
     {
-      "id": "d4add2b5-0a3c-43dd-ad8f-edc72b9ab2e5",
-      "name": "WBB-8 NIR Bklyn Anch./Kent Av",
-      "lat": 40.712379,
-      "lng": -73.967807,
+      "id": "5bb6d7d8-39ce-43b8-b539-376fbcf73927",
+      "name": "3 Ave @ 49 St",
+      "lat": 40.7552116061846,
+      "lng": -73.9712421172846,
       "is_online": true
     },
     {
-      "id": "c5040f93-f4ec-4803-8370-8b931b0443e2",
-      "name": "FDR Dr @ 64 St",
-      "lat": 40.761186,
-      "lng": -73.955676,
+      "id": "c880d0c4-db84-44c2-9f00-62f21a83b5d0",
+      "name": "Broadway @ Columbus Circle",
+      "lat": 40.768532,
+      "lng": -73.98209,
       "is_online": true
     },
     {
@@ -3951,10 +3951,17 @@
       "is_online": true
     },
     {
-      "id": "5c2b7782-2fb8-486f-89d2-0c16b6eac70c",
-      "name": "BB-15 North Rdwy @ Manhattan Anchorage",
-      "lat": 40.709185,
-      "lng": -74.000555,
+      "id": "0e8def41-11e2-45de-a8f6-b746b805b7c5",
+      "name": "BB-72 South Rdwy @ Front St",
+      "lat": 40.702461,
+      "lng": -73.992372,
+      "is_online": true
+    },
+    {
+      "id": "15f7a00b-5afb-4193-a5e4-dfe7710a5dfe",
+      "name": "3 AVE @ 34 ST",
+      "lat": 40.7457272953698,
+      "lng": -73.9781169718397,
       "is_online": true
     },
     {
@@ -3972,10 +3979,10 @@
       "is_online": true
     },
     {
-      "id": "0e8def41-11e2-45de-a8f6-b746b805b7c5",
-      "name": "BB-72 South Rdwy @ Front St",
-      "lat": 40.702461,
-      "lng": -73.992372,
+      "id": "14767de3-0b6f-4708-b63a-230f5883d932",
+      "name": "BB-71 North Rdwy @ Front St \u00a0",
+      "lat": 40.702524,
+      "lng": -73.992283,
       "is_online": true
     },
     {
@@ -3986,10 +3993,10 @@
       "is_online": true
     },
     {
-      "id": "14767de3-0b6f-4708-b63a-230f5883d932",
-      "name": "BB-71 North Rdwy @ Front St \u00a0",
-      "lat": 40.702524,
-      "lng": -73.992283,
+      "id": "5c2b7782-2fb8-486f-89d2-0c16b6eac70c",
+      "name": "BB-15 North Rdwy @ Manhattan Anchorage",
+      "lat": 40.709185,
+      "lng": -74.000555,
       "is_online": true
     },
     {
@@ -4004,6 +4011,13 @@
       "name": "Outerbridge Crossing @ Tyrellan Ave",
       "lat": 40.525714,
       "lng": -74.230356,
+      "is_online": true
+    },
+    {
+      "id": "5e0a8966-79ae-4a7b-9561-aca2c37b22ff",
+      "name": "C5-LIE-28-EB_at_213th_St-Ex28",
+      "lat": 40.74669647,
+      "lng": -73.76365673,
       "is_online": true
     },
     {
@@ -4035,20 +4049,6 @@
       "is_online": true
     },
     {
-      "id": "5e0a8966-79ae-4a7b-9561-aca2c37b22ff",
-      "name": "C5-LIE-28-EB_at_213th_St-Ex28",
-      "lat": 40.74669647,
-      "lng": -73.76365673,
-      "is_online": true
-    },
-    {
-      "id": "15f7a00b-5afb-4193-a5e4-dfe7710a5dfe",
-      "name": "3 AVE @ 34 ST",
-      "lat": 40.7457272953698,
-      "lng": -73.9781169718397,
-      "is_online": true
-    },
-    {
       "id": "8385d983-6782-4219-8aab-98f26b224f9d",
       "name": "1 st Camera South Bound BPU-148.55",
       "lat": 40.70414,
@@ -4077,34 +4077,6 @@
       "is_online": true
     },
     {
-      "id": "5f1847a6-f7fa-4663-afb8-bcbcb93f0c69",
-      "name": "C2-BQE-12-WB_at_Furmn_St_LL-Ex28A",
-      "lat": 40.69995,
-      "lng": -73.996221,
-      "is_online": true
-    },
-    {
-      "id": "0360205b-183b-4dd3-a01f-e7f0deb5ff1f",
-      "name": "Shore Front Pkwy @ Beach 108 St",
-      "lat": 40.580181,
-      "lng": -73.828916,
-      "is_online": true
-    },
-    {
-      "id": "c941aa1a-ebde-4589-9669-eaf67279dfab",
-      "name": "Drumgoole Rd W @ Arden Ave - quad - ptz - 141.10",
-      "lat": 40.54696,
-      "lng": -74.18117,
-      "is_online": true
-    },
-    {
-      "id": "0952329e-6b6f-4286-b5e3-b682eae94e52",
-      "name": "Broadway @ Chambers St",
-      "lat": 40.714177,
-      "lng": -74.006307,
-      "is_online": true
-    },
-    {
       "id": "5352e130-4668-4be5-a7b9-9e1ce4ea6d4c",
       "name": "3 Ave @ 42 St",
       "lat": 40.7507631595424,
@@ -4116,6 +4088,41 @@
       "name": "Boerum Pl @ Fulton St & Joralemon St",
       "lat": 40.692174,
       "lng": -73.98913,
+      "is_online": true
+    },
+    {
+      "id": "5ec4ce2f-d86d-4899-b464-436fdcde72eb",
+      "name": "C3-SIE-09-EB_at_ Manor_Rd",
+      "lat": 40.610089,
+      "lng": -74.105929,
+      "is_online": true
+    },
+    {
+      "id": "ca545979-d0c1-4735-88d6-61b6311bb6bc",
+      "name": "Henry Hudson Pkwy @ 125 St",
+      "lat": 40.818617,
+      "lng": -73.96099,
+      "is_online": true
+    },
+    {
+      "id": "0952329e-6b6f-4286-b5e3-b682eae94e52",
+      "name": "Broadway @ Chambers St",
+      "lat": 40.714177,
+      "lng": -74.006307,
+      "is_online": true
+    },
+    {
+      "id": "c941aa1a-ebde-4589-9669-eaf67279dfab",
+      "name": "Drumgoole Rd W @ Arden Ave - quad - ptz - 141.10",
+      "lat": 40.54696,
+      "lng": -74.18117,
+      "is_online": true
+    },
+    {
+      "id": "426d2789-3f58-4c5b-9db6-1647db7c4b5a",
+      "name": "Belt Pkwy @ Erskine St",
+      "lat": 40.650918,
+      "lng": -73.865762,
       "is_online": true
     },
     {
@@ -4133,6 +4140,13 @@
       "is_online": true
     },
     {
+      "id": "36d22d6d-bffd-4466-8a9c-9c78a1bb9021",
+      "name": "Victory Blvd @ Bay St",
+      "lat": 40.637748,
+      "lng": -74.076018,
+      "is_online": true
+    },
+    {
       "id": "6ab24015-2446-4410-b7a4-d8dd13ed2f8b",
       "name": "LIE @ College Point Blvd",
       "lat": 40.744001,
@@ -4147,31 +4161,10 @@
       "is_online": true
     },
     {
-      "id": "426d2789-3f58-4c5b-9db6-1647db7c4b5a",
-      "name": "Belt Pkwy @ Erskine St",
-      "lat": 40.650918,
-      "lng": -73.865762,
-      "is_online": true
-    },
-    {
-      "id": "ca545979-d0c1-4735-88d6-61b6311bb6bc",
-      "name": "Henry Hudson Pkwy @ 125 St",
-      "lat": 40.818617,
-      "lng": -73.96099,
-      "is_online": true
-    },
-    {
-      "id": "444aa32f-8102-4ca6-a7f8-5c9fd8fd5571",
-      "name": "Houston St @ Christies St",
-      "lat": 40.723591,
-      "lng": -73.991117,
-      "is_online": true
-    },
-    {
-      "id": "5e621a58-dade-4b9a-aef8-24b3038455a4",
-      "name": "Long Island Expy @ Greenpoint Ave",
-      "lat": 40.737146,
-      "lng": -73.930969,
+      "id": "0360205b-183b-4dd3-a01f-e7f0deb5ff1f",
+      "name": "Shore Front Pkwy @ Beach 108 St",
+      "lat": 40.580181,
+      "lng": -73.828916,
       "is_online": true
     },
     {
@@ -4182,6 +4175,20 @@
       "is_online": true
     },
     {
+      "id": "5e621a58-dade-4b9a-aef8-24b3038455a4",
+      "name": "Long Island Expy @ Greenpoint Ave",
+      "lat": 40.737146,
+      "lng": -73.930969,
+      "is_online": true
+    },
+    {
+      "id": "5f1847a6-f7fa-4663-afb8-bcbcb93f0c69",
+      "name": "C2-BQE-12-WB_at_Furmn_St_LL-Ex28A",
+      "lat": 40.69995,
+      "lng": -73.996221,
+      "is_online": true
+    },
+    {
       "id": "5f4bef40-ddee-41fa-a623-6388d561f416",
       "name": "C2-PE-01-Cntr_at_Caton_Ave-Ex6",
       "lat": 40.646969,
@@ -4189,24 +4196,31 @@
       "is_online": true
     },
     {
-      "id": "5ec4ce2f-d86d-4899-b464-436fdcde72eb",
-      "name": "C3-SIE-09-EB_at_ Manor_Rd",
-      "lat": 40.610089,
-      "lng": -74.105929,
+      "id": "444aa32f-8102-4ca6-a7f8-5c9fd8fd5571",
+      "name": "Houston St @ Christies St",
+      "lat": 40.723591,
+      "lng": -73.991117,
       "is_online": true
     },
     {
-      "id": "36d22d6d-bffd-4466-8a9c-9c78a1bb9021",
-      "name": "Victory Blvd @ Bay St",
-      "lat": 40.637748,
-      "lng": -74.076018,
+      "id": "60793334-580b-4538-b947-7312e95039bf",
+      "name": "Astoria Blvd S S/R @ 33 St",
+      "lat": 40.769839,
+      "lng": -73.916794,
       "is_online": true
     },
     {
-      "id": "2589c0d6-c389-4861-b812-4ae68f560eba",
-      "name": "46 St Bet. 5 Ave & Madison Ave",
-      "lat": 40.7557483,
-      "lng": -73.9784187,
+      "id": "7e13d5e6-bd1a-47af-ba28-39c50e2736c2",
+      "name": "Hylan Blvd @ Nelson Ave",
+      "lat": 40.542395,
+      "lng": -74.145885,
+      "is_online": true
+    },
+    {
+      "id": "3f04a686-f97c-4187-8968-cb09265e08ff",
+      "name": "Central Park @ 72nd St Post 37",
+      "lat": 40.770785,
+      "lng": -73.978337,
       "is_online": true
     },
     {
@@ -4217,24 +4231,10 @@
       "is_online": true
     },
     {
-      "id": "99bd1846-c0e4-4689-b077-63d2525bf1aa",
-      "name": "Amsterdam Ave @ W 180 st ",
-      "lat": 40.84652,
-      "lng": -73.932073,
-      "is_online": true
-    },
-    {
       "id": "8d7e94a5-7a81-4e92-8171-9f6c0f0ca7bf",
       "name": "FDR @ E 53 St",
       "lat": 40.754739,
       "lng": -73.96219,
-      "is_online": true
-    },
-    {
-      "id": "6024ac17-0c26-4435-96e5-560c41b920ad",
-      "name": "11 Ave @ 57 St",
-      "lat": 40.770316,
-      "lng": -73.991381,
       "is_online": true
     },
     {
@@ -4245,24 +4245,24 @@
       "is_online": true
     },
     {
-      "id": "15fca74d-c3e9-42ee-8f32-5b708ef36477",
-      "name": "Hutchhinson River Pkwy @ Westchester Ave",
-      "lat": 40.842852,
-      "lng": -73.837795,
+      "id": "6024ac17-0c26-4435-96e5-560c41b920ad",
+      "name": "11 Ave @ 57 St",
+      "lat": 40.770316,
+      "lng": -73.991381,
       "is_online": true
     },
     {
-      "id": "cbb04872-5f62-4989-acaa-e4166fa7c819",
-      "name": "8 Ave @ 18 St",
-      "lat": 40.659056,
-      "lng": -73.985216,
+      "id": "88895623-f6fa-4509-a927-8eae076725da",
+      "name": "Ft. Hamilton Pkwy @ McDonald Ave",
+      "lat": 40.647697,
+      "lng": -73.980373,
       "is_online": true
     },
     {
-      "id": "c34ca47e-e375-4b9f-a8d7-f9737566b783",
-      "name": "6 Ave @ 42 St",
-      "lat": 40.7548488195947,
-      "lng": -73.9841249380499,
+      "id": "81c2390a-2dc5-4a44-9fc3-9870b360032e",
+      "name": "Hempstead Ave @ Cross Island Pkwy (PTZ)",
+      "lat": 40.710823,
+      "lng": -73.727495,
       "is_online": true
     },
     {
@@ -4280,17 +4280,10 @@
       "is_online": true
     },
     {
-      "id": "60793334-580b-4538-b947-7312e95039bf",
-      "name": "Astoria Blvd S S/R @ 33 St",
-      "lat": 40.769839,
-      "lng": -73.916794,
-      "is_online": true
-    },
-    {
-      "id": "88895623-f6fa-4509-a927-8eae076725da",
-      "name": "Ft. Hamilton Pkwy @ McDonald Ave",
-      "lat": 40.647697,
-      "lng": -73.980373,
+      "id": "1ccb8d7c-43d4-450e-b40c-79527766db75",
+      "name": "Audobon Ave @ W 181 ST",
+      "lat": 40.848738,
+      "lng": -73.932353,
       "is_online": true
     },
     {
@@ -4301,38 +4294,38 @@
       "is_online": true
     },
     {
-      "id": "1ccb8d7c-43d4-450e-b40c-79527766db75",
-      "name": "Audobon Ave @ W 181 ST",
-      "lat": 40.848738,
-      "lng": -73.932353,
+      "id": "15fca74d-c3e9-42ee-8f32-5b708ef36477",
+      "name": "Hutchhinson River Pkwy @ Westchester Ave",
+      "lat": 40.842852,
+      "lng": -73.837795,
       "is_online": true
     },
     {
-      "id": "3f04a686-f97c-4187-8968-cb09265e08ff",
-      "name": "Central Park @ 72nd St Post 37",
-      "lat": 40.770785,
-      "lng": -73.978337,
+      "id": "cbb04872-5f62-4989-acaa-e4166fa7c819",
+      "name": "8 Ave @ 18 St",
+      "lat": 40.659056,
+      "lng": -73.985216,
       "is_online": true
     },
     {
-      "id": "7e13d5e6-bd1a-47af-ba28-39c50e2736c2",
-      "name": "Hylan Blvd @ Nelson Ave",
-      "lat": 40.542395,
-      "lng": -74.145885,
+      "id": "99bd1846-c0e4-4689-b077-63d2525bf1aa",
+      "name": "Amsterdam Ave @ W 180 st ",
+      "lat": 40.84652,
+      "lng": -73.932073,
       "is_online": true
     },
     {
-      "id": "05468f62-4092-4ff5-9bb6-0f70e56ff544",
-      "name": "2 Ave @ 49 St",
-      "lat": 40.75426,
-      "lng": -73.968991,
+      "id": "2589c0d6-c389-4861-b812-4ae68f560eba",
+      "name": "46 St Bet. 5 Ave & Madison Ave",
+      "lat": 40.7557483,
+      "lng": -73.9784187,
       "is_online": true
     },
     {
-      "id": "cd949f21-54b2-4d11-8aae-4ffba8654271",
-      "name": "5 Ave @ E 60 St",
-      "lat": 40.764959,
-      "lng": -73.972578,
+      "id": "c34ca47e-e375-4b9f-a8d7-f9737566b783",
+      "name": "6 Ave @ 42 St",
+      "lat": 40.7548488195947,
+      "lng": -73.9841249380499,
       "is_online": true
     },
     {
@@ -4343,6 +4336,34 @@
       "is_online": true
     },
     {
+      "id": "5531396b-856d-429b-8bde-a845ef87aead",
+      "name": "Henry Hudson @ 158 St",
+      "lat": 40.835892,
+      "lng": -73.948717,
+      "is_online": true
+    },
+    {
+      "id": "62b3062d-542f-40f1-86ec-206710e789b6",
+      "name": "3 Ave @ 57 St",
+      "lat": 40.760252895987,
+      "lng": -73.967542473241,
+      "is_online": true
+    },
+    {
+      "id": "63bf5db0-582d-4482-ad51-52338c7f9906",
+      "name": "3 Ave @ 14 St",
+      "lat": 40.733275,
+      "lng": -73.987279,
+      "is_online": false
+    },
+    {
+      "id": "cde75072-a814-46b4-8785-765b314c43e8",
+      "name": "Korean War Veterans Pkwy @ Arden Ave",
+      "lat": 40.546677,
+      "lng": -74.180783,
+      "is_online": true
+    },
+    {
       "id": "cf6d1124-f012-4678-9277-2dca8d18232b",
       "name": "Gowanus Expy @ Gatling Pl @ 92 St - 4.34",
       "lat": 40.61637,
@@ -4350,24 +4371,10 @@
       "is_online": true
     },
     {
-      "id": "5531396b-856d-429b-8bde-a845ef87aead",
-      "name": "Henry Hudson @ 158 St",
-      "lat": 40.835892,
-      "lng": -73.948717,
-      "is_online": false
-    },
-    {
       "id": "e610bc71-9bfb-4a92-928d-ad33cd1b9afd",
       "name": "Harlem River Dr @ Dyckman St /10 Av",
       "lat": 40.858893,
       "lng": -73.923042,
-      "is_online": true
-    },
-    {
-      "id": "8933100a-8229-42fe-b4b2-265db410d7ae",
-      "name": "5 Ave @ 46 St",
-      "lat": 40.756036,
-      "lng": -73.979014,
       "is_online": true
     },
     {
@@ -4385,10 +4392,17 @@
       "is_online": true
     },
     {
-      "id": "0f3b6031-fe36-43df-b2c7-6120e0580309",
-      "name": "Brooklyn Bridge - Ped Walk Way",
-      "lat": 40.709046,
-      "lng": -74.000735,
+      "id": "8933100a-8229-42fe-b4b2-265db410d7ae",
+      "name": "5 Ave @ 46 St",
+      "lat": 40.756036,
+      "lng": -73.979014,
+      "is_online": true
+    },
+    {
+      "id": "05468f62-4092-4ff5-9bb6-0f70e56ff544",
+      "name": "2 Ave @ 49 St",
+      "lat": 40.75426,
+      "lng": -73.968991,
       "is_online": true
     },
     {
@@ -4406,10 +4420,10 @@
       "is_online": true
     },
     {
-      "id": "62b3062d-542f-40f1-86ec-206710e789b6",
-      "name": "3 Ave @ 57 St",
-      "lat": 40.760252895987,
-      "lng": -73.967542473241,
+      "id": "cd949f21-54b2-4d11-8aae-4ffba8654271",
+      "name": "5 Ave @ E 60 St",
+      "lat": 40.764959,
+      "lng": -73.972578,
       "is_online": true
     },
     {
@@ -4420,17 +4434,10 @@
       "is_online": true
     },
     {
-      "id": "63bf5db0-582d-4482-ad51-52338c7f9906",
-      "name": "3 Ave @ 14 St",
-      "lat": 40.733275,
-      "lng": -73.987279,
-      "is_online": true
-    },
-    {
-      "id": "64862ed3-03e3-4452-9e59-189dbeec4a4f",
-      "name": "BB-22 BQE @ Old Fulton St",
-      "lat": 40.701565,
-      "lng": -73.992009,
+      "id": "0f3b6031-fe36-43df-b2c7-6120e0580309",
+      "name": "Brooklyn Bridge - Ped Walk Way",
+      "lat": 40.709046,
+      "lng": -74.000735,
       "is_online": true
     },
     {
@@ -4441,13 +4448,6 @@
       "is_online": true
     },
     {
-      "id": "cde75072-a814-46b4-8785-765b314c43e8",
-      "name": "Korean War Veterans Pkwy @ Arden Ave",
-      "lat": 40.546677,
-      "lng": -74.180783,
-      "is_online": true
-    },
-    {
       "id": "d019c28c-80f5-490b-8a35-198477ac3fb0",
       "name": "Woodhaven Blvd @ Dry Harbor Rd",
       "lat": 40.727879,
@@ -4455,17 +4455,31 @@
       "is_online": true
     },
     {
+      "id": "64862ed3-03e3-4452-9e59-189dbeec4a4f",
+      "name": "BB-22 BQE @ Old Fulton St",
+      "lat": 40.701565,
+      "lng": -73.992009,
+      "is_online": true
+    },
+    {
+      "id": "9e3164a8-1c63-4790-bc24-f9d752f3ae41",
+      "name": "Belt Pkwy @ Flatbush Ave",
+      "lat": 40.595641,
+      "lng": -73.907647,
+      "is_online": true
+    },
+    {
+      "id": "abb47d30-e011-47bc-ac00-622924bc5acd",
+      "name": "Belt Pkwy @ Cropsey Ave",
+      "lat": 40.584105,
+      "lng": -73.986885,
+      "is_online": true
+    },
+    {
       "id": "2064d8ab-597a-45d8-a3c9-5ab95a4e69e6",
       "name": "7 Ave @ Union St",
       "lat": 40.674443,
       "lng": -73.975468,
-      "is_online": true
-    },
-    {
-      "id": "df5bc905-6296-4f6e-ae6e-20a39b56da43",
-      "name": "BB-51 North West Brooklyn Tower",
-      "lat": 40.704172,
-      "lng": -73.994324,
       "is_online": true
     },
     {
@@ -4490,31 +4504,24 @@
       "is_online": true
     },
     {
+      "id": "03a8a2da-3ac2-45aa-a5ba-4ff7d1ecbd22",
+      "name": "5 Ave @ 47 St",
+      "lat": 40.756682,
+      "lng": -73.978578,
+      "is_online": true
+    },
+    {
+      "id": "df5bc905-6296-4f6e-ae6e-20a39b56da43",
+      "name": "BB-51 North West Brooklyn Tower",
+      "lat": 40.704172,
+      "lng": -73.994324,
+      "is_online": true
+    },
+    {
       "id": "66810a94-7065-4f6e-b306-3d3088930d89",
       "name": "11 Ave/Rt 9A @ 14 St",
       "lat": 40.742342,
       "lng": -74.008683,
-      "is_online": true
-    },
-    {
-      "id": "abb47d30-e011-47bc-ac00-622924bc5acd",
-      "name": "Belt Pkwy @ Cropsey Ave",
-      "lat": 40.584105,
-      "lng": -73.986885,
-      "is_online": true
-    },
-    {
-      "id": "680f6950-8ae6-4746-b8ce-4bc28f10f79d",
-      "name": "C2-GE-02-WB_at_Ft_Hmiltn_Pkwy-Ex19",
-      "lat": 40.621403,
-      "lng": -74.022062,
-      "is_online": true
-    },
-    {
-      "id": "9e3164a8-1c63-4790-bc24-f9d752f3ae41",
-      "name": "Belt Pkwy @ Flatbush Ave",
-      "lat": 40.595641,
-      "lng": -73.907647,
       "is_online": true
     },
     {
@@ -4525,10 +4532,17 @@
       "is_online": true
     },
     {
-      "id": "03a8a2da-3ac2-45aa-a5ba-4ff7d1ecbd22",
-      "name": "5 Ave @ 47 St",
-      "lat": 40.756682,
-      "lng": -73.978578,
+      "id": "a8805cdb-e305-42d0-b011-cb825380cf8e",
+      "name": "Bushwick Ave @ Cooper St",
+      "lat": 40.684818,
+      "lng": -73.910158,
+      "is_online": true
+    },
+    {
+      "id": "d0ea28d7-e1d3-4277-aebc-586a70b60957",
+      "name": "BQE @ Kane St",
+      "lat": 40.687257,
+      "lng": -73.999876,
       "is_online": true
     },
     {
@@ -4539,10 +4553,24 @@
       "is_online": true
     },
     {
+      "id": "cdfc2dbe-7ce3-4775-ab7a-8440a9828358",
+      "name": "Worth Street @ Bowery",
+      "lat": 40.713578,
+      "lng": -73.998542,
+      "is_online": true
+    },
+    {
       "id": "326b2bab-d277-4c5a-9778-a7af791ad151",
       "name": "9 Ave @ 37 St",
       "lat": 40.7552720843545,
       "lng": -73.9948547204017,
+      "is_online": true
+    },
+    {
+      "id": "680f6950-8ae6-4746-b8ce-4bc28f10f79d",
+      "name": "C2-GE-02-WB_at_Ft_Hmiltn_Pkwy-Ex19",
+      "lat": 40.621403,
+      "lng": -74.022062,
       "is_online": true
     },
     {
@@ -4553,13 +4581,6 @@
       "is_online": true
     },
     {
-      "id": "b995be5a-a469-4cf6-b2ee-197e8e9eecd9",
-      "name": "Cross Bay Blvd @ 20 Rd",
-      "lat": 40.598884,
-      "lng": -73.820711,
-      "is_online": true
-    },
-    {
       "id": "b9c20141-52ca-43a1-a7df-c2577ca384b6",
       "name": "Queens Plaza North @ East 21 st",
       "lat": 40.75258,
@@ -4567,17 +4588,10 @@
       "is_online": true
     },
     {
-      "id": "d016d3ce-4399-4487-a1a8-2c16620a251d",
-      "name": "Rockaway Pkwy @ Seaview Ave",
-      "lat": 40.633783,
-      "lng": -73.889428,
-      "is_online": true
-    },
-    {
-      "id": "d7496b4f-f3b5-4a49-89d3-4212e0606205",
-      "name": "Gowanus Expy @ FT. Hamilton Pkwy",
-      "lat": 40.622258,
-      "lng": -74.021137,
+      "id": "d138b651-e2ed-4065-a0f9-ef56a65f61d4",
+      "name": "West Broadway @ West Houston St",
+      "lat": 40.726958,
+      "lng": -73.999928,
       "is_online": true
     },
     {
@@ -4609,45 +4623,10 @@
       "is_online": true
     },
     {
-      "id": "e51a2974-8ca2-4fe2-a90a-842685cbbcc9",
-      "name": "C1-CBX-18-Med_at_Pennyfield_Av-TNB",
-      "lat": 40.819367,
-      "lng": -73.81055,
-      "is_online": true
-    },
-    {
-      "id": "e5cd3feb-ca2f-4108-b6ae-678b5ec32dab",
-      "name": "Webster Ave @ E 165",
-      "lat": 40.827872,
-      "lng": -73.912005,
-      "is_online": true
-    },
-    {
-      "id": "e08c24be-e2fe-4d83-bc08-bf88cdebdd63",
-      "name": "Webster Ave @ E 180 St",
-      "lat": 40.851889,
-      "lng": -73.898344,
-      "is_online": true
-    },
-    {
-      "id": "8431fefb-2068-4c83-920a-a6db628e7ce6",
-      "name": "C1-BRP-01-SB_at_E.174th_St-Ex3",
-      "lat": 40.834406,
-      "lng": -73.874177,
-      "is_online": true
-    },
-    {
-      "id": "e892a3e8-e4b5-4a70-ac2f-a1ad82af36a6",
-      "name": "C2-GE-08_E_EB_at_54th_St",
-      "lat": 40.645287,
-      "lng": -74.01669,
-      "is_online": true
-    },
-    {
-      "id": "d05b98ae-f2a7-4c26-8238-754081877484",
-      "name": "Northern Blvd @ Utopia Pkwy",
-      "lat": 40.757685,
-      "lng": -73.793017,
+      "id": "d7496b4f-f3b5-4a49-89d3-4212e0606205",
+      "name": "Gowanus Expy @ FT. Hamilton Pkwy",
+      "lat": 40.622258,
+      "lng": -74.021137,
       "is_online": true
     },
     {
@@ -4658,10 +4637,59 @@
       "is_online": true
     },
     {
-      "id": "d138b651-e2ed-4065-a0f9-ef56a65f61d4",
-      "name": "West Broadway @ West Houston St",
-      "lat": 40.726958,
-      "lng": -73.999928,
+      "id": "d016d3ce-4399-4487-a1a8-2c16620a251d",
+      "name": "Rockaway Pkwy @ Seaview Ave",
+      "lat": 40.633783,
+      "lng": -73.889428,
+      "is_online": true
+    },
+    {
+      "id": "e08c24be-e2fe-4d83-bc08-bf88cdebdd63",
+      "name": "Webster Ave @ E 180 St",
+      "lat": 40.851889,
+      "lng": -73.898344,
+      "is_online": true
+    },
+    {
+      "id": "b995be5a-a469-4cf6-b2ee-197e8e9eecd9",
+      "name": "Cross Bay Blvd @ 20 Rd",
+      "lat": 40.598884,
+      "lng": -73.820711,
+      "is_online": true
+    },
+    {
+      "id": "8431fefb-2068-4c83-920a-a6db628e7ce6",
+      "name": "C1-BRP-01-SB_at_E.174th_St-Ex3",
+      "lat": 40.834406,
+      "lng": -73.874177,
+      "is_online": true
+    },
+    {
+      "id": "e5cd3feb-ca2f-4108-b6ae-678b5ec32dab",
+      "name": "Webster Ave @ E 165",
+      "lat": 40.827872,
+      "lng": -73.912005,
+      "is_online": true
+    },
+    {
+      "id": "d05b98ae-f2a7-4c26-8238-754081877484",
+      "name": "Northern Blvd @ Utopia Pkwy",
+      "lat": 40.757685,
+      "lng": -73.793017,
+      "is_online": true
+    },
+    {
+      "id": "e51a2974-8ca2-4fe2-a90a-842685cbbcc9",
+      "name": "C1-CBX-18-Med_at_Pennyfield_Av-TNB",
+      "lat": 40.819367,
+      "lng": -73.81055,
+      "is_online": true
+    },
+    {
+      "id": "e892a3e8-e4b5-4a70-ac2f-a1ad82af36a6",
+      "name": "C2-GE-08_E_EB_at_54th_St",
+      "lat": 40.645287,
+      "lng": -74.01669,
       "is_online": true
     },
     {
@@ -4693,24 +4721,24 @@
       "is_online": true
     },
     {
+      "id": "d7ee32d6-895f-4e37-bdd9-f97b06b24f3d",
+      "name": "Tillary St @ Jay St",
+      "lat": 40.696073,
+      "lng": -73.987095,
+      "is_online": true
+    },
+    {
+      "id": "1f81dbf0-4360-49fd-b768-b1a09d730eb1",
+      "name": "Gowanus Expy @ 7 Ave & 67 St",
+      "lat": 40.633188,
+      "lng": -74.016338,
+      "is_online": true
+    },
+    {
       "id": "374c2047-3868-47e0-9767-a1a701d3fc67",
       "name": "Bay Parkway @ Benson Ave",
       "lat": 40.6003,
       "lng": -73.9955,
-      "is_online": true
-    },
-    {
-      "id": "1546f761-039c-4b5c-af5e-75c83c9f603f",
-      "name": "Lexington Ave @ 42 St",
-      "lat": 40.7514494972593,
-      "lng": -73.976060779701,
-      "is_online": true
-    },
-    {
-      "id": "9f6b60c8-b940-4eec-a3c5-4b60d24c751b",
-      "name": "YORK AVENUE @ EAST 60 STREET",
-      "lat": 40.759324,
-      "lng": -73.95905,
       "is_online": true
     },
     {
@@ -4728,10 +4756,10 @@
       "is_online": true
     },
     {
-      "id": "d1d8cd99-7609-409a-a739-f5913dabf4e6",
-      "name": "Lexington Ave @ 49 St",
-      "lat": 40.7558782935853,
-      "lng": -73.972833819289,
+      "id": "1546f761-039c-4b5c-af5e-75c83c9f603f",
+      "name": "Lexington Ave @ 42 St",
+      "lat": 40.7514494972593,
+      "lng": -73.976060779701,
       "is_online": true
     },
     {
@@ -4742,10 +4770,10 @@
       "is_online": true
     },
     {
-      "id": "1f81dbf0-4360-49fd-b768-b1a09d730eb1",
-      "name": "Gowanus Expy @ 7 Ave & 67 St",
-      "lat": 40.633188,
-      "lng": -74.016338,
+      "id": "9f6b60c8-b940-4eec-a3c5-4b60d24c751b",
+      "name": "YORK AVENUE @ EAST 60 STREET",
+      "lat": 40.759324,
+      "lng": -73.95905,
       "is_online": true
     },
     {
@@ -4770,10 +4798,10 @@
       "is_online": true
     },
     {
-      "id": "d7ee32d6-895f-4e37-bdd9-f97b06b24f3d",
-      "name": "Tillary St @ Jay St",
-      "lat": 40.696073,
-      "lng": -73.987095,
+      "id": "d1d8cd99-7609-409a-a739-f5913dabf4e6",
+      "name": "Lexington Ave @ 49 St",
+      "lat": 40.7558782935853,
+      "lng": -73.972833819289,
       "is_online": true
     },
     {
@@ -4791,13 +4819,6 @@
       "is_online": true
     },
     {
-      "id": "ef24beea-023c-4377-86c9-f9c8836c961b",
-      "name": "C3-SIE-04A-WB_at_Richmond Ave",
-      "lat": 40.61544,
-      "lng": -74.157459,
-      "is_online": true
-    },
-    {
       "id": "695c4b6d-78d1-4478-81e2-55c8e1acea68",
       "name": "C3-SIE-13_EB_at_Mosel_Avenue",
       "lat": 40.603743,
@@ -4809,6 +4830,20 @@
       "name": "Riverside DR. @ Pedestrian Crossing NOF 181 St",
       "lat": 40.852383,
       "lng": -73.941088,
+      "is_online": true
+    },
+    {
+      "id": "ef24beea-023c-4377-86c9-f9c8836c961b",
+      "name": "C3-SIE-04A-WB_at_Richmond Ave",
+      "lat": 40.61544,
+      "lng": -74.157459,
+      "is_online": true
+    },
+    {
+      "id": "9c0718c5-0ae9-4170-bea0-9b5d7d61e0c4",
+      "name": "WBB-26 SIR @ Kent Ave",
+      "lat": 40.712282,
+      "lng": -73.967862,
       "is_online": true
     },
     {
@@ -4833,24 +4868,17 @@
       "is_online": true
     },
     {
+      "id": "db1570e7-17a4-4916-9f42-cc8ca17aa42e",
+      "name": "Flatbush Ave Bet. 3 Ave & Fulton St",
+      "lat": 40.687106,
+      "lng": -73.97967,
+      "is_online": true
+    },
+    {
       "id": "d83aed40-b117-424b-8caf-35c3afe82527",
       "name": "East 60th St @ Queensboro Bridge Exit ",
       "lat": 40.760695,
       "lng": -73.963158,
-      "is_online": true
-    },
-    {
-      "id": "5361a6ea-95fe-44e1-99f8-dc7d6964a427",
-      "name": "Flatbush Ave @ Concord St",
-      "lat": 40.697565,
-      "lng": -73.985248,
-      "is_online": true
-    },
-    {
-      "id": "34616ac5-0cc5-4b86-ac7a-82c77238a536",
-      "name": "West st and Chambers",
-      "lat": 40.717179,
-      "lng": -74.012897,
       "is_online": true
     },
     {
@@ -4861,10 +4889,10 @@
       "is_online": true
     },
     {
-      "id": "9c0718c5-0ae9-4170-bea0-9b5d7d61e0c4",
-      "name": "WBB-26 SIR @ Kent Ave",
-      "lat": 40.712282,
-      "lng": -73.967862,
+      "id": "5361a6ea-95fe-44e1-99f8-dc7d6964a427",
+      "name": "Flatbush Ave @ Concord St",
+      "lat": 40.697565,
+      "lng": -73.985248,
       "is_online": true
     },
     {
@@ -4875,17 +4903,17 @@
       "is_online": true
     },
     {
+      "id": "34616ac5-0cc5-4b86-ac7a-82c77238a536",
+      "name": "West st and Chambers",
+      "lat": 40.717179,
+      "lng": -74.012897,
+      "is_online": true
+    },
+    {
       "id": "5c29ba71-1757-45db-8318-e1a2bad57e75",
       "name": "Queens Blvd @ Hillside Ave",
       "lat": 40.704168,
       "lng": -73.815211,
-      "is_online": true
-    },
-    {
-      "id": "f419b38e-2b68-4659-a525-d0a31add8528",
-      "name": "4 Ave @ Prospect Ave- 66.138",
-      "lat": 40.665473,
-      "lng": -73.992742,
       "is_online": true
     },
     {
@@ -4896,20 +4924,6 @@
       "is_online": true
     },
     {
-      "id": "47070afa-8638-4dfe-8df0-bdfa391f57b7",
-      "name": "C2-BQE-08-EB_at_Atlantic_Ave-Ex27",
-      "lat": 40.690581,
-      "lng": -73.998548,
-      "is_online": true
-    },
-    {
-      "id": "f9e26c16-1cd9-495d-a988-bd80666c28bb",
-      "name": "WBB - NOR - 3 @  Kent Ave North",
-      "lat": 40.71241,
-      "lng": -73.967779,
-      "is_online": true
-    },
-    {
       "id": "dfed3e07-de07-4243-8a41-509a1800cd1e",
       "name": "Hamilton Ave @ 9 St",
       "lat": 40.675583,
@@ -4917,10 +4931,24 @@
       "is_online": true
     },
     {
+      "id": "f419b38e-2b68-4659-a525-d0a31add8528",
+      "name": "4 Ave @ Prospect Ave- 66.138",
+      "lat": 40.665473,
+      "lng": -73.992742,
+      "is_online": true
+    },
+    {
       "id": "6fc602cf-72c5-40cc-9a42-9a844de7bc1a",
       "name": "Grand St @ Essex St",
       "lat": 40.716723,
       "lng": -73.989158,
+      "is_online": true
+    },
+    {
+      "id": "f9e26c16-1cd9-495d-a988-bd80666c28bb",
+      "name": "WBB - NOR - 3 @  Kent Ave North",
+      "lat": 40.71241,
+      "lng": -73.967779,
       "is_online": true
     },
     {
@@ -4945,6 +4973,13 @@
       "is_online": true
     },
     {
+      "id": "ddc62c2f-dab2-48e0-918e-742e62e78ec1",
+      "name": "Fort Hamilton Pkwy @ 60 St",
+      "lat": 40.6332,
+      "lng": -74.0057,
+      "is_online": true
+    },
+    {
       "id": "6bf2a18c-275b-4ec5-9242-00fee9d1a467",
       "name": "West Shore Expy @ Victory Blvd",
       "lat": 40.590118,
@@ -4966,17 +5001,10 @@
       "is_online": true
     },
     {
-      "id": "ddc62c2f-dab2-48e0-918e-742e62e78ec1",
-      "name": "Fort Hamilton Pkwy @ 60 St",
-      "lat": 40.6332,
-      "lng": -74.0057,
-      "is_online": true
-    },
-    {
-      "id": "cb0647f4-b9fd-4065-a297-ebfcd4f8d270",
-      "name": "Queens Plz S @ 27 St",
-      "lat": 40.7501753,
-      "lng": -73.9398494,
+      "id": "47070afa-8638-4dfe-8df0-bdfa391f57b7",
+      "name": "C2-BQE-08-EB_at_Atlantic_Ave-Ex27",
+      "lat": 40.690581,
+      "lng": -73.998548,
       "is_online": true
     },
     {
@@ -4987,6 +5015,13 @@
       "is_online": true
     },
     {
+      "id": "cb0647f4-b9fd-4065-a297-ebfcd4f8d270",
+      "name": "Queens Plz S @ 27 St",
+      "lat": 40.7501753,
+      "lng": -73.9398494,
+      "is_online": true
+    },
+    {
       "id": "6bfee8ce-9d91-4ffb-9586-9b3a0675578d",
       "name": "Northern Blvd @ Steinway",
       "lat": 40.752466,
@@ -4994,10 +5029,10 @@
       "is_online": true
     },
     {
-      "id": "6c1d7768-9e5f-4541-99c4-77dc8fac932b",
-      "name": "C3-SIE-03-WB_at_South_Ave-Ex5",
-      "lat": 40.621422,
-      "lng": -74.16926,
+      "id": "6d7298dd-f56a-4d33-b1d4-b2c1ec659dda",
+      "name": "C4-WST-02-NB_at_Vestry_St",
+      "lat": 40.722898,
+      "lng": -74.011638,
       "is_online": true
     },
     {
@@ -5008,10 +5043,17 @@
       "is_online": true
     },
     {
-      "id": "74ca7d62-c8e5-4986-82fa-cd8d8db835b9",
-      "name": "BB- 42 South Rdwy @ Bridge Midspan",
-      "lat": 40.705954,
-      "lng": -73.996802,
+      "id": "8255d395-eadd-46c6-87ad-f6c9340753a7",
+      "name": "Belt Pkwy @ Rockaway Parkway ",
+      "lat": 40.630008,
+      "lng": -73.886455,
+      "is_online": true
+    },
+    {
+      "id": "749f7d56-21e8-4716-8efc-624723f5b9a8",
+      "name": "C1-CBE-01_N_NB_at_Amsterdam_Ave-Ex-HRD",
+      "lat": 40.845935,
+      "lng": -73.931089,
       "is_online": true
     },
     {
@@ -5036,10 +5078,17 @@
       "is_online": true
     },
     {
-      "id": "6fa8acf2-f5bf-4200-afde-1240868ca3e3",
-      "name": "Houston St @ Lafeyette St",
-      "lat": 40.725063,
-      "lng": -73.995413,
+      "id": "e184e99b-6bbd-4dd7-a36b-ad17ca50ad36",
+      "name": "Sands St @ Jay St - quad - ptz - 149.26",
+      "lat": 40.699972,
+      "lng": -73.986858,
+      "is_online": true
+    },
+    {
+      "id": "66bcf232-3abf-4afc-951c-469e9e6cfd70",
+      "name": "Hempstead Ave @ Cross Island Pkwy (Quad)",
+      "lat": 40.710893,
+      "lng": -73.727435,
       "is_online": true
     },
     {
@@ -5050,31 +5099,10 @@
       "is_online": true
     },
     {
-      "id": "7add8765-182d-40e5-b196-a0e3c02ed787",
-      "name": "Victory Blvd @ Loop Rd -131.42",
-      "lat": 40.60879,
-      "lng": -74.15355,
-      "is_online": true
-    },
-    {
-      "id": "749f7d56-21e8-4716-8efc-624723f5b9a8",
-      "name": "C1-CBE-01_N_NB_at_Amsterdam_Ave-Ex-HRD",
-      "lat": 40.845935,
-      "lng": -73.931089,
-      "is_online": true
-    },
-    {
-      "id": "8ff9080c-6ba7-483b-be58-3a77c73546d8",
-      "name": "Jackie Robinson Pkwy @ Metropolitan Ave",
-      "lat": 40.709008,
-      "lng": -73.841382,
-      "is_online": true
-    },
-    {
-      "id": "e184e99b-6bbd-4dd7-a36b-ad17ca50ad36",
-      "name": "Sands St @ Jay St - quad - ptz - 149.26",
-      "lat": 40.699972,
-      "lng": -73.986858,
+      "id": "6fa8acf2-f5bf-4200-afde-1240868ca3e3",
+      "name": "Houston St @ Lafeyette St",
+      "lat": 40.725063,
+      "lng": -73.995413,
       "is_online": true
     },
     {
@@ -5085,10 +5113,31 @@
       "is_online": true
     },
     {
-      "id": "6d7298dd-f56a-4d33-b1d4-b2c1ec659dda",
-      "name": "C4-WST-02-NB_at_Vestry_St",
-      "lat": 40.722898,
-      "lng": -74.011638,
+      "id": "8ff9080c-6ba7-483b-be58-3a77c73546d8",
+      "name": "Jackie Robinson Pkwy @ Metropolitan Ave",
+      "lat": 40.709008,
+      "lng": -73.841382,
+      "is_online": true
+    },
+    {
+      "id": "7add8765-182d-40e5-b196-a0e3c02ed787",
+      "name": "Victory Blvd @ Loop Rd -131.42",
+      "lat": 40.60879,
+      "lng": -74.15355,
+      "is_online": true
+    },
+    {
+      "id": "74ca7d62-c8e5-4986-82fa-cd8d8db835b9",
+      "name": "BB- 42 South Rdwy @ Bridge Midspan",
+      "lat": 40.705954,
+      "lng": -73.996802,
+      "is_online": true
+    },
+    {
+      "id": "6c1d7768-9e5f-4541-99c4-77dc8fac932b",
+      "name": "C3-SIE-03-WB_at_South_Ave-Ex5",
+      "lat": 40.621422,
+      "lng": -74.16926,
       "is_online": true
     },
     {
@@ -5103,6 +5152,13 @@
       "name": "Cross Island Pkwy @ Union Tpke",
       "lat": 40.740169,
       "lng": -73.726501,
+      "is_online": true
+    },
+    {
+      "id": "f801cf2f-cd02-4077-aa53-99ee8a00e1ab",
+      "name": "3 Ave @ Atlantic Ave",
+      "lat": 40.685487,
+      "lng": -73.98067,
       "is_online": true
     },
     {
@@ -5134,10 +5190,10 @@
       "is_online": true
     },
     {
-      "id": "786650de-d254-47dc-aa8a-de9a4c231a2a",
-      "name": "2 Ave @ 23 St",
-      "lat": 40.737876,
-      "lng": -73.980926,
+      "id": "e4542be1-fe19-4efa-a25e-0d0c1065c8a2",
+      "name": "58 St @ QBB UL Approach",
+      "lat": 40.75959,
+      "lng": -73.96396,
       "is_online": true
     },
     {
@@ -5162,17 +5218,17 @@
       "is_online": true
     },
     {
-      "id": "85312947-96ae-4fce-a1f6-c6167e2f3004",
-      "name": "Jamaica Ave @ 165 St",
-      "lat": 40.705468,
-      "lng": -73.794902,
-      "is_online": true
-    },
-    {
       "id": "8820f260-11c9-49dd-8839-0ff47707b6f2",
       "name": "Atlantic Ave @ Hicks Ave - quad - 165.203",
       "lat": 40.691006,
       "lng": -73.99784,
+      "is_online": true
+    },
+    {
+      "id": "85312947-96ae-4fce-a1f6-c6167e2f3004",
+      "name": "Jamaica Ave @ 165 St",
+      "lat": 40.705468,
+      "lng": -73.794902,
       "is_online": true
     },
     {
@@ -5183,10 +5239,17 @@
       "is_online": true
     },
     {
-      "id": "e4542be1-fe19-4efa-a25e-0d0c1065c8a2",
-      "name": "58 St @ QBB UL Approach",
-      "lat": 40.75959,
-      "lng": -73.96396,
+      "id": "786650de-d254-47dc-aa8a-de9a4c231a2a",
+      "name": "2 Ave @ 23 St",
+      "lat": 40.737876,
+      "lng": -73.980926,
+      "is_online": true
+    },
+    {
+      "id": "fcaf0a31-e2ec-4abe-815d-2623d5e7b87b",
+      "name": "WBB SIR - 1 @ Manhattan Anchorage",
+      "lat": 40.7150465,
+      "lng": -73.9772337,
       "is_online": true
     },
     {
@@ -5204,13 +5267,6 @@
       "is_online": true
     },
     {
-      "id": "fcaf0a31-e2ec-4abe-815d-2623d5e7b87b",
-      "name": "WBB SIR - 1 @ Manhattan Anchorage",
-      "lat": 40.7150465,
-      "lng": -73.9772337,
-      "is_online": true
-    },
-    {
       "id": "adc07b1d-e5e1-45da-bfb7-db8a0519f231",
       "name": "Flushing Ave @ 54 St",
       "lat": 40.715065,
@@ -5218,10 +5274,10 @@
       "is_online": true
     },
     {
-      "id": "db84e6bd-1436-4213-bbfb-f6e0ceab38c7",
-      "name": "West Houston @ Varick St",
-      "lat": 40.7286,
-      "lng": -74.005356,
+      "id": "7bac53fa-8296-40f8-9297-e7e67597a92c",
+      "name": "C5-BQE-45-EB_at_GCP-Astoria_Blvd",
+      "lat": 40.764773,
+      "lng": -73.894705,
       "is_online": true
     },
     {
@@ -5232,10 +5288,10 @@
       "is_online": true
     },
     {
-      "id": "85d33af1-a82c-499c-b303-a16c8c891fe6",
-      "name": "Stillwell Ave @ Neptune Ave",
-      "lat": 40.579195,
-      "lng": -73.981856,
+      "id": "80976618-bbf8-4e7a-8a9d-095f3594244c",
+      "name": "Hylan Blvd @ Bay St",
+      "lat": 40.61405,
+      "lng": -74.066176,
       "is_online": true
     },
     {
@@ -5260,17 +5316,24 @@
       "is_online": true
     },
     {
-      "id": "80976618-bbf8-4e7a-8a9d-095f3594244c",
-      "name": "Hylan Blvd @ Bay St",
-      "lat": 40.61405,
-      "lng": -74.066176,
+      "id": "80b83728-4712-4ab6-aa2f-ae384eb1b91c",
+      "name": "Father Capodanno Blvd @ Seaview Ave",
+      "lat": 40.579328,
+      "lng": -74.07784,
       "is_online": true
     },
     {
-      "id": "7bac53fa-8296-40f8-9297-e7e67597a92c",
-      "name": "C5-BQE-45-EB_at_GCP-Astoria_Blvd",
-      "lat": 40.764773,
-      "lng": -73.894705,
+      "id": "db84e6bd-1436-4213-bbfb-f6e0ceab38c7",
+      "name": "West Houston @ Varick St",
+      "lat": 40.7286,
+      "lng": -74.005356,
+      "is_online": true
+    },
+    {
+      "id": "79f45918-c13e-4357-9ccb-9e3e7ea5b6af",
+      "name": "1 Ave @ 57 st",
+      "lat": 40.75823,
+      "lng": -73.96289,
       "is_online": true
     },
     {
@@ -5281,10 +5344,10 @@
       "is_online": true
     },
     {
-      "id": "80b83728-4712-4ab6-aa2f-ae384eb1b91c",
-      "name": "Father Capodanno Blvd @ Seaview Ave",
-      "lat": 40.579328,
-      "lng": -74.07784,
+      "id": "fdb5054c-08b7-4a84-91cb-b61aa890d8b0",
+      "name": "BQE @ Vander Voort Ave",
+      "lat": 40.72395,
+      "lng": -73.937599,
       "is_online": true
     },
     {
@@ -5292,13 +5355,6 @@
       "name": "Ocean Pkwy @ Surf Av @ Sea Breeze Ave",
       "lat": 40.575219,
       "lng": -73.968764,
-      "is_online": true
-    },
-    {
-      "id": "fdb5054c-08b7-4a84-91cb-b61aa890d8b0",
-      "name": "BQE @ Vander Voort Ave",
-      "lat": 40.72395,
-      "lng": -73.937599,
       "is_online": true
     },
     {
@@ -5323,10 +5379,10 @@
       "is_online": true
     },
     {
-      "id": "79f45918-c13e-4357-9ccb-9e3e7ea5b6af",
-      "name": "1 Ave @ 57 st",
-      "lat": 40.75823,
-      "lng": -73.96289,
+      "id": "85d33af1-a82c-499c-b303-a16c8c891fe6",
+      "name": "Stillwell Ave @ Neptune Ave",
+      "lat": 40.579195,
+      "lng": -73.981856,
       "is_online": true
     },
     {
@@ -5379,10 +5435,17 @@
       "is_online": true
     },
     {
-      "id": "dcef88ca-8811-4b82-8fa9-50225dd03bc4",
-      "name": "Br Br-19 N Rdwy @ FDR Dr",
-      "lat": 40.708195,
-      "lng": -73.999305,
+      "id": "96f64a79-929b-4f8e-b160-306313054dec",
+      "name": "BB-51A Brooklyn Tower - South Rdwy",
+      "lat": 40.704131,
+      "lng": -73.994659,
+      "is_online": true
+    },
+    {
+      "id": "82b0f566-cab5-4366-bc3a-67f82cc4fec7",
+      "name": "Bruckner Blvd @ Lincoln Ave",
+      "lat": 40.807681,
+      "lng": -73.929512,
       "is_online": true
     },
     {
@@ -5400,10 +5463,10 @@
       "is_online": true
     },
     {
-      "id": "96f64a79-929b-4f8e-b160-306313054dec",
-      "name": "BB-51A Brooklyn Tower - South Rdwy",
-      "lat": 40.704131,
-      "lng": -73.994659,
+      "id": "dcef88ca-8811-4b82-8fa9-50225dd03bc4",
+      "name": "Br Br-19 N Rdwy @ FDR Dr",
+      "lat": 40.708195,
+      "lng": -73.999305,
       "is_online": true
     },
     {
@@ -5414,10 +5477,10 @@
       "is_online": true
     },
     {
-      "id": "82b0f566-cab5-4366-bc3a-67f82cc4fec7",
-      "name": "Bruckner Blvd @ Lincoln Ave",
-      "lat": 40.807681,
-      "lng": -73.929512,
+      "id": "dbbf45f6-7d87-46fa-825f-454a7e2bbcad",
+      "name": "Broadway @ 46 St- Quad East",
+      "lat": 40.7587,
+      "lng": -73.985348,
       "is_online": true
     },
     {
@@ -5435,13 +5498,6 @@
       "is_online": true
     },
     {
-      "id": "dbbf45f6-7d87-46fa-825f-454a7e2bbcad",
-      "name": "Broadway @ 46 St- Quad East",
-      "lat": 40.7587,
-      "lng": -73.985348,
-      "is_online": true
-    },
-    {
       "id": "9bf91436-9ea5-4451-aa9d-a309f8e26a0f",
       "name": "Roosevelt Ave @ 50 St",
       "lat": 40.743472,
@@ -5449,17 +5505,17 @@
       "is_online": true
     },
     {
-      "id": "82ccb93a-fe0d-4e92-8419-64336edf761e",
-      "name": "C2-BQE-10-WB_at_State_St_UP-Ex27",
-      "lat": 40.692535,
-      "lng": -73.999642,
-      "is_online": true
-    },
-    {
       "id": "800d29e7-aa14-4269-b7a3-22661fe48f55",
       "name": "C5-LIE-27-WB_at_Clearview_Exwy-Ex27",
       "lat": 40.74516675,
       "lng": -73.76996066,
+      "is_online": true
+    },
+    {
+      "id": "82ccb93a-fe0d-4e92-8419-64336edf761e",
+      "name": "C2-BQE-10-WB_at_State_St_UP-Ex27",
+      "lat": 40.692535,
+      "lng": -73.999642,
       "is_online": true
     },
     {
@@ -5484,10 +5540,10 @@
       "is_online": true
     },
     {
-      "id": "be732c0a-c4f8-4ae4-a751-1fc011f160e7",
-      "name": "Hylan Blvd @ New Dorp Lane",
-      "lat": 40.570469,
-      "lng": -74.109749,
+      "id": "c74510ed-35cf-4908-ad10-f2c9575cc853",
+      "name": "Hamilton Ave @ Henry St",
+      "lat": 40.678408,
+      "lng": -74.002253,
       "is_online": true
     },
     {
@@ -5505,10 +5561,10 @@
       "is_online": true
     },
     {
-      "id": "c3005e2b-a94c-44ab-80a4-29e6be8700d5",
-      "name": "Jackie Robinson Pkwy @ burns St",
-      "lat": 40.712545,
-      "lng": -73.834995,
+      "id": "8246cf40-87f5-4f3a-b987-369e38a2d450",
+      "name": "Staten Island Expy @ Forest Ave ",
+      "lat": 40.6253,
+      "lng": -74.1779,
       "is_online": true
     },
     {
@@ -5540,10 +5596,10 @@
       "is_online": true
     },
     {
-      "id": "c74510ed-35cf-4908-ad10-f2c9575cc853",
-      "name": "Hamilton Ave @ Henry St",
-      "lat": 40.678408,
-      "lng": -74.002253,
+      "id": "c531c196-3944-4318-8c33-92eb2be792ac",
+      "name": "Roosevelt Ave @ Baxter Ave",
+      "lat": 40.74778,
+      "lng": -73.882616,
       "is_online": true
     },
     {
@@ -5554,10 +5610,10 @@
       "is_online": true
     },
     {
-      "id": "c531c196-3944-4318-8c33-92eb2be792ac",
-      "name": "Roosevelt Ave @ Baxter Ave",
-      "lat": 40.74778,
-      "lng": -73.882616,
+      "id": "be732c0a-c4f8-4ae4-a751-1fc011f160e7",
+      "name": "Hylan Blvd @ New Dorp Lane",
+      "lat": 40.570469,
+      "lng": -74.109749,
       "is_online": true
     },
     {
@@ -5568,10 +5624,10 @@
       "is_online": true
     },
     {
-      "id": "8246cf40-87f5-4f3a-b987-369e38a2d450",
-      "name": "Staten Island Expy @ Forest Ave ",
-      "lat": 40.6253,
-      "lng": -74.1779,
+      "id": "dfac53ae-0460-409d-8514-6db67de9aff3",
+      "name": "Bronx River Pkwy @ 233 St",
+      "lat": 40.89481,
+      "lng": -73.86174,
       "is_online": true
     },
     {
@@ -5582,10 +5638,10 @@
       "is_online": true
     },
     {
-      "id": "dfac53ae-0460-409d-8514-6db67de9aff3",
-      "name": "Bronx River Pkwy @ 233 St",
-      "lat": 40.89481,
-      "lng": -73.86174,
+      "id": "c3005e2b-a94c-44ab-80a4-29e6be8700d5",
+      "name": "Jackie Robinson Pkwy @ burns St",
+      "lat": 40.712545,
+      "lng": -73.834995,
       "is_online": true
     },
     {
@@ -5610,13 +5666,6 @@
       "is_online": true
     },
     {
-      "id": "a9b2501d-062f-43f8-9419-f89faa4f36ba",
-      "name": "Riverside Dr @ Washington Br ENT ramp",
-      "lat": 40.84337,
-      "lng": -73.9444,
-      "is_online": true
-    },
-    {
       "id": "874223a4-dc80-4764-8d91-1590cd3737d4",
       "name": "FDR Dr @ 90 St",
       "lat": 40.777422,
@@ -5631,10 +5680,10 @@
       "is_online": true
     },
     {
-      "id": "6be5adfc-1912-4811-9a04-01c8866280bb",
-      "name": "West St @ Murray",
-      "lat": 40.715249,
-      "lng": -74.013364,
+      "id": "b9085289-750b-403a-8031-681678d35ae0",
+      "name": "Flushing Ave @ Fresh Pond Rd",
+      "lat": 40.721888,
+      "lng": -73.903107,
       "is_online": true
     },
     {
@@ -5645,10 +5694,10 @@
       "is_online": true
     },
     {
-      "id": "96ea2271-4739-40bb-9aea-6429c63dfb34",
-      "name": "Cadman Plz W @ Prospect St - quad - 1.3",
-      "lat": 40.700756,
-      "lng": -73.990942,
+      "id": "7bbbaf2a-ca8d-4fa7-bcc9-bac5ac78d0b9",
+      "name": "Cross Island Pkwy @ 113 Ave",
+      "lat": 40.702317,
+      "lng": -73.727481,
       "is_online": true
     },
     {
@@ -5666,6 +5715,13 @@
       "is_online": true
     },
     {
+      "id": "e6c39111-6d28-45bb-9698-509699e78b8f",
+      "name": "Woodhaven Blvd @ 101 Ave",
+      "lat": 40.6841,
+      "lng": -73.8463,
+      "is_online": true
+    },
+    {
       "id": "7c9ef8dd-7587-4e39-b486-13ef4c7e5721",
       "name": "Central Park West @ 100 St",
       "lat": 40.79421,
@@ -5680,17 +5736,24 @@
       "is_online": true
     },
     {
+      "id": "96ea2271-4739-40bb-9aea-6429c63dfb34",
+      "name": "Cadman Plz W @ Prospect St - quad - 1.3",
+      "lat": 40.700756,
+      "lng": -73.990942,
+      "is_online": true
+    },
+    {
+      "id": "a9b2501d-062f-43f8-9419-f89faa4f36ba",
+      "name": "Riverside Dr @ Washington Br ENT ramp",
+      "lat": 40.84337,
+      "lng": -73.9444,
+      "is_online": true
+    },
+    {
       "id": "a3058350-1552-459f-8379-2fd06895e70a",
       "name": "Delancey St @ Bowery St ",
       "lat": 40.720317,
       "lng": -73.994016,
-      "is_online": true
-    },
-    {
-      "id": "a26130e0-3c9b-4f43-b253-209d80d441f8",
-      "name": "62 St @ QBB Upper Level exit ramp",
-      "lat": 40.76215,
-      "lng": -73.96203,
       "is_online": true
     },
     {
@@ -5701,24 +5764,17 @@
       "is_online": true
     },
     {
-      "id": "b9085289-750b-403a-8031-681678d35ae0",
-      "name": "Flushing Ave @ Fresh Pond Rd",
-      "lat": 40.721888,
-      "lng": -73.903107,
+      "id": "6be5adfc-1912-4811-9a04-01c8866280bb",
+      "name": "West St @ Murray",
+      "lat": 40.715249,
+      "lng": -74.013364,
       "is_online": true
     },
     {
-      "id": "e6c39111-6d28-45bb-9698-509699e78b8f",
-      "name": "Woodhaven Blvd @ 101 Ave",
-      "lat": 40.6841,
-      "lng": -73.8463,
-      "is_online": true
-    },
-    {
-      "id": "7bbbaf2a-ca8d-4fa7-bcc9-bac5ac78d0b9",
-      "name": "Cross Island Pkwy @ 113 Ave",
-      "lat": 40.702317,
-      "lng": -73.727481,
+      "id": "a26130e0-3c9b-4f43-b253-209d80d441f8",
+      "name": "62 St @ QBB Upper Level exit ramp",
+      "lat": 40.76215,
+      "lng": -73.96203,
       "is_online": true
     },
     {
@@ -5750,17 +5806,10 @@
       "is_online": true
     },
     {
-      "id": "9a01683c-321a-421b-b9c3-056bbf851f25",
-      "name": "C2-PE-06-WB_at_6th_Ave-Ex2",
-      "lat": 40.662666,
-      "lng": -73.988692,
-      "is_online": true
-    },
-    {
-      "id": "9b607ed0-dcb4-4cc3-8055-bbb23e5fe9d6",
-      "name": "C2-GE-13-EB_at_Prospect_Expy-Ex24",
-      "lat": 40.666733,
-      "lng": -73.995508,
+      "id": "935fdfa1-d810-45fe-9534-e035e059b8ec",
+      "name": "C2-BQE-19-WB_at_Kent_Ave-Ex31",
+      "lat": 40.699898,
+      "lng": -73.962065,
       "is_online": true
     },
     {
@@ -5768,6 +5817,13 @@
       "name": "Amboy Rd @ Annadale Rd",
       "lat": 40.53598,
       "lng": -74.180867,
+      "is_online": true
+    },
+    {
+      "id": "ebc0f1c7-1cc2-46c0-b8bd-365f94f09a0a",
+      "name": "Guy Brewer Blvd @ N Conduit Ave",
+      "lat": 40.667978,
+      "lng": -73.771617,
       "is_online": true
     },
     {
@@ -5785,10 +5841,10 @@
       "is_online": true
     },
     {
-      "id": "ebc0f1c7-1cc2-46c0-b8bd-365f94f09a0a",
-      "name": "Guy Brewer Blvd @ N Conduit Ave",
-      "lat": 40.667978,
-      "lng": -73.771617,
+      "id": "e86cf7d8-0782-40d7-885c-f4a9218988d9",
+      "name": "Belt Pkwy @ 68 St",
+      "lat": 40.639889,
+      "lng": -74.036124,
       "is_online": true
     },
     {
@@ -5799,17 +5855,17 @@
       "is_online": true
     },
     {
-      "id": "e86cf7d8-0782-40d7-885c-f4a9218988d9",
-      "name": "Belt Pkwy @ 68 St",
-      "lat": 40.639889,
-      "lng": -74.036124,
+      "id": "eec11fee-fc83-41c1-a9e9-5926d3ce0459",
+      "name": "Richmond Ave @ Draper Pl",
+      "lat": 40.592668,
+      "lng": -74.163322,
       "is_online": true
     },
     {
-      "id": "a0df8038-1012-48b4-8fa7-6d469472ebf6",
-      "name": "C2-BQE-14_WB_at_Midgh_St-Ex28A",
-      "lat": 40.701208,
-      "lng": -73.994466,
+      "id": "99098e73-0848-4c19-895e-f81651f76c39",
+      "name": "C1-CBX-17-Med_at_E.Tremont_Ave-Ex10",
+      "lat": 40.822093,
+      "lng": -73.818676,
       "is_online": true
     },
     {
@@ -5820,17 +5876,10 @@
       "is_online": true
     },
     {
-      "id": "935fdfa1-d810-45fe-9534-e035e059b8ec",
-      "name": "C2-BQE-19-WB_at_Kent_Ave-Ex31",
-      "lat": 40.699898,
-      "lng": -73.962065,
-      "is_online": true
-    },
-    {
-      "id": "eec11fee-fc83-41c1-a9e9-5926d3ce0459",
-      "name": "Richmond Ave @ Draper Pl",
-      "lat": 40.592668,
-      "lng": -74.163322,
+      "id": "9a01683c-321a-421b-b9c3-056bbf851f25",
+      "name": "C2-PE-06-WB_at_6th_Ave-Ex2",
+      "lat": 40.662666,
+      "lng": -73.988692,
       "is_online": true
     },
     {
@@ -5848,17 +5897,17 @@
       "is_online": true
     },
     {
-      "id": "99098e73-0848-4c19-895e-f81651f76c39",
-      "name": "C1-CBX-17-Med_at_E.Tremont_Ave-Ex10",
-      "lat": 40.822093,
-      "lng": -73.818676,
+      "id": "9b607ed0-dcb4-4cc3-8055-bbb23e5fe9d6",
+      "name": "C2-GE-13-EB_at_Prospect_Expy-Ex24",
+      "lat": 40.666733,
+      "lng": -73.995508,
       "is_online": true
     },
     {
-      "id": "a1295144-6d4b-4e63-8475-a4fff6020e53",
-      "name": "C3-SIE-07-EB_at_Woolley_Ave-Ex10",
-      "lat": 40.607476,
-      "lng": -74.140649,
+      "id": "a0df8038-1012-48b4-8fa7-6d469472ebf6",
+      "name": "C2-BQE-14_WB_at_Midgh_St-Ex28A",
+      "lat": 40.701208,
+      "lng": -73.994466,
       "is_online": true
     },
     {
@@ -5869,17 +5918,10 @@
       "is_online": true
     },
     {
-      "id": "a95f7916-24ee-4d7e-bc71-6f9f1e009f23",
-      "name": "Grand Concourse @ 161 St",
-      "lat": 40.826849,
-      "lng": -73.922609,
-      "is_online": true
-    },
-    {
-      "id": "ebec9de9-3f56-477a-a413-2e0a09b2b6ba",
-      "name": "Worth Street @ Lafayette Street",
-      "lat": 40.715579,
-      "lng": -74.003036,
+      "id": "a1295144-6d4b-4e63-8475-a4fff6020e53",
+      "name": "C3-SIE-07-EB_at_Woolley_Ave-Ex10",
+      "lat": 40.607476,
+      "lng": -74.140649,
       "is_online": true
     },
     {
@@ -5890,10 +5932,24 @@
       "is_online": true
     },
     {
+      "id": "ebec9de9-3f56-477a-a413-2e0a09b2b6ba",
+      "name": "Worth Street @ Lafayette Street",
+      "lat": 40.715579,
+      "lng": -74.003036,
+      "is_online": true
+    },
+    {
       "id": "a74c9c59-b6e1-4f7d-b260-7f54954e6e47",
       "name": "C2-GE-12_W_WB_at_26th St-Ex23",
       "lat": 40.661152,
       "lng": -74.000813,
+      "is_online": true
+    },
+    {
+      "id": "ffae5a99-c403-41aa-9985-0633aee4aeff",
+      "name": "Henry Hudson pkwy @ Exit 14 ,165 St/ GWB  ramp",
+      "lat": 40.84148,
+      "lng": -73.9455,
       "is_online": true
     },
     {
@@ -5904,10 +5960,10 @@
       "is_online": true
     },
     {
-      "id": "f68ca680-62ac-4ad5-aa9d-7a83742b15d3",
-      "name": "Staten Island Expy @ Fingerboard",
-      "lat": 40.604174,
-      "lng": -74.069091,
+      "id": "a95f7916-24ee-4d7e-bc71-6f9f1e009f23",
+      "name": "Grand Concourse @ 161 St",
+      "lat": 40.826849,
+      "lng": -73.922609,
       "is_online": true
     },
     {
@@ -5922,13 +5978,6 @@
       "name": " Belt Pkwy @  Guy R Brewer Blvd ",
       "lat": 40.66674,
       "lng": -73.770962,
-      "is_online": true
-    },
-    {
-      "id": "fb62b0fd-deb9-4a64-b114-17a5f01418a4",
-      "name": "Rockaway Blvd @ Van Wyck Expy W S/R",
-      "lat": 40.674459,
-      "lng": -73.80218,
       "is_online": true
     },
     {
@@ -5953,10 +6002,10 @@
       "is_online": true
     },
     {
-      "id": "a991a948-12b9-450a-a5ea-7ae01679f037",
-      "name": "WBB -12 NIR-12 Manhattan Mid Span",
-      "lat": 40.71369,
-      "lng": -73.972344,
+      "id": "f68ca680-62ac-4ad5-aa9d-7a83742b15d3",
+      "name": "Staten Island Expy @ Fingerboard",
+      "lat": 40.604174,
+      "lng": -74.069091,
       "is_online": true
     },
     {
@@ -5981,10 +6030,10 @@
       "is_online": true
     },
     {
-      "id": "a8f2d065-c266-4378-ac63-50b81677da84",
-      "name": "C2-PE-02-Ctr_at_Ft_Hamltn_Pkwy-Ex5",
-      "lat": 40.649912,
-      "lng": -73.975581,
+      "id": "a991a948-12b9-450a-a5ea-7ae01679f037",
+      "name": "WBB -12 NIR-12 Manhattan Mid Span",
+      "lat": 40.71369,
+      "lng": -73.972344,
       "is_online": true
     },
     {
@@ -5992,6 +6041,13 @@
       "name": "BB-27 South-West Manhattan Tower",
       "lat": 40.707228,
       "lng": -73.998439,
+      "is_online": true
+    },
+    {
+      "id": "fb62b0fd-deb9-4a64-b114-17a5f01418a4",
+      "name": "Rockaway Blvd @ Van Wyck Expy W S/R",
+      "lat": 40.674459,
+      "lng": -73.80218,
       "is_online": true
     },
     {
@@ -6016,17 +6072,17 @@
       "is_online": true
     },
     {
-      "id": "ed788fa2-c602-4676-b0fa-913d1a17a123",
-      "name": "BB-65 North Rdwy @ Above Water St/Bklyn",
-      "lat": 40.703392,
-      "lng": -73.99335,
+      "id": "b331d9d1-c081-4476-8302-83445ac196e7",
+      "name": "Dyer Ave @ 42 Street",
+      "lat": 40.7589811180163,
+      "lng": -73.9939438000961,
       "is_online": true
     },
     {
-      "id": "bc01e999-cfba-409b-9542-19c7e86cf410",
-      "name": "C3-WSE-05-NB_at_Arden_Ave-Ex4",
-      "lat": 40.560473,
-      "lng": -74.199158,
+      "id": "bcb706e6-135a-4981-8a06-7545f6e05ddd",
+      "name": "C3-SIE-11-EB_at_Renwick_Ave",
+      "lat": 40.610089,
+      "lng": -74.105929,
       "is_online": true
     },
     {
@@ -6041,20 +6097,6 @@
       "name": "C1-MDE-04-SB_at_Grand_Concrse-Ex3",
       "lat": 40.815889,
       "lng": -73.931134,
-      "is_online": true
-    },
-    {
-      "id": "bcb706e6-135a-4981-8a06-7545f6e05ddd",
-      "name": "C3-SIE-11-EB_at_Renwick_Ave",
-      "lat": 40.610089,
-      "lng": -74.105929,
-      "is_online": true
-    },
-    {
-      "id": "b331d9d1-c081-4476-8302-83445ac196e7",
-      "name": "Dyer Ave @ 42 Street",
-      "lat": 40.7589811180163,
-      "lng": -73.9939438000961,
       "is_online": true
     },
     {
@@ -6086,17 +6128,24 @@
       "is_online": true
     },
     {
-      "id": "ed12f2da-9f65-44f0-a162-123c412716c6",
-      "name": "Canal Street @ Allen Street",
-      "lat": 40.7150861999536,
-      "lng": -73.9925114202795,
-      "is_online": true
-    },
-    {
       "id": "ecdddb78-10be-47c6-ba27-e5d9da6b9a22",
       "name": "Water St @ John St",
       "lat": 40.706852,
       "lng": -74.004992,
+      "is_online": true
+    },
+    {
+      "id": "b9ba6a87-0e0b-4c5a-ad6a-7ead399e0864",
+      "name": "C1-MDE-11-NB_at_W.179th_St-Ex8",
+      "lat": 40.855126,
+      "lng": -73.918007,
+      "is_online": true
+    },
+    {
+      "id": "ed788fa2-c602-4676-b0fa-913d1a17a123",
+      "name": "BB-65 North Rdwy @ Above Water St/Bklyn",
+      "lat": 40.703392,
+      "lng": -73.99335,
       "is_online": true
     },
     {
@@ -6107,10 +6156,10 @@
       "is_online": true
     },
     {
-      "id": "b9ba6a87-0e0b-4c5a-ad6a-7ead399e0864",
-      "name": "C1-MDE-11-NB_at_W.179th_St-Ex8",
-      "lat": 40.855126,
-      "lng": -73.918007,
+      "id": "bc01e999-cfba-409b-9542-19c7e86cf410",
+      "name": "C3-WSE-05-NB_at_Arden_Ave-Ex4",
+      "lat": 40.560473,
+      "lng": -74.199158,
       "is_online": true
     },
     {
@@ -6128,38 +6177,17 @@
       "is_online": true
     },
     {
-      "id": "c75333e2-1a9f-465d-8885-39b9c01e6fb4",
-      "name": "C2-PE-04-Ctr_at_9th_Ave-Ex4",
-      "lat": 40.656004,
-      "lng": -73.980776,
+      "id": "c61490de-9ab7-4321-919c-cf8ad9ca5100",
+      "name": "2 Ave @ 59 St (QBB)",
+      "lat": 40.760978,
+      "lng": -73.964082,
       "is_online": true
     },
     {
-      "id": "fec1c88c-46b6-41bb-89ab-7dc7eeb2daaf",
-      "name": "College Point Blvd @ Roosevelt Ave",
-      "lat": 40.758092,
-      "lng": -73.834234,
-      "is_online": true
-    },
-    {
-      "id": "afff9762-e6d4-4b4d-a2e7-60c13763dd16",
-      "name": "Bowery @ Cooper Sq & 4 St",
-      "lat": 40.727155,
-      "lng": -73.991628,
-      "is_online": true
-    },
-    {
-      "id": "a69c70f4-cedf-440c-83f7-743e7a158d09",
-      "name": "11 Ave @ W 40 St",
-      "lat": 40.759495,
-      "lng": -73.999098,
-      "is_online": true
-    },
-    {
-      "id": "c65db13c-61ee-4e8c-859f-fa52a297114a",
-      "name": "BB-27A Manhattan Tower South",
-      "lat": 40.707138,
-      "lng": -73.998502,
+      "id": "f2029d59-52c0-44b9-8030-90e03f710f8f",
+      "name": "Richmond Ave @ Amboy Rd - quad - ptz - 1.218",
+      "lat": 40.54332,
+      "lng": -74.16428,
       "is_online": true
     },
     {
@@ -6184,45 +6212,10 @@
       "is_online": true
     },
     {
-      "id": "d3ab8634-97be-4229-9aa3-c3637ff66ea9",
-      "name": "Columbia St @ Degraw St",
-      "lat": 40.685735,
-      "lng": -74.002365,
-      "is_online": true
-    },
-    {
-      "id": "c61490de-9ab7-4321-919c-cf8ad9ca5100",
-      "name": "2 Ave @ 59 St (QBB)",
-      "lat": 40.760978,
-      "lng": -73.964082,
-      "is_online": true
-    },
-    {
-      "id": "d24b0435-67e7-498a-91f6-f3a65bd86be2",
-      "name": "Bruckner Expy @ Wilkinson Ave",
-      "lat": 40.851659,
-      "lng": -73.826704,
-      "is_online": true
-    },
-    {
-      "id": "c6022d8a-69df-45be-aadd-ec39a18a18fb",
-      "name": "Br Br-20 S Rdwy FDR Dr",
-      "lat": 40.708045,
-      "lng": -73.999541,
-      "is_online": true
-    },
-    {
       "id": "c75873dc-16d0-4e9c-b5b5-1c6ede0b0b63",
       "name": "FDR @ E 6 St",
       "lat": 40.721494,
       "lng": -73.974554,
-      "is_online": true
-    },
-    {
-      "id": "c74a2510-0ce0-48f2-8fbe-36fdd1a98379",
-      "name": "Hamilton Ave @ Hamilton PL @ 15 St (S SR)",
-      "lat": 40.669085,
-      "lng": -73.997168,
       "is_online": true
     },
     {
@@ -6233,13 +6226,6 @@
       "is_online": true
     },
     {
-      "id": "d7d72762-bcd2-4672-9bf7-1558bc6895b5",
-      "name": "Union tpke @ Little Neck Pkwy",
-      "lat": 40.743982,
-      "lng": -73.717583,
-      "is_online": true
-    },
-    {
       "id": "ce3ef423-8d29-40c3-9e27-f150a12ca10a",
       "name": "Victory Blvd @ Gannon Ave -131.34",
       "lat": 40.60958,
@@ -6247,10 +6233,66 @@
       "is_online": true
     },
     {
-      "id": "f2029d59-52c0-44b9-8030-90e03f710f8f",
-      "name": "Richmond Ave @ Amboy Rd - quad - ptz - 1.218",
-      "lat": 40.54332,
-      "lng": -74.16428,
+      "id": "c6022d8a-69df-45be-aadd-ec39a18a18fb",
+      "name": "Br Br-20 S Rdwy FDR Dr",
+      "lat": 40.708045,
+      "lng": -73.999541,
+      "is_online": true
+    },
+    {
+      "id": "afff9762-e6d4-4b4d-a2e7-60c13763dd16",
+      "name": "Bowery @ Cooper Sq & 4 St",
+      "lat": 40.727155,
+      "lng": -73.991628,
+      "is_online": true
+    },
+    {
+      "id": "c74a2510-0ce0-48f2-8fbe-36fdd1a98379",
+      "name": "Hamilton Ave @ Hamilton PL @ 15 St (S SR)",
+      "lat": 40.669085,
+      "lng": -73.997168,
+      "is_online": true
+    },
+    {
+      "id": "d24b0435-67e7-498a-91f6-f3a65bd86be2",
+      "name": "Bruckner Expy @ Wilkinson Ave",
+      "lat": 40.851659,
+      "lng": -73.826704,
+      "is_online": true
+    },
+    {
+      "id": "c65db13c-61ee-4e8c-859f-fa52a297114a",
+      "name": "BB-27A Manhattan Tower South",
+      "lat": 40.707138,
+      "lng": -73.998502,
+      "is_online": true
+    },
+    {
+      "id": "d3ab8634-97be-4229-9aa3-c3637ff66ea9",
+      "name": "Columbia St @ Degraw St",
+      "lat": 40.685735,
+      "lng": -74.002365,
+      "is_online": true
+    },
+    {
+      "id": "d7d72762-bcd2-4672-9bf7-1558bc6895b5",
+      "name": "Union tpke @ Little Neck Pkwy",
+      "lat": 40.743982,
+      "lng": -73.717583,
+      "is_online": true
+    },
+    {
+      "id": "a69c70f4-cedf-440c-83f7-743e7a158d09",
+      "name": "11 Ave @ W 40 St",
+      "lat": 40.759495,
+      "lng": -73.999098,
+      "is_online": true
+    },
+    {
+      "id": "fec1c88c-46b6-41bb-89ab-7dc7eeb2daaf",
+      "name": "College Point Blvd @ Roosevelt Ave",
+      "lat": 40.758092,
+      "lng": -73.834234,
       "is_online": true
     },
     {
@@ -6261,24 +6303,10 @@
       "is_online": true
     },
     {
-      "id": "dc0cb00c-0b2e-4851-9f8a-67954e4adbdb",
-      "name": "Roebling St @ South 4 St",
-      "lat": 40.710749,
-      "lng": -73.959917,
-      "is_online": true
-    },
-    {
       "id": "d47d2f63-cdc1-4f28-bc4c-e64ac07e4f1d",
       "name": "Union Sq @ 14 St",
       "lat": 40.73483,
       "lng": -73.99087,
-      "is_online": true
-    },
-    {
-      "id": "ed670675-55d7-43e9-ac88-29f1290b843b",
-      "name": "Woodhaven Blvd @ Myrtle Ave",
-      "lat": 40.702613,
-      "lng": -73.855269,
       "is_online": true
     },
     {
@@ -6289,17 +6317,24 @@
       "is_online": true
     },
     {
-      "id": "d67b0c15-549a-42f9-b99c-13023667f724",
-      "name": "C1-SHE-02-SB_at_Cross_Brx_Expwy",
-      "lat": 40.837446,
-      "lng": -73.880984,
+      "id": "d5ed6e53-5a1f-404f-8394-a1ed88a2c429",
+      "name": "Astoria Blvd @ 108 St",
+      "lat": 40.760433,
+      "lng": -73.861412,
       "is_online": true
     },
     {
-      "id": "d4338b6b-ddf6-41e9-9a64-1f0dd0b8ebdf",
-      "name": "Boston Rd. @ E 169 St",
-      "lat": 40.831378,
-      "lng": -73.900286,
+      "id": "d560faa5-0f60-4ac4-ae1e-b4af096d9adc",
+      "name": "BB-16 South Rdwy @ Manhattan Anchorage",
+      "lat": 40.709355,
+      "lng": -74.001053,
+      "is_online": true
+    },
+    {
+      "id": "ed0f8bd4-fe44-4f86-98a9-91f45b446200",
+      "name": "3 Ave @ Union St",
+      "lat": 40.678345,
+      "lng": -73.985427,
       "is_online": true
     },
     {
@@ -6310,10 +6345,17 @@
       "is_online": true
     },
     {
-      "id": "d5ed6e53-5a1f-404f-8394-a1ed88a2c429",
-      "name": "Astoria Blvd @ 108 St",
-      "lat": 40.760433,
-      "lng": -73.861412,
+      "id": "d681357c-1296-4bb0-901d-a1ebc8ab17c7",
+      "name": "BB-50 South Rdwy @ West of Bklyn Twr",
+      "lat": 40.705361,
+      "lng": -73.996088,
+      "is_online": true
+    },
+    {
+      "id": "d67b0c15-549a-42f9-b99c-13023667f724",
+      "name": "C1-SHE-02-SB_at_Cross_Brx_Expwy",
+      "lat": 40.837446,
+      "lng": -73.880984,
       "is_online": true
     },
     {
@@ -6331,38 +6373,24 @@
       "is_online": true
     },
     {
+      "id": "dd6b80d0-dad3-42a3-8b70-7cc963105027",
+      "name": "C5-BQE-38_E_at_Broadway",
+      "lat": 40.7487485,
+      "lng": -73.895909,
+      "is_online": true
+    },
+    {
+      "id": "dc0cb00c-0b2e-4851-9f8a-67954e4adbdb",
+      "name": "Roebling St @ South 4 St",
+      "lat": 40.710749,
+      "lng": -73.959917,
+      "is_online": true
+    },
+    {
       "id": "e438c68c-c1e4-4fc1-9d1e-28cab8acb42a",
       "name": "Henry Hudson Pkwy @ 70 St",
       "lat": 40.779679,
       "lng": -73.988462,
-      "is_online": true
-    },
-    {
-      "id": "d681357c-1296-4bb0-901d-a1ebc8ab17c7",
-      "name": "BB-50 South Rdwy @ West of Bklyn Twr",
-      "lat": 40.705361,
-      "lng": -73.996088,
-      "is_online": true
-    },
-    {
-      "id": "ed0f8bd4-fe44-4f86-98a9-91f45b446200",
-      "name": "3 Ave @ Union St",
-      "lat": 40.678345,
-      "lng": -73.985427,
-      "is_online": true
-    },
-    {
-      "id": "ded03849-7c56-43e5-8e82-05b61c175aca",
-      "name": "C1-CBE-04_N - NB_at_Macombs Rd-Ex2A",
-      "lat": 40.844926,
-      "lng": -73.917694,
-      "is_online": true
-    },
-    {
-      "id": "d560faa5-0f60-4ac4-ae1e-b4af096d9adc",
-      "name": "BB-16 South Rdwy @ Manhattan Anchorage",
-      "lat": 40.709355,
-      "lng": -74.001053,
       "is_online": true
     },
     {
@@ -6373,59 +6401,24 @@
       "is_online": true
     },
     {
-      "id": "dd6b80d0-dad3-42a3-8b70-7cc963105027",
-      "name": "C5-BQE-38_E_at_Broadway",
-      "lat": 40.7487485,
-      "lng": -73.895909,
+      "id": "ed670675-55d7-43e9-ac88-29f1290b843b",
+      "name": "Woodhaven Blvd @ Myrtle Ave",
+      "lat": 40.702613,
+      "lng": -73.855269,
       "is_online": true
     },
     {
-      "id": "f51e9c5b-2698-4777-a6be-1e1994b334c2",
-      "name": "Victory Blvd @ Morani St-131.26",
-      "lat": 40.608,
-      "lng": -74.1575,
+      "id": "ded03849-7c56-43e5-8e82-05b61c175aca",
+      "name": "C1-CBE-04_N - NB_at_Macombs Rd-Ex2A",
+      "lat": 40.844926,
+      "lng": -73.917694,
       "is_online": true
     },
     {
-      "id": "fee01ae5-3f35-4fe1-a236-417d43b64101",
-      "name": "Beach Channel Dr @ Beach 116 St",
-      "lat": 40.58174,
-      "lng": -73.838443,
-      "is_online": true
-    },
-    {
-      "id": "ebac5b6e-bd3a-4046-926b-7446edab9bee",
-      "name": "3 Ave @ E 14 St",
-      "lat": 40.733316,
-      "lng": -73.987185,
-      "is_online": true
-    },
-    {
-      "id": "eafc65f5-6ff9-4203-905f-3995b9fbc9eb",
-      "name": "1 Ave @ 23 St",
-      "lat": 40.7368873405677,
-      "lng": -73.9785319648825,
-      "is_online": true
-    },
-    {
-      "id": "fbe41159-b7cd-4b91-a365-5656bae67ae7",
-      "name": "Farmers Blvd @ 147 Ave @ 175 St",
-      "lat": 40.661198,
-      "lng": -73.770991,
-      "is_online": true
-    },
-    {
-      "id": "f134b133-75ef-40a8-8fbb-f9c51355e6b5",
-      "name": "Old Fulton St @ Vine St/Hicks St - quad - 156.24",
-      "lat": 40.701936,
-      "lng": -73.992574,
-      "is_online": true
-    },
-    {
-      "id": "fde1748c-7c0f-4df8-8acd-120df29a9305",
-      "name": "Atlantic Ave @ Eastern Pkwy",
-      "lat": 40.67635,
-      "lng": -73.908282,
+      "id": "d4338b6b-ddf6-41e9-9a64-1f0dd0b8ebdf",
+      "name": "Boston Rd. @ E 169 St",
+      "lat": 40.831378,
+      "lng": -73.900286,
       "is_online": true
     },
     {
@@ -6436,10 +6429,10 @@
       "is_online": true
     },
     {
-      "id": "fc900cf1-98b4-4ddb-a511-1e8a9233935c",
-      "name": "Whitestone Expy @ 28 Rd N of Linden Pl",
-      "lat": 40.772841,
-      "lng": -73.830771,
+      "id": "fee01ae5-3f35-4fe1-a236-417d43b64101",
+      "name": "Beach Channel Dr @ Beach 116 St",
+      "lat": 40.58174,
+      "lng": -73.838443,
       "is_online": true
     },
     {
@@ -6447,6 +6440,55 @@
       "name": "1 Ave @ 42 St",
       "lat": 40.7488254014022,
       "lng": -73.9698439596283,
+      "is_online": true
+    },
+    {
+      "id": "fbe41159-b7cd-4b91-a365-5656bae67ae7",
+      "name": "Farmers Blvd @ 147 Ave @ 175 St",
+      "lat": 40.661198,
+      "lng": -73.770991,
+      "is_online": true
+    },
+    {
+      "id": "fde1748c-7c0f-4df8-8acd-120df29a9305",
+      "name": "Atlantic Ave @ Eastern Pkwy",
+      "lat": 40.67635,
+      "lng": -73.908282,
+      "is_online": true
+    },
+    {
+      "id": "f51e9c5b-2698-4777-a6be-1e1994b334c2",
+      "name": "Victory Blvd @ Morani St-131.26",
+      "lat": 40.608,
+      "lng": -74.1575,
+      "is_online": true
+    },
+    {
+      "id": "f134b133-75ef-40a8-8fbb-f9c51355e6b5",
+      "name": "Old Fulton St @ Vine St/Hicks St - quad - 156.24",
+      "lat": 40.701936,
+      "lng": -73.992574,
+      "is_online": true
+    },
+    {
+      "id": "e2a52948-46af-41f0-9769-623e4a7d2900",
+      "name": "C2-BQE-06_WB_at_Congress_St-Ex27",
+      "lat": 40.689202,
+      "lng": -73.999062,
+      "is_online": true
+    },
+    {
+      "id": "fc900cf1-98b4-4ddb-a511-1e8a9233935c",
+      "name": "Whitestone Expy @ 28 Rd N of Linden Pl",
+      "lat": 40.772841,
+      "lng": -73.830771,
+      "is_online": true
+    },
+    {
+      "id": "eafc65f5-6ff9-4203-905f-3995b9fbc9eb",
+      "name": "1 Ave @ 23 St",
+      "lat": 40.7368873405677,
+      "lng": -73.9785319648825,
       "is_online": true
     },
     {
@@ -6485,17 +6527,10 @@
       "is_online": true
     },
     {
-      "id": "e2a52948-46af-41f0-9769-623e4a7d2900",
-      "name": "C2-BQE-06_WB_at_Congress_St-Ex27",
-      "lat": 40.689202,
-      "lng": -73.999062,
-      "is_online": true
-    },
-    {
-      "id": "e7c0ccc5-bf19-453f-a5cd-c02b9feb2123",
-      "name": "Drumgoogle Rd E @ Wainwright Ave",
-      "lat": 40.55919,
-      "lng": -74.171699,
+      "id": "ebac5b6e-bd3a-4046-926b-7446edab9bee",
+      "name": "3 Ave @ E 14 St",
+      "lat": 40.733316,
+      "lng": -73.987185,
       "is_online": true
     },
     {
@@ -6506,17 +6541,17 @@
       "is_online": true
     },
     {
-      "id": "ea36992f-a3bf-4cce-8942-05ff04e2ae5f",
-      "name": "Park Ave @ 23 St",
-      "lat": 40.740189,
-      "lng": -73.986363,
+      "id": "f3d14ce1-8df5-4c5c-88b8-f17f56077e04",
+      "name": "Flatbush Ave @ Willoughby",
+      "lat": 40.691214327643,
+      "lng": -73.9822340011596,
       "is_online": true
     },
     {
-      "id": "f3d82b25-6b10-44c7-ae89-30df075a7ac8",
-      "name": "Broadway @ 46 St- Quad North",
-      "lat": 40.758722,
-      "lng": -73.98536,
+      "id": "e7c0ccc5-bf19-453f-a5cd-c02b9feb2123",
+      "name": "Drumgoogle Rd E @ Wainwright Ave",
+      "lat": 40.55919,
+      "lng": -74.171699,
       "is_online": true
     },
     {
@@ -6527,17 +6562,17 @@
       "is_online": true
     },
     {
+      "id": "ee4709ba-ce23-4f26-a970-02e5ce9cf7f2",
+      "name": "College Point Blvd @ Booth Memorial Ave",
+      "lat": 40.747994,
+      "lng": -73.833113,
+      "is_online": true
+    },
+    {
       "id": "f2fbddd2-a5bb-45fe-93ef-2a9b9940bbd5",
       "name": "FDR Dr @ 131 ST (3 Ave Br)",
       "lat": 40.808367,
       "lng": -73.934622,
-      "is_online": true
-    },
-    {
-      "id": "f3d14ce1-8df5-4c5c-88b8-f17f56077e04",
-      "name": "Flatbush Ave @ Willoughby",
-      "lat": 40.691214327643,
-      "lng": -73.9822340011596,
       "is_online": true
     },
     {
@@ -6548,17 +6583,10 @@
       "is_online": true
     },
     {
-      "id": "ee4709ba-ce23-4f26-a970-02e5ce9cf7f2",
-      "name": "College Point Blvd @ Booth Memorial Ave",
-      "lat": 40.747994,
-      "lng": -73.833113,
-      "is_online": true
-    },
-    {
-      "id": "83bf2591-579d-415b-a0d4-fe39868b46d1",
-      "name": "8 Ave @ 42 St",
-      "lat": 40.7572405048358,
-      "lng": -73.9897804546602,
+      "id": "f3d82b25-6b10-44c7-ae89-30df075a7ac8",
+      "name": "Broadway @ 46 St- Quad North",
+      "lat": 40.758722,
+      "lng": -73.98536,
       "is_online": true
     },
     {
@@ -6583,24 +6611,17 @@
       "is_online": true
     },
     {
+      "id": "ea36992f-a3bf-4cce-8942-05ff04e2ae5f",
+      "name": "Park Ave @ 23 St",
+      "lat": 40.740189,
+      "lng": -73.986363,
+      "is_online": true
+    },
+    {
       "id": "f6799b6f-b7f9-451b-8c7a-eacc9e8c36a8",
       "name": "Lenox Ave @ 135 St",
       "lat": 40.814104,
       "lng": -73.94086,
-      "is_online": true
-    },
-    {
-      "id": "f8549617-2066-4d74-b2b9-b06165dd13e2",
-      "name": "C1-TNE-02-Med_at_Randall_Ave",
-      "lat": 40.827977,
-      "lng": -73.817743,
-      "is_online": true
-    },
-    {
-      "id": "fc7db899-7a79-41f3-b9b1-b23ce64c5a5e",
-      "name": "7 Ave @ 49 St",
-      "lat": 40.7604823513464,
-      "lng": -73.983738054794,
       "is_online": true
     },
     {
@@ -6611,24 +6632,17 @@
       "is_online": true
     },
     {
-      "id": "f4e822f7-d2a2-4146-851c-04b2fa6d5265",
-      "name": "5 Ave @ 42 St",
-      "lat": 40.7534920464028,
-      "lng": -73.9808970054167,
+      "id": "fc7db899-7a79-41f3-b9b1-b23ce64c5a5e",
+      "name": "7 Ave @ 49 St",
+      "lat": 40.7604823513464,
+      "lng": -73.983738054794,
       "is_online": true
     },
     {
-      "id": "f8e7c70d-bdcb-4394-b55c-d9bcef891fba",
-      "name": "11 Ave @ 42 St",
-      "lat": 40.7607911152618,
-      "lng": -73.9982590769288,
-      "is_online": true
-    },
-    {
-      "id": "fa287d30-44a9-48ef-90d6-5ab0a54eab15",
-      "name": "Flatbush Ave and Atlantic Ave",
-      "lat": 40.6832090346707,
-      "lng": -73.9769983291626,
+      "id": "f8549617-2066-4d74-b2b9-b06165dd13e2",
+      "name": "C1-TNE-02-Med_at_Randall_Ave",
+      "lat": 40.827977,
+      "lng": -73.817743,
       "is_online": true
     },
     {
@@ -6646,17 +6660,38 @@
       "is_online": true
     },
     {
-      "id": "f78c30e5-2a4d-4a71-b5d4-482ba70d585f",
-      "name": "FDR @ E 127 St",
-      "lat": 40.803143,
-      "lng": -73.930444,
-      "is_online": true
-    },
-    {
       "id": "f5d272cf-3bc6-48c3-94d0-808c4003a4e9",
       "name": "WBB-4 @ NOR Bklyn-Mid Span",
       "lat": 40.713463,
       "lng": -73.97145,
+      "is_online": true
+    },
+    {
+      "id": "f8e7c70d-bdcb-4394-b55c-d9bcef891fba",
+      "name": "11 Ave @ 42 St",
+      "lat": 40.7607911152618,
+      "lng": -73.9982590769288,
+      "is_online": true
+    },
+    {
+      "id": "fa287d30-44a9-48ef-90d6-5ab0a54eab15",
+      "name": "Flatbush Ave and Atlantic Ave",
+      "lat": 40.6832090346707,
+      "lng": -73.9769983291626,
+      "is_online": true
+    },
+    {
+      "id": "f4e822f7-d2a2-4146-851c-04b2fa6d5265",
+      "name": "5 Ave @ 42 St",
+      "lat": 40.7534920464028,
+      "lng": -73.9808970054167,
+      "is_online": true
+    },
+    {
+      "id": "f78c30e5-2a4d-4a71-b5d4-482ba70d585f",
+      "name": "FDR @ E 127 St",
+      "lat": 40.803143,
+      "lng": -73.930444,
       "is_online": true
     },
     {
@@ -6674,17 +6709,17 @@
       "is_online": true
     },
     {
-      "id": "af2b479e-ec78-46b0-be35-6bbbd1691460",
-      "name": "1 ave @ 40 st",
-      "lat": 40.74759,
-      "lng": -73.9708,
-      "is_online": true
-    },
-    {
       "id": "b6847d0c-ee18-409e-a3b8-e68f8365047c",
       "name": "West St @ Clarkson",
       "lat": 40.729832,
       "lng": -74.010658,
+      "is_online": true
+    },
+    {
+      "id": "af2b479e-ec78-46b0-be35-6bbbd1691460",
+      "name": "1 ave @ 40 st",
+      "lat": 40.74759,
+      "lng": -73.9708,
       "is_online": true
     },
     {
